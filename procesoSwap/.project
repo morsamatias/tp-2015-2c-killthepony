@@ -3,7 +3,7 @@
 	<name>procesoSwap</name>
 	<comment></comment>
 	<projects>
-		<project>utilesv1</project>
+		<project>utiles</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

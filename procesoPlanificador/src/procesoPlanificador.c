@@ -138,13 +138,15 @@ int iniciar_server(){
 int procesar_mensaje_cpu(int socket){
 	t_msg* msg = NULL;
 	msg = recibir_mensaje(socket);
-	print_msg(msg);
+	//print_msg(msg);
 	int id_cpu;
 	t_cpu* cpu = NULL;
 	switch(msg->header.id){
 		case CPU_NUEVO:
+
 			//el ID esta en la pos 0
 			id_cpu = msg->argv[0];
+			log_trace(logger, "Nuevo CPU id: %d", id_cpu);
 			destroy_message(msg);
 
 			//si no existe lo agrego

@@ -5,8 +5,8 @@
  *      Author: utnso
  */
 
-#ifndef UTIL_H_
-#define UTIL_H_
+#ifndef UTILES_UTIL_H_
+#define UTILES_UTIL_H_
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -391,4 +391,4 @@ int pcb_print(t_pcb* pcb);
 
 void lock(pthread_mutex_t* mutex);
 void unlock(pthread_mutex_t* mutex);
-#endif /* UTIL_H_ */
+#endif /* UTILES_UTIL_H_ */
