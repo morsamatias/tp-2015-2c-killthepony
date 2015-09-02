@@ -30,3 +30,11 @@
 
 # Debug files
 *.dSYM/
+log.txt
+
+
+/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoAdminDeMemoria/Debug
+/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoCPU/Debug
+/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoPlanificador/Debug
+/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoSwap/Debug
+/home/utnso/Escritorio/git/tp-2015-2c-killthepony/utiles/Debug
