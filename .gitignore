@@ -33,8 +33,25 @@
 log.txt
 
 
-/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoAdminDeMemoria/Debug
-/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoCPU/Debug
-/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoPlanificador/Debug
-/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoSwap/Debug
-/home/utnso/Escritorio/git/tp-2015-2c-killthepony/utiles/Debug
+procesoAdminDeMemoria/Debug
+procesoCPU/Debug
+procesoPlanificador/Debug
+procesoSwap/Debug
+utiles/Debug
+
+procesoAdminDeMemoria/Debug/log.txt
+procesoAdminDeMemoria/log.txt
+
+procesoCPU/Debug/log.txt
+procesoCPU/log.txt
+
+procesoPlanificador/Debug/log.txt
+procesoPlanificador/log.txt
+
+procesoSwap/Debug/log.txt
+procesoSwap/log.txt
+
+utiles/Debug/log.txt
+utiles/log.txt
+
+
