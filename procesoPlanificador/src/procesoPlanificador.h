@@ -27,7 +27,7 @@ int correr_proceso(char* path);
 
 t_list* pcbs;/*lista de pcbs*/
 
-int pcb_agregar(t_pcb* pcb){
+void pcb_agregar(t_pcb* pcb){
 	list_add(pcbs, (void*)pcb);
 }
 
