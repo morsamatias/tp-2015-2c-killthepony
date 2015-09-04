@@ -31,14 +31,6 @@ int main(void) {
 
 }
 
-char* IP_SWAP(){
-	return config_get_string_value(config, "IP_SWAP");
-}
-int PUERTO_SWAP(){
-	return config_get_int_value(config, "PUERTO_SWAP");
-}
-
-
 int conectar_con_swap(){
 	int sock ;
 	sock = client_socket(IP_SWAP(), PUERTO_SWAP());
@@ -120,12 +112,9 @@ int iniciar_server(){
 	return 0;
 }
 
-int PUERTO_ESCUCHA(){
-	return config_get_int_value(config, "PUERTO_ESCUCHA");
-}
 
 int inicializar(){
-	config = config_create(CONFIG_PATH);
+	cfg = config_create(CONFIG_PATH);
 	//printf("IP planif: %s:%d\n", IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
 
 	clean_file(LOGGER_PATH);
@@ -135,7 +124,7 @@ int inicializar(){
 }
 
 int finalizar(){
-	config_destroy(config);
+	config_destroy(cfg);
 	log_destroy(logger);
 	return 0;
 }

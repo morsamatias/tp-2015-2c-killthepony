@@ -10,16 +10,14 @@
 
 #include <util.h>
 #include <pthread.h>
-#include <commons/config.h>
 #include <commons/log.h>
 
-char* CONFIG_PATH = "config.txt";
+#include "config_mem.h"
+
 char* LOGGER_PATH = "log.txt";
 
 t_log* logger;
-t_config* config;
 
-int PUERTO_ESCUCHA();
 int iniciar_server();
 
 int inicializar();
