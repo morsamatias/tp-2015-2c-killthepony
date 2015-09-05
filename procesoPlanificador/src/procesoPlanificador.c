@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "procesoPlanificador.h"
-
+#include "string.h"
 
 t_log* logger;
 char* LOG_PATH = "log.txt";
