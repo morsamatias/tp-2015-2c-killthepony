@@ -53,17 +53,36 @@ int conectar_con_swap(){
 	return sock;
 }
 
+int swap_nuevo_proceso(int pid, int paginas){
+	t_msg* msg = NULL;
+	msg = argv_message(MEM_INICIAR, 2, pid, paginas);
+	enviar_y_destroy_mensaje(socket_swap, msg);
+
+	msg = recibir_mensaje(socket_swap);
+	destroy_message(msg);
+
+	return 0;
+}
+
 void procesar_mensaje_cpu(int socket, t_msg* msg){
 	puts("Inicio msj**************************************");
 	//print_msg(msg);
 	char* buff_pag  = NULL;
-
+	int pid = 123;
+	int paginas;
 	switch (msg->header.id) {
 		case MEM_INICIAR:
 			//param 0 cant_paginas
 			log_trace(logger, "Mem Iniciar Paginas: %d", msg->argv[0]);
 
+			pid = 123;
+			paginas = msg->argv[0];
+
 			destroy_message(msg);
+
+			swap_nuevo_proceso(pid, paginas);
+
+
 			msg = argv_message(MEM_OK, 1 ,0);
 			enviar_y_destroy_mensaje(socket, msg);
 
