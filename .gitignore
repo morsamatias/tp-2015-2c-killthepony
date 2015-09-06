@@ -54,6 +54,8 @@ procesoPlanificador/log.txt
 procesoSwap/config.txt
 procesoSwap/Debug/log.txt
 procesoSwap/log.txt
+procesoSwap/SWAP.DATA
+procesoSwap/Debug/SWAP.DATA
 
 utiles/Debug/log.txt
 utiles/log.txt
