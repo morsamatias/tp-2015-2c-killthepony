@@ -17,6 +17,23 @@ char* LOGGER_PATH = "log.txt";
 t_log* logger;
 
 
+char* swap;
+int TAMANIO_SWAP;
+pthread_mutex_t mutex;
+
+typedef struct{
+	int pid;
+	int posicion;
+	int cantidad;
+}t_ocupado;
+
+typedef struct{
+	int posicion;
+	int cantidad;
+}t_libre;
+
+t_list* esp_ocupado;
+t_list* esp_libre;
 
 int iniciar_server();
 
