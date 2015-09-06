@@ -54,235 +54,6 @@ sem_t* sem_crear(int* shmid, key_t* shmkey, int contador_ftok){
 
 	return sem;
 }
-int ejecutar_script(char* path_script, char* name_script, int(*reader_writer)(int fdreader, int fdwriter), pthread_mutex_t* mutex, int c_ftok){
-/*
-	key_t shmkey;
-	int shmid;
-	sem_t *sem;
-	sem = sem_crear(&shmid, &shmkey, c_ftok);
-*/
-	int pipes[NUM_PIPES][2];
-	pthread_mutex_lock(mutex);
-
-	// pipes for parent to write and read
-
-	if (pipe(pipes[PARENT_READ_PIPE]) == -1)
-		handle_error("pipe");
-
-	if ((pipe(pipes[PARENT_WRITE_PIPE])) == -1)
-		handle_error("pipe");
-
-	///////////////////////////////////////////
-	pid_t  pid;
-	pid = fork();
-	pthread_mutex_unlock(mutex);
-	if (pid  < 0){
-		//handle_error("fork pipe stdin stdout");
-		perror("fork!!!!!!!!!!!");
-		return -1;
-	}
-
-	if (pid == 0) {
-		if (dup2(pipes[PARENT_WRITE_PIPE][READ_FD], STDIN_FILENO) < 0) {
-			perror("dup2 STDIN_FILENO");
-			_exit(1);
-		}
-		if (dup2(pipes[PARENT_READ_PIPE][WRITE_FD], STDOUT_FILENO) < 0) {
-			perror("dup2 STDIN_FILENO");
-			_exit(1);
-		}
-
-		close(pipes[PARENT_WRITE_PIPE][READ_FD]);
-		close(pipes[PARENT_READ_PIPE][WRITE_FD]);
-		close(pipes[PARENT_READ_PIPE][READ_FD]);
-		close(pipes[PARENT_WRITE_PIPE][WRITE_FD]);
-
-
-		//execl("/usr/bin/sort", "sort", (char*) NULL);
-		//sem_post(sem);
-
-		int rs = 1;
-		do {
-			rs = execl(path_script, name_script, (char*) NULL);
-			perror("Errro execv");
-			fprintf(stderr, "hola path:%s, name: %s, Res: %d\n", path_script, name_script, rs);
-			usleep(100000);
-
-			_exit(127);
-		} while (rs < 0);
-
-		close(pipes[PARENT_READ_PIPE][READ_FD]);
-		close(pipes[PARENT_WRITE_PIPE][WRITE_FD]);
-
-
-		_exit(127);
-
-	} else {
-		/*
-		printf("AAAAAAAAAAntes sem_wait(sem);\n");
-		sem_wait(sem);
-		printf("DDDDDDDDDESPUES sem_wait(sem);\n");
-
-		shmctl(shmid, IPC_RMID, 0);
-		sem_destroy (sem);
-		*/
-
-		int rs;
-
-		rs = close(pipes[PARENT_WRITE_PIPE][READ_FD]);
-		if(rs!=0){
-			perror("close1");
-		}
-		rs = close(pipes[PARENT_READ_PIPE][WRITE_FD]);
-		if(rs!=0){
-			perror("close2");
-		}
-
-		rs = reader_writer(pipes[PARENT_READ_PIPE][READ_FD], pipes[PARENT_WRITE_PIPE][WRITE_FD]);
-		int status;
-		waitpid(pid, &status, 0);
-
-
-		//puts("listo");
-		return rs;
-	}
-}
-
-
-int ordenar(t_ordenar* param_ordenar){
-
-	int _reader_writer(int fdreader, int fdwriter){
-
-		int _writer(int *fdwriter) {
-			int fd = *fdwriter;
-
-			FILE* file = fopen(param_ordenar->origen , "r");
-			if(file==NULL){
-				perror("fopen ordenar");
-				close(fd);
-				return -1;
-			}
-			char* linea = NULL;
-			linea = malloc(LEN_KEYVALUE);
-			if(linea == NULL){
-				perror("linea malloc order");
-				close(fd);
-				return -1;
-			}
-			size_t len_linea = LEN_KEYVALUE;
-			//linea = NULL;
-			//size_t len_linea = 0;
-			int rs=0, cant_writes=0;
-			while ((getline(&linea, &len_linea, file)) > 0) {
-				cant_writes = escribir_todo(fd, linea, strlen(linea));
-				if(cant_writes<0){
-					rs=-1;
-					break;
-				}
-			}
-			free(linea);
-			fclose(file);
-			close(fd);
-			return rs;
-		}
-		int rs;
-		pthread_t th_writer, th_reader;
-
-		if((rs = pthread_create(&th_writer, NULL, (void*) _writer, (void*)&fdwriter))!=0){
-			perror("pthread_create writerrrrrrrrrrrrrrrrrrrrrrr");
-			return -1;
-		}
-		//usleep(100);
-
-		t_reader treader;
-		treader.fd = fdreader;
-		strcpy(treader.destino, param_ordenar->destino);
-		//treader.destino = param_ordenar->destino;
-
-		if( (rs = pthread_create(&th_reader, NULL, (void*) reader_and_save_as, (void*)&treader))!=0 ){
-			perror("pthread_create readerrrr");
-			return -1;
-		}
-		//usleep(100);
-
-		//joineo
-		int rswriter=-1, rsreader=-1;
-
-		if( (pthread_join(th_writer, (void*)&rswriter))!=0 ){
-			perror("pthread_join writerrrrrrrrrrrrrrrrrrrrrrr");
-			return -1;
-		}
-
-		if( (pthread_join(th_reader, (void*)&rsreader))!=0 ){
-			perror("pthread_join reader");
-			return -1;
-		}
-
-		//pthread_mutex_lock(param_ordenar->mutex);
-		//printf("Fin orden resultado: %s\n", treader.destino);
-		//pthread_mutex_unlock(param_ordenar->mutex);
-		//free(param_ordenar->destino);
-		//free(param_ordenar->origen);
-		//free(param_ordenar);
-		if(rswriter<0)
-			return -1;//fallo writer
-		if(rsreader<0)
-			return -2;//fallo reader;
-		return 0;
-	}
-	int rs=0;
-
-	rs = ejecutar_script("/usr/bin/sort", "sort", _reader_writer, param_ordenar->mutex, param_ordenar->contador_ftok);
-	//rs = ejecutar_script("/home/utnso/Escritorio/tests/mapper.sh", "mapperR", _reader_writer);
-
-	return rs;
-}
-
-int reader_and_save_as(t_reader* reader) {
-	int count, rs;
-	FILE* file = fopen(reader->destino, "w");
-	if (file == NULL) {
-		perror("fopen reader_and_save_as");
-		close(reader->fd);
-		return -1;
-	}
-	char buffer[LEN_KEYVALUE];
-	while ((count = read(reader->fd, buffer, LEN_KEYVALUE)) > 0) {
-		rs = fwrite(buffer, 1, count, file);
-		if (rs <= 0) {
-			perror("_________fwrite reader_and_save_as");
-			//exit(-1);
-			return -1;
-		}
-	}
-	if (count < 0) {
-		perror("read reader_and_save_as");
-		close(reader->fd);
-		return -1;
-	}
-	fclose(file);
-	close(reader->fd);
-	return 0;
-}
-
-int escribir_todo(int writer, char* data, int len){
-	int aux = 0;
-	int bytes_escritos = 0;
-	do {
-		aux = write(writer, data + bytes_escritos, len - bytes_escritos);
-
-		if (aux < 0) {
-			//printf("_____________write Error\n");
-			perror("write:::::::::::::::::::::::");
-			//exit(-1);
-			return -1;
-		}
-		bytes_escritos = bytes_escritos + aux;
-	} while (bytes_escritos < len);
-	//fsync(pipes[PARENT_WRITE_PIPE][WRITE_FD]);
-	return bytes_escritos;
-}
-
 
 //Size of each chunk of data received, try changing this
 		#define CHUNK_SIZE 512
@@ -347,74 +118,6 @@ size_t file_get_size(char* filename) {
 }
 
 
-
-void map_free(t_map* map){
-	//FREE_NULL(map->info->nodo_base);
-	FREE_NULL(map->info->resultado);
-	FREE_NULL(map->info);
-	//free(map->archivo_nodo_bloque);para simplificar el free lo hace el archivo_destroy
-	FREE_NULL(map);
-
-}
-
-
-t_mapreduce* mapreduce_create(int id, int job_id, char* resultado){
-	t_mapreduce* new = malloc(sizeof*new);
-	new->id = id;
-	new->resultado = string_new();
-	string_append(&(new->resultado), resultado);
-	new->empezo = false;
-	new->termino = false;
-	new->job_id = job_id;
-	return new;
-}
-
-t_map* map_create(int id, int job_id, char* resultado){
-	t_map* new = malloc(sizeof*new);
-
-	new->info = mapreduce_create(id, job_id, resultado);
-
-	return new;
-}
-
-//une alos dos string con una barra
-char* file_combine(char* f1, char* f2) {
-	char* p = NULL;
-	p = string_new();
-
-	string_append(&p, f1);
-	string_append(&p, "/");
-	string_append(&p, f2);
-
-	return p;
-
-}
-/*
-//char ip[15];
-
-char* ip_get(){
-	int fd;
-	struct ifreq ifr;
-
-	fd = socket(AF_INET, SOCK_DGRAM, 0);
-
-	ifr.ifr_addr.sa_family = AF_INET;
-
-	snprintf(ifr.ifr_name, IFNAMSIZ, "eth0");
-
-	ioctl(fd, SIOCGIFADDR, &ifr);
-
-
-
-	strcpy(ip, inet_ntoa(((struct sockaddr_in *) &ifr.ifr_addr)->sin_addr));
-	//fprintf(ip, "%s", inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
-
-	printf("%s", ip);
-
-	close(fd);
-	return ip;
-}
-*/
 
 int len_hasta_enter(char* strings){
 		int i=0;
@@ -776,49 +479,30 @@ int recibir_mensaje_flujo(int unSocket, void** buffer) {
 
 }
 
+int sendAll(uint32_t fd, char *buf, uint32_t len,uint32_t opt){
+	int32_t total = 0;
+	int32_t left = len;
+	int32_t sent = 0;
 
-t_mapreduce* recibir_mensaje_mapreduce(int fd){
-	t_mapreduce* mr = NULL;
-	t_msg* msg = NULL;
-	//envio resultado, id, job_id
-	msg = recibir_mensaje(fd);
+	while (total < len) {
+		sent = send(fd, buf + total, left, opt);
+		if (sent <= 0) {
+			break;
+		}
+		total += sent;
+		left -= sent;
+	}
 
-	mr = mapreduce_create(msg->argv[0], msg->argv[1], msg->stream);
+	if (sent == 0)
+		//return SOCK_DISCONNECTED;
+		return -1;
+	else
+		return -2;//no envio el paquete completo
 
-	destroy_message(msg);
-	return mr;
+	return total;
+
 }
 
-
-
-t_archivo_nodo_bloque* archivo_nodo_bloque_create(t_nodo_base* nb, int numero_bloque){
-	t_archivo_nodo_bloque* new = malloc(sizeof*new);
-
-	new->numero_bloque = numero_bloque;
-	new->base = nb;
-	return new;
-}
-
-
-t_nodo_archivo* nodo_archivo_create(void){
-	t_nodo_archivo* new = malloc(sizeof(t_nodo_archivo));
-	new->nodo_base = NULL;
-
-	return new;
-}
-
-
-void print_map(t_map* map){
-	printf("*************************************************************\n");
-	printf("Map_id: %d - Ubicacion: id_nodo: %d, %s:%d numero_bloque: %d, resultado: %s\n",
-			map->info->id,
-			map->archivo_nodo_bloque->base->id,
-			map->archivo_nodo_bloque->base->red.ip,
-			map->archivo_nodo_bloque->base->red.puerto,
-			map->archivo_nodo_bloque->numero_bloque,
-			map->info->resultado);
-	printf("*************************************************************\n");
-}
 int mandarMensaje(int unSocket, int8_t tipo, int tamanio, void *buffer) {
 
 	t_header_base header;
@@ -831,234 +515,56 @@ int mandarMensaje(int unSocket, int8_t tipo, int tamanio, void *buffer) {
 	memcpy(bufferAux, &header, sizeof(t_header_base));
 	memcpy((bufferAux + (sizeof(t_header_base))), buffer, tamanio);
 //			if ((auxInt=send(unSocket, &header, sizeof(Header), 0)) >= 0){
-	auxInt = send(unSocket, bufferAux, (sizeof(t_header_base) + tamanio), 0);
+	//auxInt = send(unSocket, bufferAux, (sizeof(t_header_base) + tamanio), 0);
+	auxInt = sendAll(unSocket, bufferAux, (sizeof(t_header_base) + tamanio), 0);
 	free(bufferAux);
 	return auxInt;
-			}
-
-int recibir_mensaje_script(int socket, char* save_as){
-	ssize_t len;
-	char buffer[BUFSIZ];
-	int file_size;
-	FILE *received_file;
-	int remain_data = 0;
-
-
-	/* Receiving file size */
-	recv(socket, buffer, BUFSIZ, 0);
-	file_size = atoi(buffer);
-	//fprintf(stdout, "\nFile size : %d\n", file_size);
-
-	received_file = fopen(save_as, "w");
-	if (received_file == NULL) {
-		fprintf(stderr, "Failed to open file foo --> %s\n", strerror(errno));
-
-		exit(EXIT_FAILURE);
-	}
-
-	remain_data = file_size;
-
-	while (((len = recv(socket, buffer, BUFSIZ, 0)) > 0)
-			&& (remain_data > 0)) {
-		fwrite(buffer, sizeof(char), len, received_file);
-		remain_data -= len;
-		fprintf(stdout, "Receive %d bytes and we hope :- %d bytes\n", len,
-				remain_data);
-	}
-	fclose(received_file);
-
-	return 0;
 }
+
 //Mande un mensaje a un socket determinado
-		//Recibe un mensaje del servidor - Version Lucas
+//Recibe un mensaje del servidor - Version Lucas
 int recibirMensajeConHeader(int unSocket, t_header_base* header, void** buffer) {
 
-			int auxInt;
-			if((auxInt=recv(unSocket, header, sizeof(t_header_base), 0))>=0) {
-				*buffer = malloc (header->payloadlength);
-				if ((auxInt=recv(unSocket, *buffer, header->payloadlength, 0)) >= 0) {
-					return  auxInt;
-				}
-			}
-			return  auxInt;
-
-		}
-int recibirMensaje(int unSocket, void** buffer) {
-
-			t_header_base header;
-			int auxInt;
-			if((auxInt=recv(unSocket, &header, sizeof(t_header_base), 0))>=0) {
-				*buffer = malloc (header.payloadlength);
-				if ((auxInt=recv(unSocket, *buffer, header.payloadlength, 0)) >= 0) {
-					return  auxInt;
-				}
-			}
-			return  auxInt;
-
-		}
-		//Recibe un mensaje del servidor - Version Lucas
-		int recibirHeader(int unSocket, t_header_base* header) {
-			int auxInt;
-				if((auxInt=recv(unSocket, header, sizeof(t_header_base), 0))>=0) {
-					return auxInt;
-					}
-					return auxInt;
-				}
-
-		int recibirData(int unSocket, t_header_base header, void** buffer){
-			int auxInt;
-			*buffer = malloc (header.payloadlength);
-					if ((auxInt=recv(unSocket, buffer, header.payloadlength, 0)) >= 0) {
-						return auxInt;
-					}
+	int auxInt;
+	if ((auxInt = recv(unSocket, header, sizeof(t_header_base), 0)) >= 0) {
+		*buffer = malloc(header->payloadlength);
+		if ((auxInt = recv(unSocket, *buffer, header->payloadlength, 0)) >= 0) {
 			return auxInt;
 		}
-
-int enviar_mensaje_script(int socket, char* path_script){
-	//char file_data[CHUNK_SIZE];
-	int rs =0;
-	int size = file_get_size(path_script);
-
-	/*
-	FILE* file = fopen(path_script, "r");
-	if(file==NULL){
-		return -1;
 	}
-	void* data_file = malloc(size);
-	rs = fwrite(data_file, size, 1, file);
-	if(rs!=size){
-		printf("RRRRRRRRRRRRRRRRRRRRRRRERR\n");
-		return -1;
-	}*/
+	return auxInt;
 
-	char* data_file = file_get_mapped(path_script);
-	//enviar_mensaje_sin_header(socket, size, data_file);
-	rs = mandarMensaje(socket, 0, size, data_file);
+}
+int recibirMensaje(int unSocket, void** buffer) {
 
-	if(rs<0){
-		printf("ERRRRRRRRRRRRR\n");
-		return -1;
+	t_header_base header;
+	int auxInt;
+	if ((auxInt = recv(unSocket, &header, sizeof(t_header_base), 0)) >= 0) {
+		*buffer = malloc(header.payloadlength);
+		if ((auxInt = recv(unSocket, *buffer, header.payloadlength, MSG_WAITALL))
+				>= 0) {
+			return auxInt;
+		}
 	}
+	return auxInt;
 
-	//free(data_file);
-	file_mmap_free(data_file, path_script);
-	//fclose(file);
-	return 0;
-
-	/*
-	ssize_t len;
-	int fd;
-	int sent_bytes = 0;
-	char file_size[256];
-	struct stat file_stat;
-	int offset;
-	int remain_data;
-
-	fd = open(path_script, O_RDONLY);
-	if (fd == -1) {
-		fprintf(stderr, "Error opening file --> %s", strerror(errno));
-		return -1;
+}
+//Recibe un mensaje del servidor - Version Lucas
+int recibirHeader(int unSocket, t_header_base* header) {
+	int auxInt;
+	if ((auxInt = recv(unSocket, header, sizeof(t_header_base), 0)) >= 0) {
+		return auxInt;
 	}
-
-	if (fstat(fd, &file_stat) < 0) {
-		fprintf(stderr, "Error fstat --> %s", strerror(errno));
-		return -1;
-	}
-
-	fprintf(stdout, "File Size: \n%d bytes\n", file_stat.st_size);
-	sprintf(file_size, "%d", file_stat.st_size);
-
-	len = send(socket, file_size, sizeof(file_size), 0);
-	if (len < 0) {
-		fprintf(stderr, "Error on sending greetings --> %s", strerror(errno));
-
-		exit(EXIT_FAILURE);
-	}
-
-	fprintf(stdout, "Server sent %d bytes for the size\n", len);
-*/
-/*
-	offset = 0;
-	remain_data = file_stat.st_size;
-	while (((sent_bytes = sendfile(socket, fd, &offset, BUFSIZ)) > 0)
-			&& (remain_data > 0)) {
-		fprintf(stdout,	"1. Server sent %d bytes from file's data, offset is now : %d and remaining data = %d\n",sent_bytes, offset, remain_data);
-		remain_data -= sent_bytes;
-		fprintf(stdout,	"2. Server sent %d bytes from file's data, offset is now : %d and remaining data = %d\n",sent_bytes, offset, remain_data);
-	}
-	perror("sendfile");
-	*/
-
-	return 0;
-
-	//mandarMensaje(fd, 0, size, &buffer);
-	/*
-	char* script = file_get_mapped(path_script);
-	t_msg* msg = string_message(JOB_SCRIPT, script, 0);
-	enviar_mensaje(fd, msg);
-	file_mmap_free(script, path_script);
-	destroy_message(msg);
-	*/
-	return 0;
+	return auxInt;
 }
 
-int recibir_mensaje_script_y_guardar(int socket, char* path_destino_script){
-	t_header_base header;
-	//recibirHeader(socket, &header);
-
-	void* file_data ;//= malloc(header.payloadlength);
-	recibirMensajeConHeader(socket, &header, &file_data);
-
-	//recibirData(socket, header, &file_data);
-
-	FILE* file = fopen(path_destino_script, "w");
-	fwrite(file_data, header.payloadlength, 1, file);
-	fclose(file);
-	free(file_data);
-	//settear permisos de ejecucion
-	chmod(path_destino_script, S_IRWXU);
-
-	/*ssize_t len;
-	char buffer[BUFSIZ];
-	int file_size;
-	FILE *received_file;
-	int remain_data = 0;
-
-
-	recv(socket, buffer, BUFSIZ, 0);
-	file_size = atoi(buffer);
-	//fprintf(stdout, "\nFile size : %d\n", file_size);
-
-	received_file = fopen(path_destino_script, "w");
-	if (received_file == NULL) {
-		fprintf(stderr, "Failed to open file foo --> %s\n", strerror(errno));
-
-		exit(EXIT_FAILURE);
+int recibirData(int unSocket, t_header_base header, void** buffer) {
+	int auxInt;
+	*buffer = malloc(header.payloadlength);
+	if ((auxInt = recv(unSocket, buffer, header.payloadlength, 0)) >= 0) {
+		return auxInt;
 	}
-
-	remain_data = file_size;
-
-	while (((len = recv(socket, buffer, remain_data-1, 0)) > 0) && (remain_data > 0)) {
-		fwrite(buffer, sizeof(char), len, received_file);
-		remain_data -= len;
-		fprintf(stdout, "Receive %d bytes and we hope :- %d bytes\n", len, remain_data);
-	}
-
-	fclose(received_file);
-	chmod(path_destino_script, S_IRWXU);
-*/
-	/*
-	t_msg* msg = NULL;
-	//recibo el codigo del script
-	msg = recibir_mensaje(fd);
-	//guardo en el path destino el script
-	write_file(path_destino_script,msg->stream, strlen(msg->stream));
-	destroy_message(msg);
-	//settear permisos de ejecucion
-	chmod(path_destino_script, S_IRWXU);
-	*/
-
-	return 0;
+	return auxInt;
 }
 
 
@@ -1438,15 +944,6 @@ void print_msg(t_msg *msg) {
 char *id_string(t_msg_id id) {
 	char *buf;
 	switch (id) {
-	case NODO_CONECTAR_CON_FS:
-		buf = strdup("NODO_CONECTAR_CON_FS");
-		break;
-	case FS_NODO_OK:
-		buf = strdup("FS_NODO_OK");
-		break;
-	case NODO_SALIR:
-		buf = strdup("NODO_SALIR");
-		break;
 	case CPU_NUEVO:
 		buf = strdup("CPU_NUEVO");
 		break;
@@ -1502,27 +999,7 @@ void free_split(char** splitted){
 	FREE_NULL(splitted);
 }
 
-char NODO_BASE_PRINT[30];
-char* nodo_base_to_string(t_nodo_base* nb){
-	memset(NODO_BASE_PRINT, 0, 30);
-	sprintf(NODO_BASE_PRINT, "id:%d, %s:%d", nb->id, nb->red.ip, nb->red.puerto);
-	//printf("%s\n", NODO_BASE_PRINT );
-	return NODO_BASE_PRINT;
-}
 
-
-t_reduce* reduce_create(int id, int job_id, char* resultado, t_nodo_base* nb){
-	t_reduce* new = malloc(sizeof*new);
-
-	new->info = mapreduce_create(id,job_id, resultado);
-	new->nodo_base_destino = nb;
-
-	new->info->job_id = job_id;
-	new->nodos_archivo = list_create();
-	new->final = false;
-
-	return new;
-}
 
 int pcb_print(t_pcb* pcb){
 	printf("Mostrar PCB::\n");

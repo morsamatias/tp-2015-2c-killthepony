@@ -161,6 +161,9 @@ int procesar_mensaje_cpu(int socket){
 			}
 
 		break;
+	default:
+		printf("No msgjjj\n");
+		break;
 	}
 
 	return 0;

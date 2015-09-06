@@ -53,7 +53,6 @@
 	do{perror(msj);exit(EXIT_FAILURE);} while(0)
 
 #define MB_EN_B  1024*1024//1mb
-#define LEN_KEYVALUE 1024*10 //longitud de la key de map o reduce
 
 #define PATH_MAX_LEN 1024 //size maximo de un path
 
@@ -65,18 +64,8 @@
     {free(p); \
     p = NULL;}
 
-#define NUM_PIPES          2
-
-#define PARENT_WRITE_PIPE  0
-#define PARENT_READ_PIPE   1
-
-#define READ_FD  0
-#define WRITE_FD 1
 
 
-
-
-//#define free_null(p) ({free(p);(p)=(NULL);})
 /*
  * Compara dos numeros y retorna el mínimo.
  */
@@ -89,29 +78,32 @@
 
 /* FIN Funciones Macro */
 
-#define MAP 0
-#define REDUCE 1
+
 #define MAX_PATH 1024
 
 /****************** IDS DE MENSAJES. ******************/
 
 typedef enum {
-
-	NODO_CONECTAR_CON_FS, //verifica que el nodo se conecte con el fs
-	FS_NODO_OK, //el fs le contesta que ya esta conectado
-	NODO_SALIR,
 	CPU_NUEVO,
 	CPU_BASE,
 	PCB,
 	PCB_A_EJECUTAR,
+
 	MEM_INICIAR,
 	MEM_OK,
 	MEM_LEER,
 	MEM_ESCRIBIR,
-	MEM_FINALIZAR
-} t_msg_id;
+	MEM_FINALIZAR,
+	MEM_NO_OK,
 
-/****************** ESTRUCTURAS DE DATOS. ******************/
+	SWAP_INICIAR,
+	SWAP_OK,
+	SWAP_LEER,
+	SWAP_ESCRIBIR,
+	SWAP_FINALIZAR,
+	SWAP_NO_OK
+
+} t_msg_id;
 
 typedef struct{
 	char ip[15];
@@ -139,63 +131,6 @@ typedef struct {
 
 
 
-typedef struct{
-	char origen[1024];
-	char destino[1024];
-	pthread_mutex_t* mutex;
-	int contador_ftok;
-}t_ordenar;
-
-typedef struct {
-	int fd;
-	char destino[1024];
-}t_reader;
-
-typedef struct{
-	char ip[15];
-	int puerto;
-	char archivo[255];//nombre del archivo guardado en tmp
-}t_files_reduce;
-
-typedef struct {
-	int id;
-	t_red red;
-}t_nodo_base;
-
-typedef struct{
-	int job_id;
-	int id;
-	//t_nodo_base* nodo_base;
-	char* resultado;//el nombre del archivo ya mapeado(solo el nombre porque siempre lo va buscar en el tmp del nodo)
-	bool empezo;
-	//bool error;
-	bool termino;//para saber si termino
-}t_mapreduce;
-
-typedef struct{
-	t_nodo_base* nodo_base;
-	char archivo[255];//list of string
-}t_nodo_archivo;
-typedef struct{
-	t_mapreduce* info;
-	t_nodo_base* nodo_base_destino;
-	t_list* nodos_archivo;//list of t_nodo_archivo
-	bool final;
-}t_reduce;
-
-typedef struct{
-	t_nodo_base* base;
-	int numero_bloque;//del nodo
-}t_archivo_nodo_bloque; //
-
-typedef struct{
-	t_mapreduce* info;
-	t_archivo_nodo_bloque* archivo_nodo_bloque;
-	int archivo_id;
-	int parte_numero;
-	//int numero_bloque;//para saber a que bloque del archivo tengo que aplicarle el map
-}t_map;
-
 
 typedef struct {
 	int8_t type;
@@ -215,50 +150,42 @@ typedef struct {
 }__attribute__ ((__packed__)) t_msg;
 
 
-int reader_and_save_as(t_reader* reader);
-int escribir_todo(int writer, char* data, int len);
 
-int ordenar(t_ordenar* param_ordenar);
-int ejecutar_script(char* path_script, char* name_script, int(*reader_writer)(int fdreader, int fdwriter), pthread_mutex_t* mutex, int c_ftok);
+//test envio struct
+typedef struct{
+		int pid;
+		int pagina;
+		char texto[1024];
+}__attribute__ ((__packed__)) t_foo;
+
+
 
 bool file_exists(const char* filename);
-//void free_null(void** data);
-char* file_combine(char* f1, char* f2);
+
 size_t file_get_size(char* filename);
 void* file_get_mapped(char* filename);
 void file_mmap_free(char* mapped, char* filename);
 float  bytes_to_kilobytes(size_t bytes);
-int enviar_mensaje_nodo_base(int fd, t_nodo_base* nb);
-t_nodo_base* recibir_mensaje_nodo_base(int fd);
-int enviar_mensaje_reduce(int fd, t_reduce* reduce);
-t_nodo_archivo* nodo_archivo_create();
+
 int recibir_mensaje_script(int socket, char* save_as);
 
-t_reduce* recibir_mensaje_reduce(int fd);
-int read_line(char* linea, int fd);
 t_cpu_base* cpu_base_new(int id, char* ip, int puerto);
 sem_t* sem_crear(int* shmid, key_t* shmkey, int contador_ftok);
 float bytes_to_megabytes(size_t bytes);
-int enviar_nodo_base(int fd, t_nodo_base* nb);
 
-int enviar_mensaje_map(int fd, t_map* map);
-t_archivo_nodo_bloque* archivo_nodo_bloque_create(t_nodo_base* nb, int numero_bloque);
 int cant_registros(char** registros) ;
 int enviar_mensaje_flujo(int unSocket, int8_t tipo, int tamanio, void *buffer);
 int recibir_mensaje_flujo(int unSocket, void** buffer);
-t_map* recibir_mensaje_map(int fd);
 int recibir_mensaje_script_y_guardar(int fd, char* path_destino);
 int enviar_mensaje_script(int fd, char* path_script);
-void print_map(t_map* map);
-t_map* map_create(int id, int job_id, char* resultado);
-t_mapreduce* mapreduce_create(int id, int job_id, char* resultado);
+
+
 int enviar_mensaje_sin_header(int sock_fd, int tamanio, void* buffer);
-void map_free(t_map* map);
-
-
 
 /****************** FUNCIONES SOCKET. ******************/
 int server_socket_select(uint16_t port, void (*procesar_mensaje)(int, t_msg*));
+int recibirMensaje(int unSocket, void** buffer) ;
+int mandarMensaje(int unSocket, int8_t tipo, int tamanio, void *buffer) ;
 /*
  * Crea, vincula y escucha un socket desde un puerto determinado.
  */
@@ -287,10 +214,6 @@ t_msg *recibir_mensaje(int sock_fd);
  * Envia los contenidos de un t_msg a un socket determinado.
  */
 int enviar_mensaje(int sock_fd, t_msg *msg);
-
-int enviar_mensaje_nodo_close(int fd);
-int recibir_mensaje_nodo_ok(int fd);
-int enviar_mensaje_nodo_ok(int fd);
 
 /****************** FUNCIONES T_MSG. ******************/
 
@@ -358,10 +281,6 @@ void write_file(char *path, char* data, size_t size);
 
 /****************** FUNCIONES AUXILIARES. ******************/
 
-/*
- * Genera una nueva secuencia de enteros pseudo-random a retornar por rand().
- */
-void seedgen(void);
 
 /*
  * Muestra los contenidos y argumentos de un t_msg.
@@ -374,8 +293,6 @@ void print_msg(t_msg *msg);
 char *id_string(t_msg_id id);
 //int convertir_path_absoluto(char** destino, char* file);
 char* convertir_path_absoluto(char* file);
-t_reduce* reduce_create(int id, int job_id, char* resultado, t_nodo_base* nodo_destino);
-char* nodo_base_to_string(t_nodo_base* nb);
 void free_split(char** splitted);
 int split_count(char** splitted);
 int recv_timeout(int s , int timeout);

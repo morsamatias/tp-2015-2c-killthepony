@@ -22,6 +22,10 @@ int iniciar_server();
 
 int inicializar();
 int finalizar();
+void procesar_mensaje_cpu(int socket, t_msg* msg);
 int conectar_con_swap();
+
+char* swap_leer_pagina(int pid, int pagina);
+int swap_nuevo_proceso(int pid, int paginas);
 
 #endif /* PROCESOADMINDEMEMORIA_H_ */

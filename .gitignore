@@ -39,15 +39,19 @@ procesoPlanificador/Debug
 procesoSwap/Debug
 utiles/Debug
 
+procesoAdminDeMemoria/config.txt
 procesoAdminDeMemoria/Debug/log.txt
 procesoAdminDeMemoria/log.txt
 
+procesoCPU/config.txt
 procesoCPU/Debug/log.txt
 procesoCPU/log.txt
 
+procesoPlanificador/config.txt
 procesoPlanificador/Debug/log.txt
 procesoPlanificador/log.txt
 
+procesoSwap/config.txt
 procesoSwap/Debug/log.txt
 procesoSwap/log.txt
 

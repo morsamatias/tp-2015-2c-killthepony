@@ -26,7 +26,7 @@ int correr_proceso(char* path);
 
 
 t_list* pcbs;/*lista de pcbs*/
-
+/*
 typedef struct {
 	char path[MAX_PATH];
 	int pc;
@@ -36,7 +36,7 @@ typedef struct {
 	char* nombre_archivo_mcod;
 	int estado_proceso;
 }t_pcb;
-
+*/
 void pcb_agregar(t_pcb* pcb){
 	list_add(pcbs, (void*)pcb);
 }
