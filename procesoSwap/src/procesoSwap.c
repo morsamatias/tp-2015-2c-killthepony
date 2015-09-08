@@ -165,6 +165,116 @@ t_ocupado* swap_buscar_ocupado_por_pid(pid){
 	return list_find(esp_ocupado, (void*)_swap_buscar_ocupado_por_pid);
 }
 
+
+int esp_libre_eliminar(int posicion){
+
+	bool _esp_libre_buscar(t_libre* libre){
+		return libre->posicion == posicion;
+	}
+
+	list_remove_and_destroy_by_condition(esp_libre, (void*)_esp_libre_buscar, free);
+
+	return 0;
+}
+
+int unir_huecos_contiguos(t_libre* libre){
+	int i;
+	t_libre* libre_ant = NULL;
+	for (i = 0; i < list_size(esp_libre); i++) {
+		libre_ant = list_get(esp_libre, i);
+		//si es el anterior
+		if (libre_ant->posicion + libre_ant->cantidad == libre->posicion) {
+			break;
+		}else{
+			libre_ant = NULL;
+		}
+	}
+
+	t_libre* libre_sig = NULL;
+	for (i = 0; i < list_size(esp_libre); i++) {
+		libre_sig = list_get(esp_libre, i);
+		//si es el anterior
+		if (libre->posicion + libre->cantidad == libre_sig->posicion) {
+			break;
+		}else{
+			libre_sig = NULL;
+		}
+	}
+
+	///////////////////////////////////
+	if (libre_ant != NULL) {
+		libre_ant->cantidad += libre->cantidad;
+
+		esp_libre_eliminar(libre->posicion);
+
+		libre = libre_ant;
+	}
+	if (libre_sig != NULL) {
+		libre->cantidad += libre_sig->cantidad;
+
+		esp_libre_eliminar(libre_sig->posicion);
+	}
+
+	//////////////////////////////////
+	/////////////////////////////////
+	/*
+	if(libre_ant!=NULL && libre_sig!=NULL){
+		libre->posicion -= libre_ant->cantidad;
+		libre->cantidad+=libre_sig->cantidad;
+
+		esp_libre_eliminar(libre_ant->posicion);
+		esp_libre_eliminar(libre_sig->posicion);
+
+	}else{
+		if(libre_ant!=NULL){
+			libre_ant->cantidad+=libre->cantidad;
+
+
+			esp_libre_eliminar(libre->posicion);
+		}else{
+			if(libre_sig!=NULL){
+				libre->cantidad += libre_sig->cantidad;
+
+
+				esp_libre_eliminar(libre_sig->posicion);
+			}
+		}
+	}*/
+
+
+
+	/*
+	t_list* nueva_lista_libres = list_create();
+
+	t_libre* libre = NULL;
+	int i, pagina;
+
+	int cant_huecos = list_size(esp_libre);
+	t_libre* libre_sig;
+	for (i = 0; i < cant_huecos; i++) {
+		libre = list_get(esp_libre, i);
+		pagina = libre->posicion + libre->cantidad;
+
+		//leo el siguiente para saber si es contiguo (ya esta ordenado)
+		libre_sig = list_get(esp_libre, i+1);
+		if(libre_sig->posicion == pagina){
+			//si no existe, no es un hueco contiguo, lo agrego a la lista
+			list_add(nueva_lista_libres, libre);
+		}else{
+			//si el siguiente es contiguo, le sumo a la cantidad siguiente la actual
+			libre->cantidad = libre->cantidad + libre_sig->cantidad;
+
+			list_add(nueva_lista_libres, (void*)libre);
+			i++;
+		}
+	}
+
+	//reemplazo la lista vieja por la nueva
+	esp_libre = nueva_lista_libres;*/
+
+	return 0;
+}
+
 int swap_liberar(int pid){
 	t_ocupado* ocupado = swap_buscar_ocupado_por_pid(pid);
 
@@ -184,10 +294,12 @@ int swap_liberar(int pid){
 		libre = malloc(sizeof(t_libre));
 		libre->posicion = ocupado->posicion;
 		libre->cantidad = ocupado->cantidad;
-		list_add(esp_libre, (void*)libre);
 
-		//todo: falta verificar si se generan dos huecos juntos
+		list_add(esp_libre, (void*)libre);
 	}
+	//todo: falta verificar si se generan dos huecos juntos
+	unir_huecos_contiguos(libre);
+
 
 	//borrar el bloque ocupado
 	bool _swap_buscar_ocupado_por_pid(t_ocupado* ocup) {
