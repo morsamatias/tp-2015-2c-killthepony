@@ -127,6 +127,7 @@ typedef struct {
 	int cant_a_ejectuar;
 	int cant_sentencias;
 	int pid;
+	int estado;
 }t_pcb;
 
 

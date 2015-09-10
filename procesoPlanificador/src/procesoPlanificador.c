@@ -12,6 +12,9 @@
 #include <stdlib.h>
 #include "procesoPlanificador.h"
 #include "string.h"
+#include <util.h>
+
+
 
 t_log* logger;
 char* LOG_PATH = "log.txt";
@@ -22,6 +25,7 @@ int iniciar_consola();
 int iniciar_server();
 
 pthread_t th_server_cpu;
+
 
 int main(void) {
 	inicializar();
@@ -49,9 +53,17 @@ int correr_proceso(char* path){
 	t_pcb* pcb = NULL;
 	pcb = pcb_nuevo(path);
 
-	pcb->cant_sentencias = get_cant_sent(path);
+	pcb->cant_a_ejectuar = get_cant_sent(path);
+	pcb->estado=NEW;
 
 	pcb_agregar(pcb);
+
+	t_new* new=NULL;
+
+	new->pid=pcb->pid;
+
+	list_add(list_new,new);
+
 
 	t_cpu* cpu = NULL;
 	if(cpu_disponible()){
@@ -183,6 +195,16 @@ int inicializar(){
 	cpus = list_create();
 
 	pcbs = list_create();
+
+	list_ready=list_create();
+
+	list_new=list_create();
+
+	list_block=list_create();
+
+	list_finish=list_create();
+
+	list_exec=list_create();
 
 	return 0;
 }

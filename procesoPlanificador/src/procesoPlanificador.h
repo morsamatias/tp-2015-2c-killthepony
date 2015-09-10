@@ -8,7 +8,11 @@
 #ifndef PROCESOPLANIFICADOR_H_
 #define PROCESOPLANIFICADOR_H_
 
-
+#define NEW 0;
+#define READY 1;
+#define BLOCK 2;
+#define EXEC 3;
+#define FINISH 4;
 
 
 #include <commons/log.h>
@@ -26,6 +30,7 @@ int correr_proceso(char* path);
 
 
 t_list* pcbs;/*lista de pcbs*/
+
 /*
 typedef struct {
 	char path[MAX_PATH];
@@ -37,6 +42,7 @@ typedef struct {
 	int estado_proceso;
 }t_pcb;
 */
+
 void pcb_agregar(t_pcb* pcb){
 	list_add(pcbs, (void*)pcb);
 }
@@ -99,6 +105,36 @@ int cpu_agregar(t_cpu* cpu){
 
 	return 0;
 }
+
+typedef struct {
+	int pid;
+}t_ready;
+
+typedef struct {
+	int pid;
+}t_exec;
+
+typedef struct {
+	int pid;
+}t_block;
+
+typedef struct {
+	int pid;
+}t_new;
+
+typedef struct {
+	int pid;
+}t_finish;
+
+t_list* list_ready;/*lista de procesos listos para ejecutar*/
+
+t_list* list_exec;/*lista de procesos en ejecución*/
+
+t_list* list_block;/*lista de procesos bloqueados*/
+
+t_list* list_new;/*lista de procesos nuevos*/
+
+t_list* list_finish;/*lista de procesos terminados*/
 
 
 
