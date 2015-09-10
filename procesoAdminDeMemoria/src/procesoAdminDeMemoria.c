@@ -100,13 +100,6 @@ char* swap_leer_pagina(int pid, int pagina){
 		log_trace(logger, "SWAP_LEER Erro al recibir mensaje");
 
 
-	/*
-	t_foo foo;
-	foo.pid = pid;
-	foo.pagina = pagina;
-	strcpy(foo.texto, "holaaaaaaaQ");
-	mandarMensaje(socket_swap, MEM_LEER, sizeof(t_foo), (void*)&foo);
-	*/
 
 	return NULL;
 }
@@ -168,23 +161,34 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 	switch (msg->header.id) {
 		case MEM_INICIAR:
 			//param 0 cant_paginas
-			log_trace(logger, "Mem Iniciar Paginas: %d", msg->argv[0]);
+			//param 1 PID
 
-			pid = 123;
 			paginas = msg->argv[0];
+			pid 	= msg->argv[1];
 
+			log_trace(logger, "Iniciar Proceso %d con %d paginas",pid,paginas);
 			destroy_message(msg);
 
-			st = swap_nuevo_proceso(pid, paginas);
+			st = iniciar_proceso_CPU(pid,paginas);
 
-			if(st >=0 ){
+			switch(st){
+			case 0:
 				msg = argv_message(MEM_OK, 1 ,0);
-			}else{
+				enviar_y_destroy_mensaje(socket, msg);
+				log_info(logger, "El proceso %d fue inicializado correctamente",pid);
+				break;
+			case 1:
 				msg = argv_message(MEM_NO_OK, 1 ,0);
+				enviar_y_destroy_mensaje(socket, msg);
+				log_warning(logger, "La cantidad de paginas del proceso %d es mayor a la posible",pid);
+				break;
+			case 2:
+				msg = argv_message(MEM_NO_OK, 1 ,0);
+				enviar_y_destroy_mensaje(socket, msg);
+				log_warning(logger, "No hay espacio suficiente para alocar la memoria del proceso %d",pid);
+				break;
 			}
 
-
-			enviar_y_destroy_mensaje(socket, msg);
 
 			break;
 		case MEM_LEER:
@@ -262,17 +266,75 @@ int iniciar_server(){
 
 
 int inicializar(){
+	// ARCHIVO DE CONFIGURACION
 	cfg = config_create(CONFIG_PATH);
-	//printf("IP planif: %s:%d\n", IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
 
+	// ARCHIVO DE LOG
 	clean_file(LOGGER_PATH);
 	logger = log_create(LOGGER_PATH, "procesoAdminMem", true, LOG_LEVEL_TRACE);
+
+	// ESTRUCTURA TLB y MEMORIA
+	TBL 	= (t_paginas*)malloc(ENTRADAS_TLB()*sizeof(t_paginas));
+	memoria = (t_memoria*)malloc(CANTIDAD_MARCOS()*sizeof(t_memoria));
+	l_paginas_por_proceso = list_create();
 
 	return 0;
 }
 
 int finalizar(){
+
+	// ARCHIVO DE CONFIGURACION
 	config_destroy(cfg);
+
+	// ARCHIVO DE LOG
 	log_destroy(logger);
+
+	// ESTRUCTURA TLB y MEMORIA
+	free(TBL);
+	free(memoria);
+	list_destroy_and_destroy_elements(l_paginas_por_proceso,(void*)eliminar_estructuras_de_un_proceso);
+
 	return 0;
+}
+
+int iniciar_proceso_CPU(int pid, int paginas){
+	int st;
+
+	// CHEQUEO QUE LA CANTIDAD DE PAGINAS POR PROCESO REAL SEA MENOR A LA MAXIMA
+	if(paginas > MAXIMO_MARCOS_POR_PROCESO()){
+		return 1;
+	}
+
+	// LE ENVIO AL PROCESO SWAP PARA QUE RESERVE EL ESPACIO
+	st = swap_nuevo_proceso(pid, paginas);
+
+	if(st==0){
+
+		return 0;
+	}
+	else{
+		return 2;
+	}
+
+}
+
+
+void crear_estructuras_de_un_proceso(int PID,int paginas){
+	int i;
+	t_proceso* proceso= (t_proceso*)malloc((paginas+2)*sizeof(int));
+	proceso->PID = PID;
+	proceso->cant_paginas = paginas;
+	for(i=0;i<paginas;i++)
+		proceso->entradas[i]=-1;
+}
+
+void eliminar_estructuras_de_un_proceso(t_proceso* proceso){
+	int i;
+	for(i=0;i<proceso->cant_paginas;i++){
+		if(proceso->entradas[i]!=-1){
+				memoria[proceso->entradas[i]].libre=1;
+				memoria[proceso->entradas[i]].modificado=0;
+			}
+	}
+	free(proceso);
 }
