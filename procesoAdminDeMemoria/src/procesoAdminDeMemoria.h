@@ -28,4 +28,11 @@ int conectar_con_swap();
 char* swap_leer_pagina(int pid, int pagina);
 int swap_nuevo_proceso(int pid, int paginas);
 
+//// NUEVAS
+
+void eliminar_estructuras_de_un_proceso(t_proceso* proceso);
+void crear_estructuras_de_un_proceso(int PID, int paginas);
+int iniciar_proceso_CPU(int pid, int paginas);
+
+
 #endif /* PROCESOADMINDEMEMORIA_H_ */
