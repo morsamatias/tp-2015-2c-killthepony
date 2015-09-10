@@ -12,13 +12,25 @@
 #include <stdlib.h>
 
 #include "procesoSwap.h"
+#include <pthread.h>
 
+bool FIN = false;
 int main(void) {
 	inicializar();
 
+	/*
+	pthread_t th;
+	void _srv(){
+		server_socket_select(PUERTO_ESCUCHA(), procesar_mensaje_mem);
+	}
+	*/
+	//pthread_create(&th, NULL, (void*)_srv, NULL);
+	//pthread_detach(th);
+	//while(!FIN);
 	server_socket_select(PUERTO_ESCUCHA(), procesar_mensaje_mem);
 
 	finalizar();
+
 	return EXIT_SUCCESS;
 }
 char* swap_inicializar() {
@@ -76,6 +88,58 @@ int finalizar(){
 	return 0;
 }
 
+int swap_cant_huecos_libres(){
+	int huecos = 0;
+
+	void _contar(t_libre* libre){
+		huecos += libre->cantidad;
+	}
+	list_iterate(esp_libre, (void*)_contar);
+
+	return huecos;
+}
+
+int compactar(){
+
+
+
+	//creo una nueva lista copia de la lista de ocupados
+	t_list* esp_ocupado_new = NULL;
+	esp_ocupado_new = list_create();
+	void _copiar(t_ocupado* ocup){
+		list_add(esp_ocupado_new, ocup);
+	}
+	list_iterate(esp_ocupado, (void*)_copiar);
+
+	//borro los elementos de la lista,
+	esp_ocupado->elements_count = 0;
+
+	//limpio la lista de esp libre
+	list_clean(esp_libre);
+
+
+	//ocupo tod0 de nuevo
+	list_iterate(esp_ocupado_new, (void*)swap_ocupar_hueco);
+
+	//ordenpor las dudas
+	ordenar();
+
+	//limpio la lista creada
+	FREE_NULL(esp_ocupado_new);
+
+
+	/*
+	void _ocupar(t_ocupado* ocupado){
+		swap_ocupar_hueco(ocupado);
+	}
+	list_iterate(esp_ocupado_new, (void*)_ocupar);
+	*/
+
+
+
+	return 0;
+}
+
 /*
  * si no encuentra nada devuelve -1;
  */
@@ -88,7 +152,18 @@ int swap_buscar_hueco_libre(paginas){
 	t_libre* l;
 	l = list_find(esp_libre, (void*)_swap_buscar_hueco_libre);
 	if(l==NULL){
-		return -1;
+		//si no hay hueco libre, me fijo si es por fragmentacion o no
+		if(swap_cant_huecos_libres()>=paginas){
+			compactar();
+
+			//una vez que compacto, siempre va encontrar el hueco
+			l = list_find(esp_libre, (void*)_swap_buscar_hueco_libre);
+			return l->posicion;
+		}else{
+			log_trace(logger, "No se pudo crear el proceso porque no hay %d paginas libres");
+			return -1;
+		}
+
 	}else{
 		return l->posicion;
 	}
@@ -102,22 +177,59 @@ t_libre* swap_buscar_hueco_que_empiece_en(int pagina){
 	return list_find(esp_libre, (void*)_swap_buscar_libre);
 }
 
+void ordenar_ocupado(){
+	bool _ordenar_ocupado(t_ocupado* o1, t_ocupado* o2) {
+		return o1->posicion > o2->posicion;
+	}
+	list_sort(esp_ocupado, (void*) _ordenar_ocupado);
+}
+
+void ordenar_libre(){
+	bool _ordenar_libre(t_libre* l1, t_libre* l2) {
+		return l1->posicion > l2->posicion;
+	}
+	list_sort(esp_libre, (void*)_ordenar_libre);
+}
+
+int ordenar(){
+
+	ordenar_ocupado();
+
+	ordenar_libre();
+
+	return 0;
+}
+
+int swap_ocupar_hueco(t_ocupado* ocupado){
+
+	list_add(esp_ocupado, ocupado);
+
+	//ahora agrego a la lista de espacio libre
+	//swap_agregar_lista_esp_libre(pagina);
+
+	t_libre* libre = NULL;
+	//siempre exisste el hueco que empieza en la pagina
+	libre = swap_buscar_hueco_que_empiece_en(ocupado->posicion);
+
+	libre->posicion = libre->posicion + ocupado->cantidad;
+	libre->cantidad = libre->cantidad - ocupado->cantidad;
+
+
+	return 0;
+}
+
 int swap_ocupar(int pid, int pagina, int paginas){
 	//primero agrego a la lista de espacio ocupado lo que pide el proceso
 	t_ocupado* ocupado = malloc(sizeof(t_ocupado));
 	ocupado->pid = pid;
 	ocupado->posicion = pagina;
 	ocupado->cantidad = paginas	;
-	list_add(esp_ocupado, ocupado);
 
-	//ahora agrego a la lista de espacio libre
-	t_libre* libre = NULL;
-	//siempre exisste el hueco que empieza en la pagina
-	libre = swap_buscar_hueco_que_empiece_en(pagina);
 
-	libre->posicion = libre->posicion + paginas;
-	libre->cantidad = libre->cantidad - paginas;
 
+	swap_ocupar_hueco(ocupado);
+
+	ordenar();
 
 	return 0;
 }
@@ -129,6 +241,8 @@ int swap_nuevo_proceso(int pid, int paginas){
 		swap_ocupar(pid, comienzo, paginas);
 		return 0;
 	}else{
+
+
 		log_trace(logger, "pid: %d, paginas: %d. No hay hueco libre para el proceso", pid, paginas);
 		return -1;
 	}
@@ -172,12 +286,15 @@ int esp_libre_eliminar(int posicion){
 		return libre->posicion == posicion;
 	}
 
-	list_remove_and_destroy_by_condition(esp_libre, (void*)_esp_libre_buscar, free);
+	//list_remove_and_destroy_by_condition(esp_libre, (void*)_esp_libre_buscar, free);
+	list_remove_by_condition(esp_libre, (void*)_esp_libre_buscar);
 
 	return 0;
 }
 
 int unir_huecos_contiguos(t_libre* libre){
+	ordenar_libre();
+
 	int i;
 	t_libre* libre_ant = NULL;
 	for (i = 0; i < list_size(esp_libre); i++) {
@@ -215,62 +332,7 @@ int unir_huecos_contiguos(t_libre* libre){
 		esp_libre_eliminar(libre_sig->posicion);
 	}
 
-	//////////////////////////////////
-	/////////////////////////////////
-	/*
-	if(libre_ant!=NULL && libre_sig!=NULL){
-		libre->posicion -= libre_ant->cantidad;
-		libre->cantidad+=libre_sig->cantidad;
-
-		esp_libre_eliminar(libre_ant->posicion);
-		esp_libre_eliminar(libre_sig->posicion);
-
-	}else{
-		if(libre_ant!=NULL){
-			libre_ant->cantidad+=libre->cantidad;
-
-
-			esp_libre_eliminar(libre->posicion);
-		}else{
-			if(libre_sig!=NULL){
-				libre->cantidad += libre_sig->cantidad;
-
-
-				esp_libre_eliminar(libre_sig->posicion);
-			}
-		}
-	}*/
-
-
-
-	/*
-	t_list* nueva_lista_libres = list_create();
-
-	t_libre* libre = NULL;
-	int i, pagina;
-
-	int cant_huecos = list_size(esp_libre);
-	t_libre* libre_sig;
-	for (i = 0; i < cant_huecos; i++) {
-		libre = list_get(esp_libre, i);
-		pagina = libre->posicion + libre->cantidad;
-
-		//leo el siguiente para saber si es contiguo (ya esta ordenado)
-		libre_sig = list_get(esp_libre, i+1);
-		if(libre_sig->posicion == pagina){
-			//si no existe, no es un hueco contiguo, lo agrego a la lista
-			list_add(nueva_lista_libres, libre);
-		}else{
-			//si el siguiente es contiguo, le sumo a la cantidad siguiente la actual
-			libre->cantidad = libre->cantidad + libre_sig->cantidad;
-
-			list_add(nueva_lista_libres, (void*)libre);
-			i++;
-		}
-	}
-
-	//reemplazo la lista vieja por la nueva
-	esp_libre = nueva_lista_libres;*/
+	//ordenar_libre();
 
 	return 0;
 }
@@ -297,7 +359,8 @@ int swap_liberar(int pid){
 
 		list_add(esp_libre, (void*)libre);
 	}
-	//todo: falta verificar si se generan dos huecos juntos
+
+	//ordenar_libre();
 	unir_huecos_contiguos(libre);
 
 
@@ -307,6 +370,9 @@ int swap_liberar(int pid){
 	}
 	list_remove_by_condition(esp_ocupado, (void*)_swap_buscar_ocupado_por_pid);
 	FREE_NULL(ocupado);
+
+	//ordenar();
+	ordenar_ocupado();
 
 	return 0;
 }
@@ -380,10 +446,9 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			msg = argv_message(SWAP_OK, 0);
 			enviar_y_destroy_mensaje(socket_mem, msg);
 
-
-
+			FIN = true;
+			return ;
 			break;
-
 		default:
 			break;
 	}

@@ -40,6 +40,8 @@ int iniciar_server();
 int inicializar();
 int finalizar();
 
+int swap_ocupar_hueco(t_ocupado* ocupado);
+int ordenar();
 void procesar_mensaje_mem(int socket, t_msg* msg);
 
 
