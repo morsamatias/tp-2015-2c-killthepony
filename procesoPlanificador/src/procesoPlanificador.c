@@ -15,7 +15,7 @@
 #include <util.h>
 
 
-
+int PID = 1;
 t_log* logger;
 char* LOG_PATH = "log.txt";
 
@@ -49,9 +49,14 @@ int get_cant_sent(char* path){
 	return cant_sent;
 }
 
+int get_nuevo_pid(){
+	return PID++;
+}
+
 int correr_proceso(char* path){
 	t_pcb* pcb = NULL;
 	pcb = pcb_nuevo(path);
+	pcb->pid = get_nuevo_pid();
 
 	pcb->cant_sentencias = get_cant_sent(path);
 	pcb->cant_a_ejectuar = get_cant_sent(path); // en caso de que se RR es el Q

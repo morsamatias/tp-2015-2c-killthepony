@@ -163,8 +163,8 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			//param 0 cant_paginas
 			//param 1 PID
 
-			paginas = msg->argv[0];
-			pid 	= msg->argv[1];
+			pid 	= msg->argv[0];
+			paginas = msg->argv[1];
 
 			log_trace(logger, "Iniciar Proceso %d con %d paginas",pid,paginas);
 			destroy_message(msg);
@@ -196,8 +196,8 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			log_trace(logger, "Mem Leer pagina %d", msg->argv[0]);
 
 			//buff_pag = string_from_format("Contenido de la pagina %d", msg->argv[0]);
-			pid = 123;
-			pagina = msg->argv[0];
+			pid = msg->argv[0];
+			pagina = msg->argv[1];
 			destroy_message(msg);
 
 			buff_pag = swap_leer_pagina(pid, pagina);
@@ -219,8 +219,8 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			log_trace(logger, "MEM_ESCRIBIR pagina %d, texto: \"%s\"", msg->argv[0], msg->stream);
 
 			buff_pag = string_duplicate(msg->stream);
-			pid = 123;
-			pagina = msg->argv[0];
+			pid = msg->argv[0];;
+			pagina = msg->argv[1];
 
 			destroy_message(msg);
 
@@ -239,8 +239,8 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			//param 0 nro pagina
 			log_trace(logger, "MEM_FINALIZAR");
 
+			pid = msg->argv[0];
 			destroy_message(msg);
-			pid = 123;
 			swap_finalizar(pid);
 
 			msg = argv_message(MEM_OK, 1, 0);

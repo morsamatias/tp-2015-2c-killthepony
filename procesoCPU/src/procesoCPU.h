@@ -29,6 +29,7 @@ typedef enum {
 }e_sentencia;
 
 typedef struct{
+	int pid;
 	e_sentencia sentencia;
 	int pagina;
 	char* texto;

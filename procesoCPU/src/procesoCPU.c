@@ -86,8 +86,11 @@ char* get_texto_solo(char* texto){
 /*
  * el param seria p.e: escribir 3 "hola"
  */
-t_sentencia* sentencia_crear(char* sentencia){
+t_sentencia* sentencia_crear(char* sentencia, int pid){
 	t_sentencia* sent = malloc(sizeof(*sent));
+
+	sent->pid = pid;
+
 	char** split =  string_split(sentencia, " ");
 
 	if(string_starts_with(sentencia, "iniciar ")){
@@ -121,7 +124,7 @@ t_sentencia* sentencia_crear(char* sentencia){
 int sent_ejecutar_iniciar(t_sentencia* sent){
 	int rs = 0;
 	t_msg* msg = NULL;
-	msg = argv_message(MEM_INICIAR, 1, sent->cant_paginas);
+	msg = argv_message(MEM_INICIAR, 2, sent->pid, sent->cant_paginas);
 	log_trace(logger, "Enviando mensaje MemIniciar %d",sent->cant_paginas);
 	enviar_y_destroy_mensaje(socket_mem, msg);
 
@@ -148,7 +151,7 @@ int sent_ejecutar_iniciar(t_sentencia* sent){
 int sent_ejecutar_finalizar(t_sentencia* sent){
 	int rs = 0;
 	t_msg* msg = NULL;
-	msg = argv_message(MEM_FINALIZAR, 0);
+	msg = argv_message(MEM_FINALIZAR, 1, sent->pid);
 	log_trace(logger, "Enviando mensaje MEM_FINALIZAR ");
 	enviar_y_destroy_mensaje(socket_mem, msg);
 
@@ -176,7 +179,7 @@ int sent_ejecutar_escribir(t_sentencia* sent){
 	int rs = 0;
 
 	t_msg* msg = NULL;
-	msg = string_message(MEM_ESCRIBIR, sent->texto, 1, sent->pagina);
+	msg = string_message(MEM_ESCRIBIR, sent->texto, 2, sent->pid, sent->pagina);
 	log_trace(logger, "Enviando mensaje MEM_ESCRIBIR %d %s",	sent->pagina, sent->texto);
 	enviar_y_destroy_mensaje(socket_mem, msg);
 
@@ -204,7 +207,7 @@ char* sent_ejecutar_leer(t_sentencia* sent){
 	char* pagina = NULL;
 
 	t_msg* msg = NULL;
-	msg = argv_message(MEM_LEER, 1, sent->pagina);
+	msg = argv_message(MEM_LEER, 2, sent->pid, sent->pagina);
 	log_trace(logger, "Enviando mensaje MEM_LEER %d",	sent->pagina);
 	enviar_y_destroy_mensaje(socket_mem, msg);
 
@@ -272,12 +275,15 @@ int ejecutar(t_pcb* pcb){
 
 	while(pcb_tiene_que_seguir_ejecutando(pcb)){
 
-		sent = sentencia_crear(sents[pcb->pc]);
+		sent = sentencia_crear(sents[pcb->pc], pcb->pid);
+
 		sent_ejecutar(sent);
 
 		sent_free(sent);
 		pcb->pc++;
 	}
+
+	free_split(sents);
 
 	file_mmap_free(mcod, pcb->path);
 	return 0;

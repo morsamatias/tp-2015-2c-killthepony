@@ -1019,6 +1019,8 @@ t_pcb* recibir_mensaje_pcb(int socket){
 	new->pc = msg->argv[0];
 	new->cant_sentencias = msg->argv[2];
 
+	new->pid = msg->argv[3];//el pid
+
 	return new;
 
 }
@@ -1026,10 +1028,10 @@ t_pcb* recibir_mensaje_pcb(int socket){
 int enviar_mensaje_pcb(int socket, t_pcb* pcb){
 	t_msg* msg = NULL;
 	int rs ;
-	//primero el pc, 2 cant, a ejectuar, 3 cant sentencias,
+	//primero el pc, 2 cant, a ejectuar, 3 cant sentencias,4 pid
 
 
-	msg = string_message(PCB, pcb->path, 3, pcb->pc, pcb->cant_a_ejectuar, pcb->cant_sentencias);
+	msg = string_message(PCB, pcb->path, 4, pcb->pc, pcb->cant_a_ejectuar, pcb->cant_sentencias, pcb->pid);
 
 	rs = enviar_y_destroy_mensaje(socket, msg);
 

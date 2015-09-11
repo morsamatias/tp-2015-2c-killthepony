@@ -384,8 +384,8 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 	switch (msg->header.id) {
 		case SWAP_INICIAR:
 
-			paginas = msg->argv[1];
 			pid = msg->argv[0];
+			paginas = msg->argv[1];
 			pthread_mutex_lock(&mutex);
 			log_trace(logger, "SWAP_INICIAR . pid: %d, Paginas: %d", pid, paginas);
 			pthread_mutex_unlock(&mutex);

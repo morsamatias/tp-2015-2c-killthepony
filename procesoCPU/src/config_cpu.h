@@ -11,7 +11,7 @@
 
 #include <commons/config.h>
 
-char* CONFIG_PATH = "config.txt";
+char* CONFIG_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoCPU/Debug/config.txt";
 
 t_config* cfg;
 
