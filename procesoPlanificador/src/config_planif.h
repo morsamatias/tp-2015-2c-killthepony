@@ -11,7 +11,7 @@
 #include <commons/config.h>
 
 t_config* cfg = NULL;
-char* CONFIG_PATH = "config.txt";
+char* CONFIG_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoPlanificador/Debug/config.txt";
 
 int PUERTO_ESCUCHA();
 

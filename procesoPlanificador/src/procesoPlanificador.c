@@ -53,12 +53,13 @@ int correr_proceso(char* path){
 	t_pcb* pcb = NULL;
 	pcb = pcb_nuevo(path);
 
-	pcb->cant_a_ejectuar = get_cant_sent(path);
+	pcb->cant_sentencias = get_cant_sent(path);
+	pcb->cant_a_ejectuar = get_cant_sent(path); // en caso de que se RR es el Q
 	pcb->estado=NEW;
 
 	pcb_agregar(pcb);
 
-	t_new* new=NULL;
+	t_new* new=malloc(sizeof(t_new));
 
 	new->pid=pcb->pid;
 
