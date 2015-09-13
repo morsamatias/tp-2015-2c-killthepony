@@ -25,9 +25,8 @@
 #include <commons/collections/list.h>
 
 
-int procesar_mensaje_cpu(int s);
 int correr_proceso(char* path);
-
+int iniciar_server_select();
 
 t_list* pcbs;/*lista de pcbs*/
 
@@ -56,6 +55,7 @@ t_cpu* cpu_nuevo(int id);
 int cpu_disponible();
 t_cpu* cpu_seleccionar();
 int cpu_ejecutar(t_cpu* cpu, t_pcb* pcb);
+int procesar_mensaje_cpu(int socket, t_msg* msg);
 
 int cpu_ejecutar(t_cpu* cpu, t_pcb* pcb){
 

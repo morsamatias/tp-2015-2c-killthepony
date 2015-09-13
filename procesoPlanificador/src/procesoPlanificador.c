@@ -30,7 +30,7 @@ pthread_t th_server_cpu;
 int main(void) {
 	inicializar();
 
-	pthread_create(&th_server_cpu, NULL, (void*)iniciar_server, NULL);
+	pthread_create(&th_server_cpu, NULL, (void*)iniciar_server_select, NULL);
 
 
 	iniciar_consola();
@@ -129,33 +129,71 @@ int iniciar_consola() {
  * CPUs
  */
 
-int iniciar_server(){
+int iniciar_server_select(){
+	int port = PUERTO_ESCUCHA();
+	////////////////
+	fd_set master, read_fds;
+	int fdNuevoNodo, fdmax, newfd;
+	int i;
 
-	//printf("Iniciando server\n");
-	//server_socket_select(PUERTO_ESCUCHA(), procesar_mensaje);
-	int listener = server_socket(PUERTO_ESCUCHA());
-	if (listener < 0) {
-		printf("ERRROr listener %d\n", PUERTO_ESCUCHA());
-		return -1;
+	if ((fdNuevoNodo = server_socket(port)) < 0) {
+		handle_error("No se pudo iniciar el server");
 	}
-	int nuevaConexion;
-	while (true) {
+	printf("server iniciado en %d\n", port);
 
-		nuevaConexion = accept_connection(listener);
-		if (nuevaConexion < 0)
-			perror("accept");
+	FD_ZERO(&master); // borra los conjuntos maestro y temporal
+	FD_ZERO(&read_fds);
+	FD_SET(fdNuevoNodo, &master);
 
-		log_info(logger, "Nueva Conexion socket: %d", nuevaConexion);
+	fdmax = fdNuevoNodo; // por ahora el maximo
 
-		procesar_mensaje_cpu(nuevaConexion);
+	//log_info(logger, "inicio thread eschca de nuevos nodos");
+	// bucle principal
+	for (;;) {
+		read_fds = master; // cópialo
+		if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
+			handle_error("Error en select");
+		}
+
+		// explorar conexiones existentes en busca de datos que leer
+		for (i = 0; i <= fdmax; i++) {
+			if (FD_ISSET(i, &read_fds)) { // ¡¡tenemos datos!!
+				if (i == fdNuevoNodo) {	// gestionar nuevas conexiones
+					//char * ip;
+					//newfd = accept_connection_and_get_ip(fdNuevoNodo, &ip);
+					newfd = accept_connection(fdNuevoNodo);
+					if (newfd < 0) {
+						printf("no acepta mas conexiones\n");
+					} else {
+						//printf("nueva conexion desde IP: %s\n", ip);
+						FD_SET(newfd, &master); // añadir al conjunto maestro
+						if (newfd > fdmax) { // actualizar el máximo
+							fdmax = newfd;
+						}
+					}
+
+				} else { // gestionar datos de un cliente ya conectado
+					t_msg *msg = recibir_mensaje(i);
+					if (msg == NULL) {
+						/* Socket closed connection. */
+						//int status = remove_from_lists(i);
+						printf("Conexion cerrada %d\n", i);
+						close(i);
+						FD_CLR(i, &master);
+					} else {
+						//print_msg(msg);
+						procesar_mensaje_cpu(i, msg);
+
+					}
+
+				} //fin else procesar mensaje nodo ya conectado
+			}
+		}
 	}
-
 	return 0;
 }
 
-int procesar_mensaje_cpu(int socket){
-	t_msg* msg = NULL;
-	msg = recibir_mensaje(socket);
+int procesar_mensaje_cpu(int socket, t_msg* msg){
 	//print_msg(msg);
 	int id_cpu;
 	t_cpu* cpu = NULL;
