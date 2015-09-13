@@ -128,6 +128,7 @@ typedef struct {
 	int cant_sentencias;
 	int pid;
 	int estado;
+	int cpu_asignado;//para saber a que cpu fue asignado, en el caso de que el cpu se desconecte, busco el pcb que hay que replanificar
 }t_pcb;
 
 
@@ -304,6 +305,7 @@ t_msg* cpu_base_message(t_cpu_base* cb);
 t_cpu_base* recibir_mensaje_cpu_base(int s);
 
 int enviar_mensaje_pcb(int socket, t_pcb* pcb);
+
 t_pcb* pcb_nuevo(char* path);
 t_pcb* recibir_mensaje_pcb(int socket);
 int pcb_print(t_pcb* pcb);
