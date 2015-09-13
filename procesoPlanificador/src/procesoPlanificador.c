@@ -22,7 +22,6 @@ char* LOG_PATH = "log.txt";
 int inicializar();
 int finalizar();
 int iniciar_consola();
-int iniciar_server();
 
 pthread_t th_server_cpu;
 
@@ -62,11 +61,13 @@ int correr_proceso(char* path){
 	pcb->cant_a_ejectuar = get_cant_sent(path); // en caso de que se RR es el Q
 	pcb->estado=NEW;
 
+
 	pcb_agregar(pcb);
 
 	t_new* new=malloc(sizeof(t_new));
 
 	new->pid=pcb->pid;
+
 
 	list_add(list_new,new);
 
@@ -74,7 +75,7 @@ int correr_proceso(char* path){
 	t_cpu* cpu = NULL;
 	if(cpu_disponible()){
 		cpu = cpu_seleccionar();
-
+		pcb->cpu_asignado = cpu->id;
 		cpu_ejecutar(cpu, pcb);
 	}
 
@@ -130,11 +131,13 @@ int iniciar_consola() {
  */
 
 int iniciar_server_select(){
+	t_cpu* cpu = NULL;
+	t_pcb* pcb = NULL;
 	int port = PUERTO_ESCUCHA();
 	////////////////
 	fd_set master, read_fds;
 	int fdNuevoNodo, fdmax, newfd;
-	int i;
+	int socket;
 
 	if ((fdNuevoNodo = server_socket(port)) < 0) {
 		handle_error("No se pudo iniciar el server");
@@ -156,9 +159,9 @@ int iniciar_server_select(){
 		}
 
 		// explorar conexiones existentes en busca de datos que leer
-		for (i = 0; i <= fdmax; i++) {
-			if (FD_ISSET(i, &read_fds)) { // ¡¡tenemos datos!!
-				if (i == fdNuevoNodo) {	// gestionar nuevas conexiones
+		for (socket = 0; socket <= fdmax; socket++) {
+			if (FD_ISSET(socket, &read_fds)) { // ¡¡tenemos datos!!
+				if (socket == fdNuevoNodo) {	// gestionar nuevas conexiones
 					//char * ip;
 					//newfd = accept_connection_and_get_ip(fdNuevoNodo, &ip);
 					newfd = accept_connection(fdNuevoNodo);
@@ -173,16 +176,30 @@ int iniciar_server_select(){
 					}
 
 				} else { // gestionar datos de un cliente ya conectado
-					t_msg *msg = recibir_mensaje(i);
+					t_msg *msg = recibir_mensaje(socket);
 					if (msg == NULL) {
-						/* Socket closed connection. */
-						//int status = remove_from_lists(i);
-						printf("Conexion cerrada %d\n", i);
-						close(i);
-						FD_CLR(i, &master);
+						printf("Conexion cerrada %d\n", socket);
+						close(socket);
+						FD_CLR(socket, &master);
+
+						//si llega aca se desconecto el cpu
+
+						//busco el cpu por el socket
+						cpu = cpu_buscar_por_socket(socket);
+						//si el cpu se desconecto habria que sacarlo de la lista de cpus, o marcarlo como desconectado
+						//todo: hay que buscar los pcbs que esta procesando este socket, para replanificarlos en otra cpu
+						log_trace(logger, "El cpu %d, socket: %d se desconecto", cpu->id, cpu->socket);
+						pcb = pcb_buscar_por_cpu(cpu->id);
+						if(pcb== NULL){
+							log_trace(logger, "Hay que replanificar el pcb %d", pcb->pid );
+						}else{
+							log_trace(logger, "Ningun pcb a replanificar?");
+						}
+
+
 					} else {
 						//print_msg(msg);
-						procesar_mensaje_cpu(i, msg);
+						procesar_mensaje_cpu(socket, msg);
 
 					}
 
@@ -192,6 +209,7 @@ int iniciar_server_select(){
 	}
 	return 0;
 }
+
 
 int procesar_mensaje_cpu(int socket, t_msg* msg){
 	//print_msg(msg);

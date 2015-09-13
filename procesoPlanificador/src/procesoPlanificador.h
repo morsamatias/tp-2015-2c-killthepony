@@ -28,6 +28,7 @@
 int correr_proceso(char* path);
 int iniciar_server_select();
 
+
 t_list* pcbs;/*lista de pcbs*/
 
 /*
@@ -42,6 +43,9 @@ typedef struct {
 }t_pcb;
 */
 
+
+
+
 void pcb_agregar(t_pcb* pcb){
 	list_add(pcbs, (void*)pcb);
 }
@@ -50,12 +54,32 @@ void pcb_agregar(t_pcb* pcb){
 t_list* cpus;
 
 t_cpu* cpu_buscar(int id);
+t_cpu* cpu_buscar_por_socket(int socket);
+
 bool cpu_existe(int id);
 t_cpu* cpu_nuevo(int id);
 int cpu_disponible();
 t_cpu* cpu_seleccionar();
 int cpu_ejecutar(t_cpu* cpu, t_pcb* pcb);
 int procesar_mensaje_cpu(int socket, t_msg* msg);
+t_pcb* pcb_buscar_por_cpu(int cpu);
+
+t_pcb* pcb_buscar_por_cpu(int cpu){
+
+	bool _pcb_buscar_por_cpu(t_pcb* pcb){
+		return pcb->cpu_asignado == cpu;
+	}
+	return list_find(pcbs, (void*)_pcb_buscar_por_cpu);
+}
+
+t_cpu* cpu_buscar_por_socket(int socket){
+	bool _cpu_buscar_por_socket(t_cpu* cpu){
+		return cpu->socket == socket;
+	}
+
+	return list_find(cpus, (void*)_cpu_buscar_por_socket);
+}
+
 
 int cpu_ejecutar(t_cpu* cpu, t_pcb* pcb){
 
