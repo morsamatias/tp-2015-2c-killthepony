@@ -12,6 +12,12 @@
 #include<signal.h>
 #include<unistd.h>
 
+/*
+ * en una consola del so
+ * kill -USR1 pid
+ * kill -USR2 pid
+ * kill -SIGIO pid  //SIGPOLL
+ */
 int iniciar_signals();
 void manejar_SIGUSR1();
 void manejar_SIGUSR2();
