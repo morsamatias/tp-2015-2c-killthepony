@@ -12,6 +12,7 @@
 #include <stdlib.h>
 
 #include "procesoAdminDeMemoria.h"
+#include <util.h>
 
 pthread_t th_server_cpu;
 int socket_swap;
@@ -155,7 +156,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 	//print_msg(msg);
 	char* buff_pag  = NULL;
 	int st ;
-	int pid = 123;
+	int pid;
 	int pagina;
 	int paginas;
 	switch (msg->header.id) {
@@ -189,17 +190,27 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 				break;
 			}
 
-
 			break;
+
 		case MEM_LEER:
-			//param 0 nro pagina
-			log_trace(logger, "Mem Leer pagina %d", msg->argv[0]);
-
-			//buff_pag = string_from_format("Contenido de la pagina %d", msg->argv[0]);
-			pid = msg->argv[0];
-			pagina = msg->argv[1];
+			int flag_esta_en_memoria=0;
+			int entrada;
+			//param 0 PID / 1 Pagina
+			pid 	= msg->argv[0];
+			pagina  = msg->argv[1];
 			destroy_message(msg);
+			log_trace(logger, "Leer pagina %d del proceso", pagina,pid);
 
+			// SE FIJA SI ESTA LA PAGINA EN MEMORIA
+			entrada = buscar_pagina_en_TLB(pid,pagina);
+
+			if (TLB_HABILITADA() && entrada!=-1){
+				t_memoria[entrada].
+			} else {
+
+			}
+
+			//EN CASO DE QUE LA PAGINA NO ESTE EN MEMORIA, SE LA PIDO AL SWAP
 			buff_pag = swap_leer_pagina(pid, pagina);
 
 			if(buff_pag != NULL){
@@ -212,41 +223,48 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			}
 
 
-
 			break;
+
 		case MEM_ESCRIBIR:
 			//param 0 nro pagina
 			log_trace(logger, "MEM_ESCRIBIR pagina %d, texto: \"%s\"", msg->argv[0], msg->stream);
 
-			buff_pag = string_duplicate(msg->stream);
-			pid = msg->argv[0];;
-			pagina = msg->argv[1];
+			buff_pag 	= string_duplicate(msg->stream);
+			pid 		= msg->argv[0];;
+			pagina 		= msg->argv[1];
 
 			destroy_message(msg);
 
-			st = swap_escribir_pagina(pid, pagina, buff_pag);
+			st = escribir_pagina(pid, pagina, buff_pag);
 			if(st >=0){
 				msg = argv_message(MEM_OK, 1, 0);
 			}else{
 				msg = argv_message(MEM_NO_OK, 1, 0);
 			}
 
-
 			enviar_y_destroy_mensaje(socket, msg);
 			FREE_NULL(buff_pag);
 			break;
+
 		case MEM_FINALIZAR:
-			//param 0 nro pagina
-			log_trace(logger, "MEM_FINALIZAR");
+			//param 0 PID
+			log_info(logger, "MEM_FINALIZAR");
 
 			pid = msg->argv[0];
 			destroy_message(msg);
+
+			// LE AVISO AL SWAP QUE LIBERE EL ESPACIO
 			swap_finalizar(pid);
+
+			// ELIMINO LAS ESTRUCTURAS
+			list_destroy_and_destroy_elements(l_paginas_por_proceso,(void*)eliminar_estructuras_de_un_proceso);
 
 			msg = argv_message(MEM_OK, 1, 0);
 			enviar_y_destroy_mensaje(socket, msg);
 			break;
+
 		default:
+			log_warning(logger, "LA OPCION SELECCIONADA NO ESTA REGISTRADA");
 			break;
 	}
 
@@ -274,7 +292,7 @@ int inicializar(){
 	logger = log_create(LOGGER_PATH, "procesoAdminMem", true, LOG_LEVEL_TRACE);
 
 	// ESTRUCTURA TLB y MEMORIA
-	TBL 	= (t_paginas*)malloc(ENTRADAS_TLB()*sizeof(t_paginas));
+	TLB 	= (t_paginas*)malloc(ENTRADAS_TLB()*sizeof(t_paginas));
 	memoria = (t_memoria*)malloc(CANTIDAD_MARCOS()*sizeof(t_memoria));
 	l_paginas_por_proceso = list_create();
 
@@ -290,9 +308,9 @@ int finalizar(){
 	log_destroy(logger);
 
 	// ESTRUCTURA TLB y MEMORIA
-	free(TBL);
+	free(TLB);
 	free(memoria);
-	list_destroy_and_destroy_elements(l_paginas_por_proceso,(void*)eliminar_estructuras_de_un_proceso);
+	list_destroy_and_destroy_elements(l_paginas_por_proceso,(void*)eliminar_estructuras_de_todos_los_procesos);
 
 	return 0;
 }
@@ -300,20 +318,15 @@ int finalizar(){
 int iniciar_proceso_CPU(int pid, int paginas){
 	int st;
 
-	// CHEQUEO QUE LA CANTIDAD DE PAGINAS POR PROCESO REAL SEA MENOR A LA MAXIMA
-	if(paginas > MAXIMO_MARCOS_POR_PROCESO()){
-		return 1;
-	}
-
 	// LE ENVIO AL PROCESO SWAP PARA QUE RESERVE EL ESPACIO
 	st = swap_nuevo_proceso(pid, paginas);
 
 	if(st==0){
-
+		crear_estructuras_de_un_proceso(pid,paginas);
 		return 0;
 	}
 	else{
-		return 2;
+		return 1;
 	}
 
 }
@@ -321,20 +334,69 @@ int iniciar_proceso_CPU(int pid, int paginas){
 
 void crear_estructuras_de_un_proceso(int PID,int paginas){
 	int i;
-	t_proceso* proceso= (t_proceso*)malloc((paginas+2)*sizeof(int));
-	proceso->PID = PID;
-	proceso->cant_paginas = paginas;
-	for(i=0;i<paginas;i++)
-		proceso->entradas[i]=-1;
+
+	t_proceso* proceso= (t_proceso*)malloc((paginas+3)*sizeof(int)+sizeof(t_posicion_pagina));
+
+		proceso->PID = PID;
+		proceso->cant_paginas = paginas;
+		for(i=0;i<paginas;i++)
+			proceso->paginas[i].posicion_memoria=-1;
+			proceso->paginas[i].posicion_TLB=-1;
+		if(paginas==1)
+			proceso->prox_reemplazo_FIFO=0;
+		else
+			proceso->prox_reemplazo_FIFO=1;
+
+	list_add(l_paginas_por_proceso,proceso);
 }
 
 void eliminar_estructuras_de_un_proceso(t_proceso* proceso){
 	int i;
+
+	// DEJO DISPONIBLE TODAS LAS ENTRADAS USADAS POR EL PROCESO QUE TIENE EN LA MEMORIA
 	for(i=0;i<proceso->cant_paginas;i++){
-		if(proceso->entradas[i]!=-1){
-				memoria[proceso->entradas[i]].libre=1;
-				memoria[proceso->entradas[i]].modificado=0;
+		if(proceso->paginas[i].posicion_memoria!=-1){
+				memoria[proceso->paginas[i].posicion_memoria].libre=1;
+				memoria[proceso->paginas[i].posicion_memoria].modificado=0;
+			}
+		if(proceso->paginas[i].posicion_TLB!=-1){
+				memoria[proceso->paginas[i].posicion_TLB].libre=1;
 			}
 	}
+
 	free(proceso);
+}
+
+void eliminar_estructuras_de_todos_los_procesos(t_proceso* proceso){
+	int i;
+
+	// DEJO DISPONIBLE TODAS LAS ENTRADAS USADAS POR EL PROCESO QUE TIENE EN LA MEMORIA
+	for(i=0;i<proceso->cant_paginas;i++){
+			if(proceso->paginas[i].posicion_memoria!=-1){
+					memoria[proceso->paginas[i].posicion_memoria].libre=1;
+					memoria[proceso->paginas[i].posicion_memoria].modificado=0;
+				}
+			if(proceso->paginas[i].posicion_TLB!=-1){
+					memoria[proceso->paginas[i].posicion_TLB].libre=1;
+				}
+		}
+
+	// LIBERO EL ESPACIO EN EL SWAP
+	swap_finalizar(proceso->PID);
+
+	free(proceso);
+}
+
+int escribir_pagina(int pid, int pagina, char* contenido){
+	int estado;
+	t_proceso proceso;
+
+	// LE MANDO AL SWAP PARA QUE GUARDE LA INFO
+	estado = swap_escribir_pagina(pid, pagina, contenido);
+	if(estado==-1) return 0;
+
+	proceso
+
+
+
 }
