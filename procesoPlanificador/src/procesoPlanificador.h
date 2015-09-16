@@ -144,10 +144,6 @@ typedef struct {
 
 typedef struct {
 	int pid;
-}t_new;
-
-typedef struct {
-	int pid;
 }t_finish;
 
 t_list* list_ready;/*lista de procesos listos para ejecutar*/
@@ -156,10 +152,18 @@ t_list* list_exec;/*lista de procesos en ejecución*/
 
 t_list* list_block;/*lista de procesos bloqueados*/
 
-t_list* list_new;/*lista de procesos nuevos*/
-
 t_list* list_finish;/*lista de procesos terminados*/
 
+t_pcb* es_el_pcb_buscado_por_id(int pid);
 
+t_pcb* es_el_pcb_buscado();
+
+void controlar_IO (int pid);
+
+int es_el_pid_en_block(int pid, t_list* list_block);
+
+int es_el_pcb_buscado_en_exec(t_exec* exec);
+
+int es_el_pcb_buscado_en_block(t_block* block);
 
 #endif /* PROCESOPLANIFICADOR_H_ */

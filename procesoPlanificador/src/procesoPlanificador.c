@@ -16,6 +16,8 @@
 
 
 int PID = 1;
+int PID_GLOBAL=1;
+int IO_GLOBAL=1;
 t_log* logger;
 char* LOG_PATH = "log.txt";
 
@@ -24,6 +26,7 @@ int finalizar();
 int iniciar_consola();
 
 pthread_t th_server_cpu;
+pthread_t contador_IO_PCB;
 
 
 int main(void) {
@@ -215,6 +218,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg){
 	//print_msg(msg);
 	int id_cpu;
 	t_cpu* cpu = NULL;
+	t_pcb* pcb = NULL;
+	char* pid_string;
 	switch(msg->header.id){
 		case CPU_NUEVO:
 
@@ -235,6 +240,30 @@ int procesar_mensaje_cpu(int socket, t_msg* msg){
 			}
 
 		break;
+
+		case PCB_IO:
+
+			pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
+
+			PID_GLOBAL=pcb->pid;
+			IO_GLOBAL=msg->argv[1];
+
+			if(list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)){
+
+			list_remove_by_condition(list_exec, (void*) es_el_pcb_buscado_en_exec);
+
+			t_block* block;
+
+			block->pid=PID_GLOBAL;
+
+			list_add(list_block,block);
+
+			pid_string=string_itoa(PID_GLOBAL);
+
+			pthread_create(&contador_IO_PCB, NULL, (void*)controlar_IO, (void*) pid_string);
+
+			break;
+
 	default:
 		printf("No msgjjj\n");
 		break;
@@ -260,8 +289,6 @@ int inicializar(){
 
 	list_ready=list_create();
 
-	list_new=list_create();
-
 	list_block=list_create();
 
 	list_finish=list_create();
@@ -271,3 +298,88 @@ int inicializar(){
 	return 0;
 }
 
+void controlar_IO (char* pid_string){
+
+	t_block* block;
+
+	block=list_get(list_block, es_el_pid_en_block(atoi(pid_string),list_block));
+
+	sleep(IO_GLOBAL);
+
+	PID_GLOBAL=atoi(pid_string);
+
+	list_remove_by_condition(list_block, (void*) es_el_pcb_buscado_en_block);
+
+	t_ready* ready;
+
+	ready->pid=atoi(pid_string);
+
+	list_add(list_ready,ready);
+
+	pthread_exit(NULL);
+
+}
+
+t_pcb* es_el_pcb_buscado_por_id(int pid){
+
+	int i=0;
+	t_pcb* pcb;
+
+	pcb=list_get(pcbs,i);
+
+	while((i+1)<=list_size(pcbs)){
+	if(pcb->pid==pid){
+		break;}
+	else{	}
+		i++;
+}
+
+	return pcb;
+}
+
+t_pcb* es_el_pcb_buscado(){
+
+	int i=0;
+	t_pcb* pcb;
+
+	pcb=list_get(pcbs,i);
+
+	while((i+1)<=list_size(pcbs)){
+
+	if(pcb->pid==PID_GLOBAL){
+		break;}
+		else{
+		i++;
+		}
+}
+
+	return pcb;
+}
+
+int es_el_pid_en_block(int pid, t_list* list_block){
+
+	int i=0;
+
+	t_block* block;
+
+	block=list_get(list_block,i);
+
+	while((i+1)<=list_size(list_block)){
+
+	if (block->pid==pid) {
+	break;
+	}else{
+		i++;
+	}
+
+}
+	return i;
+}
+
+int es_el_pcb_buscado_en_exec(t_exec* exec){
+	return(exec->pid==PID_GLOBAL);
+}
+
+int es_el_pcb_buscado_en_block(t_block* block){
+	return(block->pid==PID_GLOBAL);
+}

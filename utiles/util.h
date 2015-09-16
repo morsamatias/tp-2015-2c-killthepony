@@ -88,6 +88,7 @@ typedef enum {
 	CPU_BASE,
 	PCB,
 	PCB_A_EJECUTAR,
+	PCB_IO,
 
 	MEM_INICIAR,
 	MEM_OK,
