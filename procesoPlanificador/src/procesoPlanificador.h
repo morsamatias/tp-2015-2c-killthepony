@@ -166,4 +166,6 @@ int es_el_pcb_buscado_en_exec(t_exec* exec);
 
 int es_el_pcb_buscado_en_block(t_block* block);
 
+int pos_del_pcb(int pid);
+
 #endif /* PROCESOPLANIFICADOR_H_ */

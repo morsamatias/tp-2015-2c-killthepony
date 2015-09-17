@@ -110,9 +110,25 @@ int iniciar_consola() {
 		case FINALIZAR:
 			pid = atoi(input_user[1]);
 			printf("finalizar pid: %d\n", pid);
+			t_pcb* pcb;
+			PID_GLOBAL=pid;
+			pcb=list_get(pcbs,pos_del_pcb(pid));
+			pcb->pc=pcb->cant_sentencias;
 			break;
 		case PS:
 			printf("PS listar procesos\n");
+			int i=0;
+			t_pcb* pcb;
+			while ((i+1)<= list_size(pcbs)){
+
+				pcb=list_get(pcbs,i);
+
+				//log_info(log_pantalla,"mProc	%d PID:	%s nombre	->	%d estado /n",pcb->pid,pcb->path,pcb->estado);
+
+				printf("mProc	 PID: %d	 nombre %s	->	 estado %d\n",pcb->pid,pcb->path,pcb->estado);
+
+				i++;
+			}
 			break;
 		case CPU:
 			printf("Uso CPU en el ultimo min \n");
@@ -354,6 +370,25 @@ t_pcb* es_el_pcb_buscado(){
 }
 
 	return pcb;
+}
+
+int pos_del_pcb(int pid){
+
+	int i=0;
+	t_pcb* pcb;
+
+	pcb=list_get(pcbs,i);
+
+	while((i+1)<=list_size(pcbs)){
+
+	if(pcb->pid==PID_GLOBAL){
+		break;}
+		else{
+		i++;
+		}
+}
+
+	return i;
 }
 
 int es_el_pid_en_block(int pid, t_list* list_block){
