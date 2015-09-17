@@ -164,15 +164,21 @@ t_pcb* es_el_pcb_buscado_por_id(int pid);
 
 t_pcb* es_el_pcb_buscado();
 
-void controlar_IO (int pid);
+void controlar_IO (char* pid_string);
+
+//void controlar_IO (int pid);
 
 int es_el_pid_en_block(int pid, t_list* list_block);
 
 int es_el_pcb_buscado_en_exec(t_exec* exec);
 
+int es_el_pcb_buscado_en_ready(t_ready* ready);
+
 int es_el_pcb_buscado_en_block(t_block* block);
 
 int pos_del_pcb(int pid);
+
+void procesar_msg_consola(t_msg* msg);
 
 
 

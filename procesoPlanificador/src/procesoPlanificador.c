@@ -31,13 +31,97 @@ pthread_t contador_IO_PCB;
 
 int main(void) {
 	inicializar();
+	printf("INICIO CONSOLA\n");
 
-	pthread_create(&th_server_cpu, NULL, (void*)iniciar_server_select, NULL);
+	//pthread_create(&th_server_cpu, NULL, (void*)iniciar_server_select, NULL);
+
+	t_cpu* cpu = NULL;
+		t_pcb* pcb = NULL;
+		int port = PUERTO_ESCUCHA();
+		////////////////
+		fd_set master, read_fds;
+		int fdNuevoNodo, fdmax, newfd;
+		int socket;
+
+		if ((fdNuevoNodo = server_socket(port)) < 0) {
+			handle_error("No se pudo iniciar el server");
+		}
+		printf("server iniciado en %d\n", port);
+
+		int consola=0 ;
+
+		FD_ZERO(&master); // borra los conjuntos maestro y temporal
+		FD_ZERO(&read_fds);
+		FD_SET(fdNuevoNodo, &master);
+        FD_SET(consola,&master); // agrego consola stdin
+		fdmax = fdNuevoNodo; // por ahora el maximo
+
+		//log_info(logger, "inicio thread eschca de nuevos nodos");
+		// bucle principal
+		for (;;) {
+			read_fds = master; // cópialo
+			if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
+				handle_error("Error en select");
+			}
+
+			// explorar conexiones existentes en busca de datos que leer
+			for (socket = 0; socket <= fdmax; socket++) {
+				if (FD_ISSET(socket, &read_fds)) { // ¡¡tenemos datos!!
+					if (socket == fdNuevoNodo) {	// gestionar nuevas conexiones
+						//char * ip;
+						//newfd = accept_connection_and_get_ip(fdNuevoNodo, &ip);
+						newfd = accept_connection(fdNuevoNodo);
+						if (newfd < 0) {
+							printf("no acepta mas conexiones\n");
+						} else {
+							//printf("nueva conexion desde IP: %s\n", ip);
+							FD_SET(newfd, &master); // añadir al conjunto maestro
+							if (newfd > fdmax) { // actualizar el máximo
+								fdmax = newfd;
+							}
+						}
+
+					} else { // gestionar datos de un cliente ya conectado
+						t_msg *msg = recibir_mensaje(socket);
+
+						if(socket==consola){
+
+							procesar_msg_consola(msg);
+
+						}
+						if (msg == NULL) {
+							printf("Conexion cerrada %d\n", socket);
+							close(socket);
+							FD_CLR(socket, &master);
+
+							//si llega aca se desconecto el cpu
+
+							//busco el cpu por el socket
+							cpu = cpu_buscar_por_socket(socket);
+							//si el cpu se desconecto habria que sacarlo de la lista de cpus, o marcarlo como desconectado
+							//todo: hay que buscar los pcbs que esta procesando este socket, para replanificarlos en otra cpu
+							log_trace(logger, "El cpu %d, socket: %d se desconecto", cpu->id, cpu->socket);
+							pcb = pcb_buscar_por_cpu(cpu->id);
+							if(pcb== NULL){
+								log_trace(logger, "Hay que replanificar el pcb %d", pcb->pid );
+							}else{
+								log_trace(logger, "Ningun pcb a replanificar?");
+							}
 
 
-	iniciar_consola();
+						} else {
+							//print_msg(msg);
+							procesar_mensaje_cpu(socket, msg);
 
-	pthread_join(th_server_cpu, NULL);
+						}
+
+					} //fin else procesar mensaje nodo ya conectado
+				}
+			}
+		}
+	//iniciar_consola();
+
+	//pthread_join(th_server_cpu, NULL);
 	finalizar();
 	return EXIT_SUCCESS;
 }
@@ -54,6 +138,67 @@ int get_cant_sent(char* path){
 int get_nuevo_pid(){
 	return PID++;
 }
+
+
+void procesar_msg_consola(t_msg* msg){
+
+	char* path;
+	int pid;
+	//char* buff  ;
+	char comando[COMMAND_MAX_SIZE];
+	char** input_user;
+//	printf("INICIO CONSOLA\n");
+/*
+	bool fin = false;
+	while (!fin) {
+		printf("\nINGRESAR COMANDO: ");
+	*/
+	//leer_comando_consola(comando);
+		//separo todoo en espacios ej: [copiar, archivo1, directorio0]
+		input_user = separar_por_espacios(msg);
+		e_comando cmd = parsear_comando(input_user[0]);
+
+		switch (cmd) {
+		case CORRER:
+			path = input_user[1];
+			printf("Correr path: %s\n", path);
+			correr_proceso(path);
+			break;
+		case FINALIZAR:
+			pid = atoi(input_user[1]);
+			printf("finalizar pid: %d\n", pid);
+			t_pcb* pcb;
+			PID_GLOBAL=pid;
+			pcb=list_get(pcbs,pos_del_pcb(pid));
+			pcb->pc=pcb->cant_sentencias;
+			break;
+		case PS:
+			printf("PS listar procesos\n");
+			int i=0;
+			t_pcb* pcb2;
+			while ((i+1)<= list_size(pcbs)){
+
+				pcb2=list_get(pcbs,i);
+
+				//log_info(log_pantalla,"mProc	%d PID:	%s nombre	->	%d estado /n",pcb->pid,pcb->path,pcb->estado);
+
+				printf("mProc	 PID: %d	 nombre %s	->	 estado %d\n",pcb2->pid,pcb2->path,pcb2->estado);
+
+				i++;
+			}
+			break;
+		case CPU:
+			printf("Uso CPU en el ultimo min \n");
+			break;
+	/*	case SALIR:			//exit
+			fin = true;
+			break;*/
+		default:
+			printf("Comando desconocido\n");
+			break;
+		}
+		free_split(input_user);
+	}
 
 int correr_proceso(char* path){
 	t_pcb* pcb = NULL;
@@ -81,7 +226,7 @@ int correr_proceso(char* path){
 
 	return 0;
 }
-
+/*
 int iniciar_consola() {
 	char* path;
 	int pid;
@@ -140,7 +285,7 @@ int iniciar_consola() {
 		free_split(input_user);
 	}
 	return 0;
-}
+}*/
 
 /*
  * CPUs
@@ -274,9 +419,45 @@ int procesar_mensaje_cpu(int socket, t_msg* msg){
 			pid_string=string_itoa(PID_GLOBAL);
 
 			pthread_create(&contador_IO_PCB, NULL, (void*)controlar_IO, (void*) pid_string);
+			}
+
+			if ((list_size(list_ready))!=0){
+				if(cpu_disponible()){
+						cpu = cpu_seleccionar();
+						pcb->cpu_asignado = cpu->id;
+						cpu_ejecutar(cpu, pcb);
+					}
+
+
+			}
 
 			break;
+		case PCB_FINQ :
+ //VUELVE EN EL FIN DEL QUANTUM
 
+			pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
+
+			PID_GLOBAL=pcb->pid;
+
+
+			if(list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)){
+
+			list_remove_by_condition(list_exec, (void*) es_el_pcb_buscado_en_exec);
+
+			}
+			t_ready* ready;
+
+			ready->pid=PID_GLOBAL;
+
+			list_add(list_ready,ready);
+
+			if(cpu_disponible()){
+									cpu = cpu_seleccionar();
+									pcb->cpu_asignado = cpu->id;
+									cpu_ejecutar(cpu, pcb);
+								}
+
+			break;
 	default:
 		printf("No msgjjj\n");
 		break;
