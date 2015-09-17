@@ -64,16 +64,13 @@ int correr_proceso(char* path){
 	pcb->cant_a_ejectuar = get_cant_sent(path); // en caso de que se RR es el Q
 	pcb->estado=NEW;
 
-
 	pcb_agregar(pcb);
 
-	t_new* new=malloc(sizeof(t_new));
+	t_ready* new=malloc(sizeof(t_ready));
 
 	new->pid=pcb->pid;
 
-
-	list_add(list_new,new);
-
+	list_add(list_ready,new);
 
 	t_cpu* cpu = NULL;
 	if(cpu_disponible()){
@@ -417,4 +414,24 @@ int es_el_pcb_buscado_en_exec(t_exec* exec){
 
 int es_el_pcb_buscado_en_block(t_block* block){
 	return(block->pid==PID_GLOBAL);
+}
+
+void cambiar_a_exec (int pid){
+
+	PID_GLOBAL=pid;
+
+	list_remove_by_condition(list_ready, (void*) es_el_pcb_buscado_en_ready);
+
+	t_exec* exec;
+
+	exec->pid=pid;
+
+	list_add(list_exec,exec);
+
+	return;
+
+}
+
+int es_el_pcb_buscado_en_ready(t_ready* ready){
+	return(ready->pid==PID_GLOBAL);
 }

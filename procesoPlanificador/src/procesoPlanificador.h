@@ -27,7 +27,7 @@
 
 int correr_proceso(char* path);
 int iniciar_server_select();
-
+void cambiar_a_exec(int pid);
 
 t_list* pcbs;/*lista de pcbs*/
 
@@ -89,6 +89,8 @@ int cpu_ejecutar(t_cpu* cpu, t_pcb* pcb){
 
 	enviar_mensaje_pcb(cpu->socket, pcb);
 
+	cambiar_a_exec(pcb->pid);
+
 	return 0;
 }
 
@@ -130,6 +132,10 @@ int cpu_agregar(t_cpu* cpu){
 	return 0;
 }
 
+
+
+
+
 typedef struct {
 	int pid;
 }t_ready;
@@ -167,5 +173,7 @@ int es_el_pcb_buscado_en_exec(t_exec* exec);
 int es_el_pcb_buscado_en_block(t_block* block);
 
 int pos_del_pcb(int pid);
+
+
 
 #endif /* PROCESOPLANIFICADOR_H_ */
