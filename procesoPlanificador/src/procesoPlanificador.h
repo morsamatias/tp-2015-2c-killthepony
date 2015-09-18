@@ -180,6 +180,6 @@ int pos_del_pcb(int pid);
 
 void procesar_msg_consola(t_msg* msg);
 
-
+double round(double X, int k);
 
 #endif /* PROCESOPLANIFICADOR_H_ */

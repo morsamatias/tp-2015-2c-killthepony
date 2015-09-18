@@ -120,6 +120,7 @@ typedef struct{
 	//t_cpu_base *base;
 	int id;
 	int socket;
+	int usoUltimoMinuto;
 }t_cpu;
 
 typedef struct {

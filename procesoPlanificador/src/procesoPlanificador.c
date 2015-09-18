@@ -27,6 +27,7 @@ int iniciar_consola();
 
 pthread_t th_server_cpu;
 pthread_t contador_IO_PCB;
+t_cpu* cpu;
 
 
 int main(void) {
@@ -189,6 +190,21 @@ void procesar_msg_consola(t_msg* msg){
 			break;
 		case CPU:
 			printf("Uso CPU en el ultimo min \n");
+			int i=0;
+			int uso;
+			int uso_rodondeado;
+			if(list_size(cpus)>0){
+				while((i+1)<=list_size(cpus)){
+					cpu=list_get(cpus,i);
+					uso=60/cpu->usoUltimoMinuto;
+					uso_rodondeado=round(uso,0);
+					printf("Cpu %d: %d%",cpu->id,uso_rodondeado);
+					i++;
+				}
+				}else
+				{
+					printf("No hay CPUs activas por el momento");
+			}
 			break;
 	/*	case SALIR:			//exit
 			fin = true;
@@ -616,3 +632,11 @@ void cambiar_a_exec (int pid){
 int es_el_pcb_buscado_en_ready(t_ready* ready){
 	return(ready->pid==PID_GLOBAL);
 }
+
+double round(double X, int k)
+{
+
+	return floor( pow(10,k)*X + 0.5) / pow(10,k) ;
+
+}
+
