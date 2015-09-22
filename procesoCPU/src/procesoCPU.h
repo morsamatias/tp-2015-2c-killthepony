@@ -1,10 +1,3 @@
-/*
- * procesoCPU.h
- *
- *  Created on: 29/8/2015
- *      Author: utnso
- */
-
 #ifndef PROCESOCPU_H_
 #define PROCESOCPU_H_
 
