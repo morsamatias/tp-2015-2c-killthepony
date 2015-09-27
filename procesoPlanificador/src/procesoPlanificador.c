@@ -189,16 +189,17 @@ void procesar_msg_consola(t_msg* msg){
 			}
 			break;
 		case CPU:
+			i=0;
 			printf("Uso CPU en el ultimo min \n");
-			int i=0;
+
 			int uso;
 			int uso_rodondeado;
 			if(list_size(cpus)>0){
 				while((i+1)<=list_size(cpus)){
 					cpu=list_get(cpus,i);
 					uso=60/cpu->usoUltimoMinuto;
-					uso_rodondeado=round(uso,0);
-					printf("Cpu %d: %d%",cpu->id,uso_rodondeado);
+					uso_rodondeado=round_2(uso,0);
+					printf("Cpu %d: %d",cpu->id,uso_rodondeado);
 					i++;
 				}
 				}else
@@ -474,6 +475,13 @@ int procesar_mensaje_cpu(int socket, t_msg* msg){
 								}
 
 			break;
+
+		case PCB_FINALIZAR:
+
+			printf("Hay que finalizar el proceso");
+
+			break;
+
 	default:
 		printf("No msgjjj\n");
 		break;
@@ -522,7 +530,7 @@ void controlar_IO (char* pid_string){
 
 	t_ready* ready;
 
-	ready->pid=atoi(pid_string);
+	ready->pid=block->pid;
 
 	list_add(list_ready,ready);
 
@@ -633,7 +641,7 @@ int es_el_pcb_buscado_en_ready(t_ready* ready){
 	return(ready->pid==PID_GLOBAL);
 }
 
-double round(double X, int k)
+double round_2(double X, int k)
 {
 
 	return floor( pow(10,k)*X + 0.5) / pow(10,k) ;

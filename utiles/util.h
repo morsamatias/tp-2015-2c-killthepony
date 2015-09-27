@@ -90,6 +90,7 @@ typedef enum {
 	PCB_A_EJECUTAR,
 	PCB_IO,
     PCB_FINQ,
+	PCB_FINALIZAR,
 	MEM_INICIAR,
 	MEM_OK,
 	MEM_LEER,
