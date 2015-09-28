@@ -743,6 +743,7 @@ int enviar_mensaje(int sock_fd, t_msg *msg) {
 		if (sent < 0) {
 			free(buffer);
 			return -1;
+
 		}
 		total += sent;
 		pending -= sent;

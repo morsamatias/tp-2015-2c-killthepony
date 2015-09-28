@@ -89,8 +89,6 @@ typedef enum {
 	PCB,
 	PCB_A_EJECUTAR,
 	PCB_IO,
-    PCB_FINQ,
-	PCB_FINALIZAR,
 	MEM_INICIAR,
 	MEM_OK,
 	MEM_LEER,
@@ -107,6 +105,7 @@ typedef enum {
 
 } t_msg_id;
 
+
 typedef struct{
 	char ip[15];
 	int puerto;
@@ -117,12 +116,6 @@ typedef struct {
 	t_red red;
 }t_cpu_base;
 
-typedef struct{
-	//t_cpu_base *base;
-	int id;
-	int socket;
-	int usoUltimoMinuto;
-}t_cpu;
 
 typedef struct {
 	char path[MAX_PATH];
@@ -133,9 +126,6 @@ typedef struct {
 	int estado;
 	int cpu_asignado;//para saber a que cpu fue asignado, en el caso de que el cpu se desconecte, busco el pcb que hay que replanificar
 }t_pcb;
-
-
-
 
 typedef struct {
 	int8_t type;

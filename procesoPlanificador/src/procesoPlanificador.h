@@ -50,6 +50,13 @@ void pcb_agregar(t_pcb* pcb){
 	list_add(pcbs, (void*)pcb);
 }
 
+typedef struct{
+	//t_cpu_base *base;
+	int id;
+	int socket;
+	int usoUltimoMinuto;
+}t_cpu;
+
 /*cpu*/
 t_list* cpus;
 
