@@ -19,7 +19,7 @@ typedef enum {
 	PCB_FIN,
 		PCB_FINQ,
 		PCB_FINALIZAR
-};
+} t_msg_id2;
 
 int PID = 1;
 int PID_GLOBAL=1;
@@ -32,14 +32,14 @@ int finalizar();
 int iniciar_consola();
 
 
-t_cpu cpu;
+t_cpu* cpu;
 pthread_t th_server_cpu;
 pthread_t contador_IO_PCB;
 
 
 int main(void) {
 	inicializar();
-	printf("INICIO CONSOLA\n");
+	printf("INICIANDO CONSOLA\n");
 
 	//pthread_create(&th_server_cpu, NULL, (void*)iniciar_server_select, NULL);
 
@@ -63,7 +63,8 @@ int main(void) {
 		FD_SET(fdNuevoNodo, &master);
         FD_SET(consola,&master); // agrego consola stdin
 		fdmax = fdNuevoNodo; // por ahora el maximo
-
+		printf("Consola iniciada \n");
+		fflush(stdout);
 		//log_info(logger, "inicio thread eschca de nuevos nodos");
 		// bucle principal
 		for (;;) {
@@ -204,10 +205,13 @@ void procesar_msg_consola(t_msg* msg){
 			if(list_size(cpus)>0){
 				while((i+1)<=list_size(cpus)){
 
-				cpu=list_get(cpus,i);
-					uso=60/cpu.usoUltimoMinuto;
+					cpu=cpu_buscar(i);
+			//	cpu=(t_cpu)(list_get(cpus,i));
+
+				int tiempoUsado= cpu->usoUltimoMinuto;
+					uso=60/tiempoUsado;
 					uso_rodondeado=round_2(uso,0);
-					printf("Cpu %d: %d",cpu.id,uso_rodondeado);
+					printf("Cpu %d: %d",cpu->id,uso_rodondeado);
 					i++;
 				}
 				}else
@@ -486,6 +490,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg){
 			break;
 
 		case PCB_FINALIZAR:
+
 
 			printf("Hay que finalizar el proceso");
 
