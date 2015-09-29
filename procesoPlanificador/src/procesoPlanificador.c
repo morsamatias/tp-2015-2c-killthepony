@@ -35,12 +35,12 @@ int iniciar_consola();
 t_cpu* cpu;
 pthread_t th_server_cpu;
 pthread_t contador_IO_PCB;
-
+time_t time1;
 
 int main(void) {
 	inicializar();
 	printf("INICIANDO CONSOLA\n");
-
+	time1=time(NULL);
 	//pthread_create(&th_server_cpu, NULL, (void*)iniciar_server_select, NULL);
 
 	t_cpu* cpu = NULL;
@@ -491,12 +491,40 @@ int procesar_mensaje_cpu(int socket, t_msg* msg){
 
 		case PCB_FINALIZAR:
 
+			pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
+
+			PID_GLOBAL=pcb->pid;
+			/*
+			Tiempo de retorno: tiempo transcurrido entre la llegada de
+			un proceso y su finalización.
+		     Tiempo de espera: tiempo que un proceso permanece en la
+			cola de preparados.
+		    Tiempo de respuesta: tiempo que un proceso bloqueado
+			tarda en entrar en la CPU desde que ocurre el suceso que lo
+			bloquea.
+                    */
+
+			if(list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)){
+
+			list_remove_by_condition(list_exec, (void*) es_el_pcb_buscado_en_exec);
+
+			}
+			t_finish finish;
+			t_pcb_finalizado pcb;
+
+			finish.pid=PID_GLOBAL;
+			list_add(list_finish,finish);
+
+          pcb.tiempo_total=difftime(time(NULL),time1);
 
 			printf("Hay que finalizar el proceso");
 
 			break;
 
 	default:
+
+
+
 		printf("No msgjjj\n");
 		break;
 	}

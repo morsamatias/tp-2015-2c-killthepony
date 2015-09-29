@@ -23,7 +23,7 @@
 
 #include "config_planif.h"
 #include <commons/collections/list.h>
-
+#include "time.h"
 
 int correr_proceso(char* path);
 int iniciar_server_select();
@@ -43,6 +43,16 @@ typedef struct {
 }t_pcb;
 */
 
+typedef struct{
+	int pid;
+	int cant_sentencias;
+	int tiempo_retorno;
+	int tiempo_respuesta;
+	int tiempo_espera;
+	int tiempo_total;
+}t_pcb_finalizado;
+
+
 
 
 
@@ -56,6 +66,8 @@ typedef struct{
 	int socket;
 	int usoUltimoMinuto;
 }t_cpu;
+
+t_list* procesosFinalizados;
 
 /*cpu*/
 t_list* cpus;
