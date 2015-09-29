@@ -12,6 +12,7 @@ char* CONFIG_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/CPU/Debug
 char* LOGGER_PATH = "log.txt";
 
 ///////////////////////////////////////HILOS////////////////////////////////////////////
+
 void* hilo_cpu(int *numero_hilo){
 
 	int numero= *numero_hilo;
@@ -19,8 +20,11 @@ void* hilo_cpu(int *numero_hilo){
 
 	t_msg* mensaje_planificador = NULL;
 
-	int socket_memoria = conectar_con_memoria();
-	int socket_planificador = conectar_con_planificador();
+
+	static __thread int socket_memoria = 0;
+	socket_memoria = conectar_con_memoria();
+	static __thread int socket_planificador = 0;
+	socket_planificador = conectar_con_planificador();
 
 	if (socket_memoria && socket_planificador){
 
