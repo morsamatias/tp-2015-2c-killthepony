@@ -14,12 +14,13 @@
 #include "string.h"
 #include "util.h"
 #include <math.h>
-
+#include "config_planif.h"
 
 typedef enum {
 	PCB_FIN,
 		PCB_FINQ,
-		PCB_FINALIZAR
+		PCB_FINALIZAR,
+
 } t_msg_id2;
 
 int PID = 1;
@@ -443,8 +444,40 @@ int procesar_mensaje_cpu(int socket, t_msg* msg){
 				cpu = cpu_buscar(id_cpu);
 				cpu->socket = socket;
 			}
-
 		break;
+
+		case SENTENCIAS_EJECUTADAS:
+
+
+                    if (msg->argv[3]==(QUANTUM())){
+
+
+            			pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
+
+            			PID_GLOBAL=pcb->pid;
+
+
+            			if(list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)){
+
+            			list_remove_by_condition(list_exec, (void*) es_el_pcb_buscado_en_exec);
+
+            			}
+            			t_ready* ready;
+
+            			ready->pid=PID_GLOBAL;
+
+            			list_add(list_ready,ready);
+
+            			if(cpu_disponible()){
+            									cpu = cpu_seleccionar();
+            									pcb->cpu_asignado = cpu->id;
+            									cpu_ejecutar(cpu, pcb);
+            								}
+
+
+                    }
+
+		switch(msg->argv[0]){
 
 		case PCB_IO:
 
@@ -452,6 +485,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg){
 
 			PID_GLOBAL=pcb->pid;
 			IO_GLOBAL=msg->argv[1];
+
+                int cantIO= msg->argv[2];
+
 
 			if(list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)){
 
@@ -480,6 +516,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg){
 
 			break;
 
+			/*
+
 		case PCB_FINQ:
  //VUELVE EN EL FIN DEL QUANTUM
 
@@ -505,7 +543,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg){
 									cpu_ejecutar(cpu, pcb);
 								}
 
-			break;
+			break; */
 
 		case PCB_FINALIZAR:
 
@@ -538,7 +576,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg){
 			printf("Hay que finalizar el proceso");
 
 			break;
-
+		}
+break;
 	default:
 
 
