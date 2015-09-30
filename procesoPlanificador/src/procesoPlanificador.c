@@ -467,7 +467,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg){
 
 
                     }
-
+                    else{
 		switch(msg->argv[0]){
 
 		case PCB_IO:
@@ -568,6 +568,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg){
 
 			break;
 		}
+                    }
 break;
 	default:
 
