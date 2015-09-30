@@ -102,7 +102,6 @@ t_cpu* cpu_buscar_por_socket(int socket){
 
 int cpu_ejecutar(t_cpu* cpu, t_pcb* pcb){
 
-
 	t_msg* msg = argv_message(PCB_A_EJECUTAR, 0);
 	enviar_y_destroy_mensaje(cpu->socket, msg);
 
@@ -197,7 +196,7 @@ int es_el_pcb_buscado_en_block(t_block* block);
 
 int pos_del_pcb(int pid);
 
-void procesar_msg_consola(t_msg* msg);
+void procesar_msg_consola(char* msg);
 
 double round_2(double X, int k);
 

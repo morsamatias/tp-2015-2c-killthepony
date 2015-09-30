@@ -13,6 +13,7 @@
 #include "procesoPlanificador.h"
 #include "string.h"
 #include "util.h"
+#include <math.h>
 
 
 typedef enum {
@@ -75,6 +76,17 @@ int main(void) {
 
 			// explorar conexiones existentes en busca de datos que leer
 			for (socket = 0; socket <= fdmax; socket++) {
+
+				if(socket==consola){
+
+					char comando_usuario[1000];
+					leer_comando_consola(comando_usuario);
+
+					procesar_msg_consola(comando_usuario);
+
+				}
+
+
 				if (FD_ISSET(socket, &read_fds)) { // ¡¡tenemos datos!!
 					if (socket == fdNuevoNodo) {	// gestionar nuevas conexiones
 						//char * ip;
@@ -93,11 +105,7 @@ int main(void) {
 					} else { // gestionar datos de un cliente ya conectado
 						t_msg *msg = recibir_mensaje(socket);
 
-						if(socket==consola){
 
-							procesar_msg_consola(msg);
-
-						}
 						if (msg == NULL) {
 							printf("Conexion cerrada %d\n", socket);
 							close(socket);
@@ -149,12 +157,12 @@ int get_nuevo_pid(){
 }
 
 
-void procesar_msg_consola(t_msg* msg){
+void procesar_msg_consola(char* msg){
 
 	char* path;
 	int pid;
 	//char* buff  ;
-	char comando[COMMAND_MAX_SIZE];
+	//char comando[COMMAND_MAX_SIZE];
 	char** input_user;
 //	printf("INICIO CONSOLA\n");
 /*
@@ -235,7 +243,17 @@ int correr_proceso(char* path){
 	pcb->pid = get_nuevo_pid();
 
 	pcb->cant_sentencias = get_cant_sent(path);
-	pcb->cant_a_ejectuar = get_cant_sent(path); // en caso de que se RR es el Q
+
+	int algoritmo=ALGORITMO_PLANIFICACION();
+
+		if(algoritmo==0){
+
+	pcb->cant_a_ejectuar = get_cant_sent(path);}
+		else{
+			pcb->cant_a_ejectuar =QUANTUM();
+			// en caso de que se RR es el Q
+		}
+
 	pcb->estado=NEW;
 
 	pcb_agregar(pcb);
@@ -509,13 +527,13 @@ int procesar_mensaje_cpu(int socket, t_msg* msg){
 			list_remove_by_condition(list_exec, (void*) es_el_pcb_buscado_en_exec);
 
 			}
-			t_finish finish;
-			t_pcb_finalizado pcb;
+			t_finish* finish;
+			t_pcb_finalizado* pcb;
 
-			finish.pid=PID_GLOBAL;
+			finish->pid=PID_GLOBAL;
 			list_add(list_finish,finish);
 
-          pcb.tiempo_total=difftime(time(NULL),time1);
+          pcb->tiempo_total=difftime(time(NULL),time1);
 
 			printf("Hay que finalizar el proceso");
 
