@@ -14,15 +14,6 @@
 #include "string.h"
 #include "util.h"
 #include <math.h>
-#include "config_planif.h"
-
-typedef enum {
-	PCB_FIN,
-		PCB_FINQ,
-		PCB_FINALIZAR,
-
-} t_msg_id2;
-
 int PID = 1;
 int PID_GLOBAL=1;
 int IO_GLOBAL=1;
