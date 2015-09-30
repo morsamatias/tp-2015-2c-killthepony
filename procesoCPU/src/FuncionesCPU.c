@@ -1,6 +1,13 @@
 
 #include "procesoCPU.h"
 
+typedef struct{
+	e_sentencia sentencia;		
+	t_pcb* pcb;		
+	int cantidad_sentencias;		
+	unsigned int tiempo;		
+}t_resultado_pcb;
+
 char* CONFIG_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoCPU/Debug/config.txt";
 char* LOGGER_PATH = "log.txt";
 
@@ -262,29 +269,65 @@ void sent_free(t_sentencia* sent){
 	free(sent);
 }
 
-int ejecutar(t_pcb* pcb){
-
-	char* mcod = file_get_mapped(pcb->path);
-	char** sents = string_split(mcod, "\n");
-	t_sentencia* sent = NULL;
-
-	///VER LAS SENTENCIA QUE NO SEA ENTRADA SALIDA
-	//verificar que sea finalizar
-	while(pcb_tiene_que_seguir_ejecutando(pcb)){
-
-		sent = sentencia_crear(sents[pcb->pc]);
-		sent_ejecutar(sent);
 
 
-
-		sent_free(sent);
-		pcb->pc++;
-	}
-
-	file_mmap_free(mcod, pcb->path);
-
-	return 0;
+		 
+t_resultado_pcb ejecutar(t_pcb* pcb){		
+		
+	bool es_entrada_salida=false;		
+		
+	t_resultado_pcb resultado;		
+		
+	int cantidad_a_ejecutar=pcb->cant_a_ejectuar;		
+	int contador=0;		
+ 		 
+ 	char* mcod = file_get_mapped(pcb->path);		 
+ 	char** sents = string_split(mcod, "\n");		 	
+ 	t_sentencia* sent = NULL;		 
+ 		 
+	sent = sentencia_crear(sents[pcb->pc]);	
+	
+	while((sent->sentencia!=final)&&(es_entrada_salida=false)&&(cantidad_a_ejecutar!=contador)){	
+			 if(sent->sentencia!=io){	
+			 	
+				sent_ejecutar(sent);		
+				sent_free(sent);		
+				pcb->pc++;		
+				sent = sentencia_crear(sents[pcb->pc]);		
+				contador=contador+1;		
+ 		 
+			}else{		
+				es_entrada_salida=true;		
+			}		
+	}		
+ 		 
+ 		 
+	if ((sent->sentencia==final)&&(cantidad_a_ejecutar!=contador)){		
+		sent_ejecutar(sent);		
+ 		sent_free(sent);		 	
+		}
+ 		 
+ 	file_mmap_free(mcod, pcb->path);		 
+ 		 
+	free_split(sents);		
+	resultado.pcb=pcb;		
+	resultado.sentencia=sent->sentencia;		
+	resultado.tiempo=sent->tiempo;		
+	resultado.cantidad_sentencias=contador;		
+	
+ return resultado;		
+	
 }
+
+
+int avisar_a_planificador(t_resultado_pcb respuesta){		
+		
+	t_msg* mensaje_a_planificador;		
+		
+	mensaje_a_planificador=argv_message(SENTENCIAS_EJECUTADAS,3,respuesta.pcb->pid,respuesta.sentencia,respuesta.tiempo);		
+		
+}
+
 
 int conectar_con_memoria(){
 	int sock;
