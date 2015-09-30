@@ -21,27 +21,25 @@ typedef struct {
 	int PID;
 	int pagina;
 	int entrada;
-	int libre;
-} t_paginas;
+} t_pagina;
 
 typedef struct {
-	int entrada;
-	int libre;
+	int PID;
+	int pagina;
 	int modificado;
-	char* bloque;
+	char* contenido;
 } t_memoria;
 
-typedef struct {
+/*typedef struct {
 	int posicion_memoria;
 	int posicion_TLB;
-} t_posicion_pagina;
+} t_pagina_proceso;
 
 typedef struct {
 	int PID;
 	int cant_paginas;
-	t_posicion_pagina* paginas; // EL INDICE ES LA PAGINA Y EL VALOR ES LA ENTRADA EN LA MEM PRINCIPAL
-	int prox_reemplazo_FIFO;
-} t_proceso;
+	t_list* paginas;
+} t_proceso;*/
 
 
 
@@ -52,9 +50,9 @@ typedef struct {
 t_log* 		logger;
 char* 		CONFIG_PATH = "config.txt";
 char* 		LOGGER_PATH = "log.txt";
-t_paginas* 	TLB;
-t_memoria* 	memoria;
-t_list*		l_paginas_por_proceso ;
+t_list* 	TLB;
+t_list*		paginas;
+t_list* 	memoria;
 t_config* 	cfg;
 int 		PUERTO_ESCUCHA();
 char* 		IP_SWAP();
@@ -67,7 +65,14 @@ int 		TLB_HABILITADA();
 int 		RETARDO_MEMORIA();
 char* 		ALGORITMO_REEMPLAZO();
 
-int			FIFO_TLB = 0;
+int			INDICE_TLB = 0;
+int 		gl_PID;
+int			gl_nro_pagina;
+int			gl_entrada;
+float		gl_TLB_acierto = 0.0;
+int			gl_TLB_total = 0;
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// DECLARACIONES //////////////////////////////////////
@@ -107,25 +112,39 @@ char* ALGORITMO_REEMPLAZO(){
 
 
 
-
-
-
-
 int iniciar_server();
 int inicializar();
 int finalizar();
-void procesar_mensaje_cpu(int socket, t_msg* msg);
 int conectar_con_swap();
 char* swap_leer_pagina(int pid, int pagina);
 int swap_nuevo_proceso(int pid, int paginas);
+int swap_escribir_pagina(int pid, int pagina, char* contenido);
 
 //// NUEVAS
 
-void eliminar_estructuras_de_un_proceso(t_proceso* proceso);
-void eliminar_estructuras_de_todos_los_procesos(t_proceso* proceso);
-void crear_estructuras_de_un_proceso(int PID, int paginas);
-int  iniciar_proceso_CPU(int pid, int paginas);
-int  escribir_pagina(int pid, int pagina, char* contenido);
-
+void 		procesar_mensaje_cpu						(int socket, t_msg* msg);
+void 		crear_estructuras_de_un_proceso				(int PID, int paginas);
+int  		iniciar_proceso_CPU							(int pid, int paginas);
+int  		escribir_pagina								(int pid, int pagina, char* contenido);
+int  		es_la_memoria_segun_PID						(t_memoria* pagina);
+int  		es_la_memoria_segun_PID_y_pagina			(t_memoria* pagina);
+void 		setear_flag_modificado						(int pid, int nro_pagina);
+int 		buscar_pagina_en_TLB						(int PID,int nro_pagina);
+t_pagina* 	crear_pagina								(int PID, int pagina, int entrada);
+t_memoria* 	crear_memoria								(int PID, int pagina, int modificado, char* contenido);
+void 		destruir_pagina								(t_pagina* pagina);
+void 		destruir_memoria							(t_memoria* memoria);
+int 		es_la_pagina_segun_PID_y_nro_pagina			(t_pagina* pagina);
+int 		es_la_pagina_segun_PID						(t_pagina* pagina);
+int 		buscar_pagina_en_paginas					(int PID,int nro_pagina);
+void		agregar_pagina_en_memoria					(int pid,int nro_pagina,char*buff_pag);
+void		modificar_pagina_en_memoria_segun_algoritmo	(int pid,int nro_pagina,char*buff_pag);
+void 		actualizar_entradas_en_tabla_de_paginas		(t_pagina* pagina);
+int 		reemplazar_pagina_en_memoria_segun_algoritmo(int PID, int pagina, char* contenido);
+char* 		usar_pagina_en_memoria_segun_algoritmo		(int PID, int nro_pagina, int entrada,int flag_TLB);
+void 		actualizar_entradas_en_tabla_de_paginas		(t_pagina* pagina);
+void 		agregar_pagina_en_TLB						(int PID, int pagina, int entrada);
+void 		recalcular_entrada							(t_pagina* pagina);
+void 		tasa_aciertos_TLB							();
 
 #endif /* PROCESOADMINDEMEMORIA_H_ */
