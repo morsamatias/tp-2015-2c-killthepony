@@ -61,7 +61,7 @@ int inicializar();
 int finalizar();
 int conectar_con_planificador();
 int procesar_mensaje_planif(t_msg* msg);
-int ejecutar(t_pcb* pcb);
+t_resultado_pcb ejecutar(t_pcb* pcb);
 int pcb_tiene_que_seguir_ejecutando(t_pcb* pcb);
 int conectar_con_memoria();
 void* hilo_cpu(int *numero_hilo);
