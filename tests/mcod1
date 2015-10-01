@@ -1,4 +1,5 @@
 iniciar 2 
 escribir 1 "hola"
 leer 1
+leer 2
 finalizar
