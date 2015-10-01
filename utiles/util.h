@@ -82,6 +82,15 @@
 #define MAX_PATH 1024
 
 /****************** IDS DE MENSAJES. ******************/
+typedef enum {
+	iniciar,
+	leer,
+	escribir,
+	io,
+	final,
+	error
+}e_sentencia;
+
 
 typedef enum {
 	CPU_NUEVO,
@@ -102,7 +111,8 @@ typedef enum {
 	SWAP_ESCRIBIR,
 	SWAP_FINALIZAR,
 	SWAP_NO_OK,
-	SENTENCIAS_EJECUTADAS
+	SENTENCIAS_EJECUTADAS,
+	PCB_FINALIZAR
 
 } t_msg_id;
 
