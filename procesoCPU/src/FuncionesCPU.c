@@ -1,16 +1,20 @@
 
 #include "procesoCPU.h"
 
-typedef struct{
-	e_sentencia sentencia;		
-	t_pcb* pcb;		
-	int cantidad_sentencias;		
-	unsigned int tiempo;		
-}t_resultado_pcb;
-
 char* CONFIG_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoCPU/Debug/config.txt";
 char* LOGGER_PATH = "log.txt";
 
+///////////////////////////////////////PORCENTAJE////////////////////////////////////////
+
+void* hilo_porcentaje(numero){
+
+	porcentaje_a_planificador[numero]=0;
+	sleep(60);
+	porcentaje_a_planificador[numero]= (porcentaje[numero] * 100) / (60 / RETARDO()) ;
+
+	porcentaje=0;
+
+}
 ///////////////////////////////////////HILOS////////////////////////////////////////////
 void* hilo_cpu(int *numero_hilo){
 
@@ -18,47 +22,45 @@ void* hilo_cpu(int *numero_hilo){
 
 	t_msg* mensaje_planificador = NULL;
 
+	//int* cantidad_sentencias_ejecutadas = malloc(10*(sizeof(int)));
 
-	static __thread int socket_memoria = 0;
-	socket_memoria = conectar_con_memoria();
-	static __thread int socket_planificador = 0;
-	socket_planificador = conectar_con_planificador();
+
+	socket_memoria[numero] = conectar_con_memoria();
+	socket_planificador[numero] = conectar_con_planificador();
 
 	if (socket_memoria && socket_planificador){
 
 		while(true){
 
 				log_trace(logger, "Esperando peticiones del planificador");
-				mensaje_planificador = recibir_mensaje(socket_planif);
+				mensaje_planificador = recibir_mensaje(socket_planificador[numero]);
 				log_trace(logger, "Nuevo mensaje del planificador");
-				procesar_mensaje_planif(mensaje_planificador);//pasarle socket_planificador y de memoria
+				procesar_mensaje_planif(mensaje_planificador,numero);//pasarle socket_planificador y de memoria
 		}
-
-	}else
+      }else
 		log_trace(logger,"Error al conectarse con la memoria y el planificador. \n");
 
 }
 
 
-
-
-
-
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-int procesar_mensaje_planif(t_msg* msg){
+int procesar_mensaje_planif(t_msg* msg,int numero){
 	//print_msg(msg);
 	t_pcb* pcb = NULL;
+	t_resultado_pcb mensaje_planificador;
+
 	switch(msg->header.id){
 	case PCB_A_EJECUTAR:
 		destroy_message(msg);
 
-		pcb = recibir_mensaje_pcb(socket_planif);
+		pcb = recibir_mensaje_pcb(socket_planificador[numero]);
 		//pcb_print(pcb);
 
 		log_trace(logger, "Ejecutando %s, PC: %d, cant: %d, cant_sent: %d", pcb->path, pcb->pc, pcb->cant_a_ejectuar, pcb->cant_sentencias);
-		ejecutar(pcb);
+		mensaje_planificador = ejecutar(pcb,socket_memoria[numero],numero);
 		log_trace(logger, "Fin ejecucion %s, PC: %d, cant: %d, cant_sent: %d", pcb->path, pcb->pc, pcb->cant_a_ejectuar, pcb->cant_sentencias);
+		avisar_a_planificador(mensaje_planificador,socket_planificador[numero]);
+		free(pcb);
 
 		break;
 
@@ -123,7 +125,7 @@ t_sentencia* sentencia_crear(char* sentencia){
 }
 
 
-int sent_ejecutar_iniciar(t_sentencia* sent){
+int sent_ejecutar_iniciar(t_sentencia* sent,int socket_mem){
 	int rs = 0;
 	t_msg* msg = NULL;
 	msg = argv_message(MEM_INICIAR, 1, sent->cant_paginas);
@@ -150,7 +152,7 @@ int sent_ejecutar_iniciar(t_sentencia* sent){
 }
 
 
-int sent_ejecutar_finalizar(t_sentencia* sent){
+int sent_ejecutar_finalizar(t_sentencia* sent,int socket_mem){
 	int rs = 0;
 	t_msg* msg = NULL;
 	msg = argv_message(MEM_FINALIZAR, 0);
@@ -177,7 +179,7 @@ int sent_ejecutar_finalizar(t_sentencia* sent){
 }
 
 
-int sent_ejecutar_escribir(t_sentencia* sent){
+int sent_ejecutar_escribir(t_sentencia* sent,int socket_mem){
 	int rs = 0;
 
 	t_msg* msg = NULL;
@@ -205,7 +207,7 @@ int sent_ejecutar_escribir(t_sentencia* sent){
 }
 
 
-char* sent_ejecutar_leer(t_sentencia* sent){
+char* sent_ejecutar_leer(t_sentencia* sent,int socket_mem){
 	char* pagina = NULL;
 
 	t_msg* msg = NULL;
@@ -233,18 +235,19 @@ char* sent_ejecutar_leer(t_sentencia* sent){
 	}
 }
 
-int sent_ejecutar(t_sentencia* sent){
+int sent_ejecutar(t_sentencia* sent,int socket_mem){
+	porcentaje = porcentaje + 1;
 	char* pagina = NULL;
 	switch (sent->sentencia) {
 	case iniciar:
-		sent_ejecutar_iniciar(sent);
+		sent_ejecutar_iniciar(sent,socket_mem);
 		break;
 	case leer:
-		pagina  = sent_ejecutar_leer(sent);
+		pagina  = sent_ejecutar_leer(sent,socket_mem);
 		FREE_NULL(pagina);
 		break;
 	case escribir:
-		sent_ejecutar_escribir(sent);
+		sent_ejecutar_escribir(sent,socket_mem);
 		break;
 	case io:
 
@@ -253,7 +256,7 @@ int sent_ejecutar(t_sentencia* sent){
 		log_trace(logger, "Error de sentencia en archivo");
 		break;
 	case final:
-		sent_ejecutar_finalizar(sent);
+		sent_ejecutar_finalizar(sent,socket_mem);
 		break;
 	default:
 		log_trace(logger, "case default");
@@ -272,7 +275,7 @@ void sent_free(t_sentencia* sent){
 
 
 		 
-t_resultado_pcb ejecutar(t_pcb* pcb){		
+t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem,int numero){
 		
 	bool es_entrada_salida=false;		
 		
@@ -290,7 +293,8 @@ t_resultado_pcb ejecutar(t_pcb* pcb){
 	while((sent->sentencia!=final)&&(es_entrada_salida=false)&&(cantidad_a_ejecutar!=contador)){	
 			 if(sent->sentencia!=io){	
 			 	
-				sent_ejecutar(sent);		
+				porcentaje = porcentaje + 1;
+				sent_ejecutar(sent,socket_mem);
 				sent_free(sent);		
 				pcb->pc++;		
 				sent = sentencia_crear(sents[pcb->pc]);		
@@ -302,8 +306,9 @@ t_resultado_pcb ejecutar(t_pcb* pcb){
 	}		
  		 
  		 
-	if ((sent->sentencia==final)&&(cantidad_a_ejecutar!=contador)){		
-		sent_ejecutar(sent);		
+	if ((sent->sentencia==final)&&(cantidad_a_ejecutar!=contador)){
+		porcentaje = porcentaje + 1;
+		sent_ejecutar(sent,socket_mem);
  		sent_free(sent);		 	
 		}
  		 
@@ -320,13 +325,35 @@ t_resultado_pcb ejecutar(t_pcb* pcb){
 }
 
 
-int avisar_a_planificador(t_resultado_pcb respuesta){		
+int avisar_a_planificador(t_resultado_pcb respuesta,int numero){
 		
 	t_msg* mensaje_a_planificador;		
+
+	int i=0;
+
+	mensaje_a_planificador = argv_message(SENTENCIAS_EJECUTADAS,4,respuesta.pcb->pid,respuesta.sentencia,respuesta.tiempo,respuesta.cantidad_sentencias);
 		
-	mensaje_a_planificador=argv_message(SENTENCIAS_EJECUTADAS,3,respuesta.pcb->pid,respuesta.sentencia,respuesta.tiempo);		
-		
+	i = enviar_y_destroy_mensaje(socket_planificador[numero],mensaje_a_planificador);
+
+	return i;
 }
+
+
+int enviar_porcentaje_a_planificador(int porcentaje_a_enviar,int numero){
+
+	t_msg* mensaje_a_planificador;
+
+	int i=0;
+
+	mensaje_a_planificador = argv_message(CPU_PORCENTAJE_UTILIZACION,1,porcentaje_a_planificador[numero]);
+
+	i = enviar_y_destroy_mensaje(socket_planificador[numero],mensaje_a_planificador);
+
+	return i;
+
+}
+
+
 
 
 int conectar_con_memoria(){
