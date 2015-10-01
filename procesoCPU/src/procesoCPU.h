@@ -37,6 +37,9 @@ t_config* cfg;
 int socket_planif;
 int socket_mem;
 
+int* porcentaje;
+int* porcentaje_a_planificador;
+
 /////////////////////////////////////////////////ESTRUCTURAS/////////////////////////////////////////
 typedef enum {
 	iniciar,
@@ -55,14 +58,25 @@ typedef struct{
 	unsigned int tiempo;
 }t_sentencia;
 
+typedef struct{
+	e_sentencia sentencia;
+	t_pcb* pcb;
+	int cantidad_sentencias;
+	unsigned int tiempo;
+}t_resultado_pcb;
 ///////////////////////////////////////////////PROTOTIPOS//////////////////////////////////////////////
 
 int inicializar();
 int finalizar();
 int conectar_con_planificador();
-int procesar_mensaje_planif(t_msg* msg);
-t_resultado_pcb ejecutar(t_pcb* pcb);
+int procesar_mensaje_planif(t_msg* msg,int numero);
+t_resultado_pcb ejecutar(t_pcb* pcb,int numero);
+int procesar_mensaje_planif(t_msg* msg,int numero);
+t_resultado_pcb ejecutar(t_pcb* pcb,int numero);
 int pcb_tiene_que_seguir_ejecutando(t_pcb* pcb);
+int sent_ejecutar_iniciar(t_sentencia* sent,int socket_mem);
+char* sent_ejecutar_leer(t_sentencia* sent,int socket_mem);
+int sent_ejecutar_finalizar(t_sentencia* sent,int socket_mem);
 int conectar_con_memoria();
 void* hilo_cpu(int *numero_hilo);
 char* IP_PLANIFICADOR();
@@ -72,6 +86,7 @@ int PUERTO_MEMORIA();
 int ID();
 int CANTIDAD_HILOS();
 int RETARDO();
+
 
 
 #endif /* PROCESOCPU_H_ */
