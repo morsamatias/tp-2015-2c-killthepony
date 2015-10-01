@@ -26,7 +26,7 @@ typedef enum {
 	NODO_AGREGAR
 } e_comando;
 
-#define COMMAND_MAX_SIZE  256
+#define COMMAND_MAX_SIZE 1000
 
 e_comando parsear_comando(char* input_user);
 void leer_comando_consola(char* comando);

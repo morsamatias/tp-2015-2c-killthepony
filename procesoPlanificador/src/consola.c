@@ -10,13 +10,13 @@
 
 e_comando parsear_comando(char* comando) {
 
-	if (string_equals_ignore_case(comando, "r"))
+	if (string_starts_with(comando, "r") || string_starts_with(comando, "c"))
 		return CORRER;
 	if (string_equals_ignore_case(comando, "f"))
 		return FINALIZAR;
-	if (string_equals_ignore_case(comando, "ps"))
+	if (string_equals_ignore_case(comando, "p"))
 		return PS;
-	if (string_equals_ignore_case(comando, "cpu"))
+	if (string_equals_ignore_case(comando, "c"))
 		return CPU;
 	if (string_equals_ignore_case(comando, "exit"))
 		return SALIR;
@@ -50,6 +50,7 @@ char** separar_por_espacios(char* string) {
 }
 
 void leer_comando_consola(char* comando) {
+	memset(comando, '\0', COMMAND_MAX_SIZE);
 	fgets(comando, COMMAND_MAX_SIZE, stdin);
 	//comando[strlen(comando)] = ' '	;
 
