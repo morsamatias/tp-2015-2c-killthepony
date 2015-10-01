@@ -61,6 +61,12 @@ int inicializar(){
 
 	swap = swap_inicializar();
 
+	////////////////////////////////////////
+	//fix temporal
+	//cargo el archivo de letras A porque sino me da error el envio de cadena vacia la lib de socket!!!
+	int TAMANIO_SWAP = CANTIDAD_PAGINAS() * TAMANIO_PAGINA();
+	memset(swap, 'A', TAMANIO_SWAP);
+	////////////////////////////////////
 
 	esp_ocupado =  list_create();
 
@@ -265,6 +271,7 @@ int swap_escribir(int pid, int pagina, char* contenido){
 char* swap_leer(int pid, int pagina){
 	char* contenido = malloc(TAMANIO_PAGINA());
 	memset(contenido, '\0', TAMANIO_PAGINA());
+	//memset(contenido, 'A', TAMANIO_PAGINA());//inicializo con A porque la lib de socket no sporta envio de cadena vacia !!!
 
 	memcpy(contenido, swap + (TAMANIO_PAGINA() * pagina), TAMANIO_PAGINA());
 
@@ -407,6 +414,7 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			//envio 1 = true
 			//contenido = string_from_format("Pid: %d, pag: %d, contenido: HOLAAA", pid, pagina);
 			contenido = swap_leer(pid, pagina);
+			log_trace(logger, "SWAP_LEER. pid: %d, Pagina: %d Contenido: %s", pid, pagina, contenido);
 
 			msg = string_message(SWAP_OK,contenido , 0);
 			enviar_y_destroy_mensaje(socket_mem, msg);
