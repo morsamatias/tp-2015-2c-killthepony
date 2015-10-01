@@ -4,10 +4,14 @@
 int main(void) {
 
 	int contador=CANTIDAD_HILOS();
+	
+	socket_planificador = malloc(contador*sizeof(int));
+	socket_memoria = malloc(contador*sizeof(int));
+	
+	porcentaje = malloc(contador*sizeof(int));
+	porcentaje_a_planificador = malloc (contador*sizeof(int));
 
 	int vector[contador];
-
-
 
 	pthread_t *hilo=(pthread_t*)malloc((contador)*sizeof(pthread_t));
 
