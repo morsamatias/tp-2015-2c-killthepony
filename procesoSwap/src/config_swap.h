@@ -19,6 +19,11 @@ char* NOMBRE_SWAP();
 int CANTIDAD_PAGINAS();
 int TAMANIO_PAGINA();
 int RETARDO_COMPACTACION();
+int SWAP_RETARDO();
+
+int RETARDO_SWAP(){
+	return config_get_int_value(cfg, "RETARDO_SWAP");
+}
 
 int PUERTO_ESCUCHA(){
 	return config_get_int_value(cfg, "PUERTO_ESCUCHA");

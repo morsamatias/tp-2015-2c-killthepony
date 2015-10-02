@@ -269,8 +269,8 @@ int swap_escribir(int pid, int pagina, char* contenido){
  * devuelve una copia del contenido de la pagina;
  */
 char* swap_leer(int pid, int pagina){
-	char* contenido = malloc(TAMANIO_PAGINA());
-	memset(contenido, '\0', TAMANIO_PAGINA());
+	char* contenido = malloc(TAMANIO_PAGINA()+1);
+	memset(contenido, '\0', TAMANIO_PAGINA()+1);
 	//memset(contenido, 'A', TAMANIO_PAGINA());//inicializo con A porque la lib de socket no sporta envio de cadena vacia !!!
 
 	memcpy(contenido, swap + (TAMANIO_PAGINA() * pagina), TAMANIO_PAGINA());
@@ -387,6 +387,8 @@ int swap_liberar(int pid){
 void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 	char* contenido;
 	int pid, pagina, paginas;
+
+
 	//print_msg(msg);
 	switch (msg->header.id) {
 		case SWAP_INICIAR:
@@ -396,11 +398,15 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			pthread_mutex_lock(&mutex);
 			log_trace(logger, "SWAP_INICIAR . pid: %d, Paginas: %d", pid, paginas);
 			pthread_mutex_unlock(&mutex);
+
 			destroy_message(msg);
+
 
 			swap_nuevo_proceso(pid, paginas);
 
+
 			//envio 1 = true
+			sleep(RETARDO_SWAP());
 			msg = argv_message(SWAP_OK, 0);
 			enviar_y_destroy_mensaje(socket_mem, msg);
 			break;
@@ -416,6 +422,8 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			contenido = swap_leer(pid, pagina);
 			log_trace(logger, "SWAP_LEER. pid: %d, Pagina: %d Contenido: %s", pid, pagina, contenido);
 
+
+			sleep(RETARDO_SWAP());
 			msg = string_message(SWAP_OK,contenido , 0);
 			enviar_y_destroy_mensaje(socket_mem, msg);
 			free(contenido);
@@ -437,6 +445,9 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			swap_escribir(pid, pagina, contenido);
 
 			FREE_NULL(contenido);
+
+
+			sleep(RETARDO_SWAP());
 			//envio 1 = true
 			msg = argv_message(SWAP_OK, 0);
 			enviar_y_destroy_mensaje(socket_mem, msg);
@@ -451,6 +462,7 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 
 			swap_liberar(pid);
 
+			sleep(RETARDO_SWAP());
 			msg = argv_message(SWAP_OK, 0);
 			enviar_y_destroy_mensaje(socket_mem, msg);
 
