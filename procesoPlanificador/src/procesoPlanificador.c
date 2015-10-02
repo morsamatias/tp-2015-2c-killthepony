@@ -259,10 +259,13 @@ int correr_proceso(char* path) {
 
 	list_add(list_ready, new);
 
+	pcb->estado=READY;
+
 	t_cpu* cpu = NULL;
 	if (cpu_disponible()) {
 		cpu = cpu_seleccionar();
 		pcb->cpu_asignado = cpu->id;
+
 		cpu_ejecutar(cpu, pcb);
 	}
 
@@ -426,6 +429,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 					list_add(list_block, block);
 
+					pcb->estado=BLOCK;
+
 					pid_string = string_itoa(PID_GLOBAL);
 
 					pthread_create(&contador_IO_PCB, NULL, (void*) controlar_IO,
@@ -494,12 +499,13 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 				}
 				t_finish* finish;
-				t_pcb_finalizado* pcb;
+				t_pcb_finalizado* pcb2;
 
 				finish->pid = PID_GLOBAL;
 				list_add(list_finish, finish);
 
-				pcb->tiempo_total = difftime(time(NULL), time1);
+				pcb2->tiempo_total = difftime(time(NULL), time1);
+				pcb->estado=FINISH;
 
 				printf("Hay que finalizar el proceso");
 
@@ -553,6 +559,8 @@ void controlar_IO(char* pid_string) {
 
 	PID_GLOBAL = atoi(pid_string);
 
+	t_pcb* pcb =list_find(pcbs,(void*)es_el_pcb_buscado_por_id);
+
 	list_remove_by_condition(list_block, (void*) es_el_pcb_buscado_en_block);
 
 	t_ready* ready;
@@ -560,6 +568,8 @@ void controlar_IO(char* pid_string) {
 	ready->pid = block->pid;
 
 	list_add(list_ready, ready);
+
+	pcb->estado=READY;
 
 	pthread_exit(NULL);
 
@@ -654,11 +664,17 @@ void cambiar_a_exec(int pid) {
 	PID_GLOBAL = pid;
 	list_remove_by_condition(list_ready, (void*) es_el_pcb_buscado_en_ready);
 
+	t_pcb* pcb;
+
+	pcb=list_find(pcbs,(void*)es_el_pcb_buscado());
+
 	t_exec* exec = malloc(sizeof(t_exec));
 
 	exec->pid = pid;
 
 	list_add(list_exec, exec);
+
+	pcb->estado=EXEC;
 
 	return;
 
