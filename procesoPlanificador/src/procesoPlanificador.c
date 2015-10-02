@@ -209,18 +209,18 @@ void procesar_msg_consola(char* msg) {
 		i = 0;
 		printf("Uso CPU en el ultimo min \n");
 
-		int uso;
-		int uso_rodondeado;
+		//int uso;
+		//int uso_rodondeado;
 		if (list_size(cpus) > 0) {
 			while ((i + 1) <= list_size(cpus)) {
 
 				cpu = cpu_buscar(i);
 				//	cpu=(t_cpu)(list_get(cpus,i));
 
-				int tiempoUsado = cpu->usoUltimoMinuto;
-				uso = 60 / tiempoUsado;
-				uso_rodondeado = round_2(uso, 0);
-				printf("Cpu %d: %d", cpu->id, uso_rodondeado);
+				//int tiempoUsado = cpu->usoUltimoMinuto;
+				//uso = 60 / tiempoUsado;
+				//uso_rodondeado = round_2(uso, 0);
+				printf("Cpu %d: %d", cpu->id, cpu->usoUltimoMinuto);
 				i++;
 			}
 		} else {
