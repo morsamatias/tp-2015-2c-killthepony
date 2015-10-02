@@ -1,5 +1,5 @@
 iniciar 2 
-escribir 1 "hola"
+escribir 1 "hi"
 leer 1
 leer 2
 finalizar
