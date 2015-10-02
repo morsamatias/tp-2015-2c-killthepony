@@ -14,6 +14,7 @@ void* hilo_porcentaje(numero){
 
 	porcentaje=0;
 
+	return NULL;
 }
 ///////////////////////////////////////HILOS////////////////////////////////////////////
 void* hilo_cpu(int *numero_hilo){
@@ -40,6 +41,7 @@ void* hilo_cpu(int *numero_hilo){
       }else
 		log_trace(logger,"Error al conectarse con la memoria y el planificador. \n");
 
+	return NULL;
 }
 
 
@@ -57,7 +59,7 @@ int procesar_mensaje_planif(t_msg* msg,int numero){
 		//pcb_print(pcb);
 
 		log_trace(logger, "Ejecutando %s, PC: %d, cant: %d, cant_sent: %d", pcb->path, pcb->pc, pcb->cant_a_ejectuar, pcb->cant_sentencias);
-		mensaje_planificador = ejecutar(pcb,socket_memoria[numero],numero);
+		mensaje_planificador = ejecutar(pcb,socket_memoria[numero]);
 		log_trace(logger, "Fin ejecucion %s, PC: %d, cant: %d, cant_sent: %d", pcb->path, pcb->pc, pcb->cant_a_ejectuar, pcb->cant_sentencias);
 		avisar_a_planificador(mensaje_planificador,socket_planificador[numero]);
 		free(pcb);
@@ -93,8 +95,11 @@ char* get_texto_solo(char* texto){
 /*
  * el param seria p.e: escribir 3 "hola"
  */
-t_sentencia* sentencia_crear(char* sentencia){
+t_sentencia* sentencia_crear(char* sentencia, int pid){
 	t_sentencia* sent = malloc(sizeof(*sent));
+
+	sent->pid = pid;
+
 	char** split =  string_split(sentencia, " ");
 
 	if(string_starts_with(sentencia, "iniciar ")){
@@ -126,13 +131,14 @@ t_sentencia* sentencia_crear(char* sentencia){
 
 
 int sent_ejecutar_iniciar(t_sentencia* sent,int socket_mem){
+
 	int rs = 0;
 	t_msg* msg = NULL;
-	msg = argv_message(MEM_INICIAR, 1, sent->cant_paginas);
-	log_trace(logger, "Enviando mensaje MemIniciar %d",sent->cant_paginas);
+	msg = argv_message(MEM_INICIAR, 2, sent->pid, sent->cant_paginas);
+	log_trace(logger, "Enviando mensaje MemIniciar %d", sent->cant_paginas);
 	enviar_y_destroy_mensaje(socket_mem, msg);
 
-	log_trace(logger, "Esperando Rta MemIniciar %d",sent->cant_paginas);
+	log_trace(logger, "Esperando Rta MemIniciar %d", sent->cant_paginas);
 	msg = recibir_mensaje(socket_mem);
 	if (msg != NULL) {
 
@@ -140,8 +146,8 @@ int sent_ejecutar_iniciar(t_sentencia* sent,int socket_mem){
 			//el argv[0] es el estado
 			log_trace(logger, "Rta mensaje MemIniciar %d", msg->argv[0]);
 			rs = 0; // OK
-		}else{
-			rs = -1;// NO OK
+		} else {
+			rs = -1; // NO OK
 		}
 		destroy_message(msg);
 		return rs;
@@ -155,7 +161,7 @@ int sent_ejecutar_iniciar(t_sentencia* sent,int socket_mem){
 int sent_ejecutar_finalizar(t_sentencia* sent,int socket_mem){
 	int rs = 0;
 	t_msg* msg = NULL;
-	msg = argv_message(MEM_FINALIZAR, 0);
+	msg = argv_message(MEM_FINALIZAR, 1, sent->pid);
 	log_trace(logger, "Enviando mensaje MEM_FINALIZAR ");
 	enviar_y_destroy_mensaje(socket_mem, msg);
 
@@ -167,8 +173,8 @@ int sent_ejecutar_finalizar(t_sentencia* sent,int socket_mem){
 			//el argv[0] es el estado
 			log_trace(logger, "Rta mensaje MEM_FINALIZAR");
 			rs = 0; // OK
-		}else{
-			rs = -1;// NO OK
+		} else {
+			rs = -1; // NO OK
 		}
 		destroy_message(msg);
 		return rs;
@@ -183,18 +189,20 @@ int sent_ejecutar_escribir(t_sentencia* sent,int socket_mem){
 	int rs = 0;
 
 	t_msg* msg = NULL;
-	msg = string_message(MEM_ESCRIBIR, sent->texto, 1, sent->pagina);
-	log_trace(logger, "Enviando mensaje MEM_ESCRIBIR %d %s",	sent->pagina, sent->texto);
+	msg = string_message(MEM_ESCRIBIR, sent->texto, 2, sent->pid, sent->pagina);
+	log_trace(logger, "Enviando mensaje MEM_ESCRIBIR %d %s", sent->pagina,
+			sent->texto);
 	enviar_y_destroy_mensaje(socket_mem, msg);
 
-	log_trace(logger, "Esperando rta mensaje MEM_ESCRIBIR %d", sent->pagina, sent->texto);
+	log_trace(logger, "Esperando rta mensaje MEM_ESCRIBIR %d", sent->pagina,
+			sent->texto);
 	msg = recibir_mensaje(socket_mem);
 	if (msg != NULL) {
 		if (msg->header.id == MEM_OK) {
 			//en el stream esta el contenido de la pagina
 			log_trace(logger, "Rta mensaje MEM_ESCRIBIR %d", msg->argv[0]);
 			rs = 0; // OK
-		}else{
+		} else {
 			rs = -1;
 		}
 		destroy_message(msg);
@@ -211,8 +219,8 @@ char* sent_ejecutar_leer(t_sentencia* sent,int socket_mem){
 	char* pagina = NULL;
 
 	t_msg* msg = NULL;
-	msg = argv_message(MEM_LEER, 1, sent->pagina);
-	log_trace(logger, "Enviando mensaje MEM_LEER %d",	sent->pagina);
+	msg = argv_message(MEM_LEER, 2, sent->pid, sent->pagina);
+	log_trace(logger, "Enviando mensaje MEM_LEER %d", sent->pagina);
 	enviar_y_destroy_mensaje(socket_mem, msg);
 
 	log_trace(logger, "Esperando rta mensaje MEM_LEER %d", sent->pagina);
@@ -223,7 +231,7 @@ char* sent_ejecutar_leer(t_sentencia* sent,int socket_mem){
 			log_trace(logger, "Rta mensaje: MEM_LEER %s", msg->stream);
 			pagina = string_duplicate(msg->stream);
 
-		}else{
+		} else {
 			pagina = NULL;
 		}
 		destroy_message(msg);
@@ -275,7 +283,7 @@ void sent_free(t_sentencia* sent){
 
 
 		 
-t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem,int numero){
+t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem){
 		
 	bool es_entrada_salida=false;		
 		
@@ -288,16 +296,15 @@ t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem,int numero){
  	char** sents = string_split(mcod, "\n");		 	
  	t_sentencia* sent = NULL;		 
  		 
-	sent = sentencia_crear(sents[pcb->pc]);	
+	sent = sentencia_crear(sents[pcb->pc], pcb->pid);
 	
-	while((sent->sentencia!=final)&&(es_entrada_salida=false)&&(cantidad_a_ejecutar!=contador)){	
-			 if(sent->sentencia!=io){	
-			 	
+	while((sent->sentencia!=final)&&(!es_entrada_salida)&&(cantidad_a_ejecutar!=contador)){
+			 if(sent->sentencia!=io){
 				porcentaje = porcentaje + 1;
 				sent_ejecutar(sent,socket_mem);
 				sent_free(sent);		
 				pcb->pc++;		
-				sent = sentencia_crear(sents[pcb->pc]);		
+				sent = sentencia_crear(sents[pcb->pc], pcb->pid);
 				contador=contador+1;		
  		 
 			}else{		
@@ -325,7 +332,7 @@ t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem,int numero){
 }
 
 
-int avisar_a_planificador(t_resultado_pcb respuesta,int numero){
+int avisar_a_planificador(t_resultado_pcb respuesta,int socket_planif){
 		
 	t_msg* mensaje_a_planificador;		
 
@@ -333,7 +340,7 @@ int avisar_a_planificador(t_resultado_pcb respuesta,int numero){
 
 	mensaje_a_planificador = argv_message(SENTENCIAS_EJECUTADAS,4,respuesta.pcb->pid,respuesta.sentencia,respuesta.tiempo,respuesta.cantidad_sentencias);
 		
-	i = enviar_y_destroy_mensaje(socket_planificador[numero],mensaje_a_planificador);
+	i = enviar_y_destroy_mensaje(socket_planif,mensaje_a_planificador);
 
 	return i;
 }

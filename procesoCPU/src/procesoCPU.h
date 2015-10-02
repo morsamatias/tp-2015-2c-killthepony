@@ -34,21 +34,16 @@ pthread_mutex_t mutex;
 t_log* logger;
 t_config* cfg;
 
-int socket_planif;
-int socket_mem;
+//int socket_planif;
+//int socket_mem;
+
+int* socket_planificador;
+int* socket_memoria;
 
 int* porcentaje;
 int* porcentaje_a_planificador;
 
 /////////////////////////////////////////////////ESTRUCTURAS/////////////////////////////////////////
-typedef enum {
-	iniciar,
-	leer,
-	escribir,
-	io,
-	final,
-	error
-}e_sentencia;
 
 typedef struct{
 	e_sentencia sentencia;
@@ -56,6 +51,7 @@ typedef struct{
 	char* texto;
 	int cant_paginas;
 	unsigned int tiempo;
+	int pid;
 }t_sentencia;
 
 typedef struct{
@@ -70,7 +66,7 @@ int inicializar();
 int finalizar();
 int conectar_con_planificador();
 int procesar_mensaje_planif(t_msg* msg,int numero);
-t_resultado_pcb ejecutar(t_pcb* pcb,int numero);
+t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem);
 int procesar_mensaje_planif(t_msg* msg,int numero);
 t_resultado_pcb ejecutar(t_pcb* pcb,int numero);
 int pcb_tiene_que_seguir_ejecutando(t_pcb* pcb);
@@ -86,6 +82,8 @@ int PUERTO_MEMORIA();
 int ID();
 int CANTIDAD_HILOS();
 int RETARDO();
+
+int avisar_a_planificador(t_resultado_pcb respuesta,int socket_planif);
 
 
 

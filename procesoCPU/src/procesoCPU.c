@@ -1,8 +1,10 @@
 
 #include "procesoCPU.h"
 
-int main(void) {
 
+
+int main(void) {
+	inicializar();
 	int contador=CANTIDAD_HILOS();
 	
 	socket_planificador = malloc(contador*sizeof(int));
