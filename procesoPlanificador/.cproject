@@ -135,6 +135,7 @@
 			<resource resourceType="PROJECT" workspacePath="/procesoPlanificador"/>
 		</configuration>
 		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/utiles"/>
 			<resource resourceType="PROJECT" workspacePath="/procesoPlanificador"/>
 		</configuration>
 	</storageModule>

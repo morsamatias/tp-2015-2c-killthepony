@@ -48,7 +48,7 @@ int main(void) {
 	if ((fdNuevoNodo = server_socket(port)) < 0) {
 		handle_error("No se pudo iniciar el server");
 	}
-	printf("server iniciado en %d\n", port);
+	//printf("server iniciado en %d\n", port);
 
 	int consola = 0;
 
@@ -58,6 +58,12 @@ int main(void) {
 	FD_SET(consola, &master); // agrego consola stdin
 	fdmax = fdNuevoNodo; // por ahora el maximo
 	printf("Consola iniciada \n");
+
+	printf("Opciones Disponibles: \n ");
+
+
+	printf("CORRER Path \n FINALIZAR Pid \n PS \n CPU \n");
+
 	fflush(stdout);
 	//log_info(logger, "inicio thread eschca de nuevos nodos");
 	// bucle principal
