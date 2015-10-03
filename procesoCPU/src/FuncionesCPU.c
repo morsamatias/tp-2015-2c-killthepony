@@ -303,6 +303,7 @@ t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem){
 	sent = sentencia_crear(sents[pcb->pc], pcb->pid);
 	
 	while((sent->sentencia!=final)&&(!es_entrada_salida)&&(cantidad_a_ejecutar!=contador)&&(st==0)){
+			sleep(RETARDO());
 			 if(sent->sentencia!=io){
 				porcentaje = porcentaje + 1;
 				st = sent_ejecutar(sent,socket_mem);
@@ -318,6 +319,7 @@ t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem){
  		 
  		 
 	if ((sent->sentencia==final)&&(cantidad_a_ejecutar!=contador)){
+		sleep(RETARDO());
 		porcentaje = porcentaje + 1;
 		sent_ejecutar(sent,socket_mem);
 

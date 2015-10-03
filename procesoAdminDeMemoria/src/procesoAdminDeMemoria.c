@@ -410,6 +410,10 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			enviar_y_destroy_mensaje(socket, resp);
 			break;
 
+
+		case CPU_NUEVO:
+			break;
+
 		default:
 			log_warning(logger, "LA OPCION SELECCIONADA NO ESTA REGISTRADA");
 			break;
