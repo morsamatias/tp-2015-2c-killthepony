@@ -387,6 +387,7 @@ int swap_liberar(int pid){
 void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 	char* contenido;
 	int pid, pagina, paginas;
+	int st;
 
 
 	//print_msg(msg);
@@ -401,13 +402,22 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 
 			destroy_message(msg);
 
-
-			swap_nuevo_proceso(pid, paginas);
-
-
-			//envio 1 = true
 			sleep(RETARDO_SWAP());
-			msg = argv_message(SWAP_OK, 0);
+
+			if(paginas>swap_cant_huecos_libres()){
+				st=-1;
+			} else {
+				st=swap_nuevo_proceso(pid, paginas);
+			}
+
+			if(st==-1){
+				msg = argv_message(SWAP_NO_OK, 0);
+				log_trace(logger, "No hay espacio suficiente para guardas %d paginas del proceso %d", paginas, pid);
+			}else{
+				msg = argv_message(SWAP_OK, 0);
+				log_trace(logger, "Se reservaron %d paginas para el proceso %d", paginas, pid);
+			}
+
 			enviar_y_destroy_mensaje(socket_mem, msg);
 			break;
 

@@ -48,7 +48,7 @@ int main(void) {
 	if ((fdNuevoNodo = server_socket(port)) < 0) {
 		handle_error("No se pudo iniciar el server");
 	}
-	//printf("server iniciado en %d\n", port);
+	printf("server iniciado en %d\n", port);
 
 	int consola = 0;
 
@@ -58,12 +58,8 @@ int main(void) {
 	FD_SET(consola, &master); // agrego consola stdin
 	fdmax = fdNuevoNodo; // por ahora el maximo
 	printf("Consola iniciada \n");
-
 	printf("Opciones Disponibles: \n ");
-
-
 	printf("CORRER Path \n FINALIZAR Pid \n PS \n CPU \n");
-
 	fflush(stdout);
 	//log_info(logger, "inicio thread eschca de nuevos nodos");
 	// bucle principal
@@ -209,8 +205,8 @@ void procesar_msg_consola(char* msg) {
 		i = 0;
 		printf("Uso CPU en el ultimo min \n");
 
-		//int uso;
-		//int uso_rodondeado;
+	//	int uso;
+	//	int uso_rodondeado;
 		if (list_size(cpus) > 0) {
 			while ((i + 1) <= list_size(cpus)) {
 
@@ -378,10 +374,10 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 			log_trace(logger, "pid: %d, Fin por IO, tiempo: %d", msg->argv[0], msg->argv[2]);
 			break;
 		case final:
-			log_trace(logger, "pid: %d, Fin por final", msg->argv[0]);
+			log_trace(logger, "pid: %d, Finalizacion exitosa", msg->argv[0]);
 			break;
 		case error:
-			log_trace(logger, "pid: %d, Fin por error ????", msg->argv[0]);
+			log_trace(logger, "pid: %d, Fin por error", msg->argv[0]);
 			break;
 		default:
 			log_trace(logger, "pid: %d, cant_sent_ejec: %d, Fin por otra cosa, seguramente porque termino su quantum", msg->argv[0], msg->argv[3]);
@@ -599,7 +595,11 @@ t_pcb* es_el_pcb_buscado_por_id(int pid) {
 	return pcb;
 }
 
-t_pcb* es_el_pcb_buscado() {
+int es_el_pcb_buscado(t_pcb* pcb){
+	return(PID_GLOBAL==pcb->pid);
+}
+
+/*t_pcb* es_el_pcb_buscado() {
 
 	int i = 0;
 	t_pcb* pcb;
@@ -616,7 +616,7 @@ t_pcb* es_el_pcb_buscado() {
 	}
 
 	return pcb;
-}
+}*/
 
 int pos_del_pcb(int pid) {
 
@@ -666,22 +666,16 @@ int es_el_pcb_buscado_en_block(t_block* block) {
 }
 
 void cambiar_a_exec(int pid) {
-
 	PID_GLOBAL = pid;
 	list_remove_by_condition(list_ready, (void*) es_el_pcb_buscado_en_ready);
-
 	t_pcb* pcb;
 
-	pcb=list_find(pcbs,(void*)es_el_pcb_buscado());
+	pcb=list_find(pcbs,(void*)es_el_pcb_buscado);
 
 	t_exec* exec = malloc(sizeof(t_exec));
-
 	exec->pid = pid;
-
 	list_add(list_exec, exec);
-
 	pcb->estado=EXEC;
-
 	return;
 
 }

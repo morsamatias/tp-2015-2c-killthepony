@@ -180,7 +180,8 @@ t_list* list_finish;/*lista de procesos terminados*/
 
 t_pcb* es_el_pcb_buscado_por_id(int pid);
 
-t_pcb* es_el_pcb_buscado();
+int es_el_pcb_buscado(t_pcb* pcb);
+//t_pcb* es_el_pcb_buscado();
 
 void controlar_IO (char* pid_string);
 

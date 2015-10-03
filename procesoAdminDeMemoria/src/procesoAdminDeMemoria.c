@@ -177,7 +177,6 @@ int swap_finalizar(int pid){
 
 
 void procesar_mensaje_cpu(int socket, t_msg* msg){
-	puts("Inicio msj**************************************");
 	//print_msg(msg);
 	char* buff_pag  = NULL;
 	char* buff_pag_esc  = NULL;
@@ -229,7 +228,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			log_trace(logger, "Leer pagina %d del proceso", nro_pagina,pid);
 
 			// SE FIJA SI ESTA LA PAGINA EN LA TLB
-			if(TLB_HABILITADA()){
+			/*if(TLB_HABILITADA()){
 				entrada = buscar_pagina_en_TLB(pid,nro_pagina);
 				flag_TLB = 1;
 			} else {
@@ -251,24 +250,24 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 				st = 0;
 			}else{
 				if(entrada == -1){
-					if(memoria->elements_count<CANTIDAD_MARCOS()){
+					if(memoria->elements_count<CANTIDAD_MARCOS()){*/
 						buff_pag = swap_leer_pagina(pid, nro_pagina);
 						if(buff_pag != NULL){
 							// ME FIJO CUANTAS PAGINAS TIENE EN MEMORIA
-							gl_PID=pid;
+							/*gl_PID=pid;
 							gl_nro_pagina=nro_pagina;
 							cant_paginas = list_count_satisfying(paginas,(void*)es_la_pagina_segun_PID_y_nro_pagina);
 
 							if(cant_paginas<MAXIMO_MARCOS_POR_PROCESO()){
 								agregar_pagina_en_memoria(pid,nro_pagina,buff_pag);
-								st = 2;
-							}else{
+								*/st = 2;
+							}else{/*
 								st = reemplazar_pagina_en_memoria_segun_algoritmo(pid,nro_pagina,buff_pag);
 							}
 							sleep(RETARDO_MEMORIA());
-						}else{
+						}else{*/
 							st = 1;
-						}
+						}/*
 					}else{
 						st=3;
 					}
@@ -280,7 +279,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 				}
 			}
 
-
+*/
 			switch(st){
 				case 0:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
@@ -291,7 +290,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 					log_error(logger, "La pagina %d del proceso %d no pudo ser cargada en memoria",nro_pagina,pid);
 					break;
 				case 2:
-					sleep(RETARDO_MEMORIA());
+					//sleep(RETARDO_MEMORIA());
 					resp = string_message(MEM_OK, buff_pag, 0);
 					log_info(logger, "La pagina %d del proceso %d fue leida correctamente",nro_pagina,pid);
 					break;
@@ -399,13 +398,12 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			}
 
 			// ELIMINO LAS ESTRUCTURAS
-			/*list_iterate(paginas,(void*)borrar_paginas_de_un_proceso_en_la_memoria);
-			compactar_lista_memoria();*/
-			list_remove_and_destroy_by_condition(memoria,(void*)es_la_memoria_segun_PID,(void*)destruir_memoria);
+
+/*			list_remove_and_destroy_by_condition(memoria,(void*)es_la_memoria_segun_PID,(void*)destruir_memoria);
 			list_remove_and_destroy_by_condition(TLB,(void*)es_la_pagina_segun_PID,(void*)destruir_pagina);
 			list_remove_and_destroy_by_condition(paginas,(void*)es_la_pagina_segun_PID,(void*)destruir_pagina);
 			list_iterate(TLB,(void*)recalcular_entrada);
-			list_iterate(paginas,(void*)recalcular_entrada);
+			list_iterate(paginas,(void*)recalcular_entrada);*/
 
 			// LE AVISOA LA CPU COMO TERMINO
 			resp = argv_message(MEM_OK, 1, 0);
@@ -420,7 +418,6 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 
 
 	//destroy_message(msg);
-	puts("Fin msj**************************************");
 }
 
 void tasa_aciertos_TLB(){

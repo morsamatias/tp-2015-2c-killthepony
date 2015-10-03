@@ -10,15 +10,15 @@
 
 e_comando parsear_comando(char* comando) {
 
-	if (string_starts_with(comando, "r") || string_starts_with(comando, "c"))
+	if (string_equals_ignore_case(comando, "CORRER"))
 		return CORRER;
-	if (string_equals_ignore_case(comando, "f"))
+	if (string_equals_ignore_case(comando, "FINALIZAR"))
 		return FINALIZAR;
-	if (string_equals_ignore_case(comando, "p"))
+	if (string_equals_ignore_case(comando, "PS"))
 		return PS;
-	if (string_equals_ignore_case(comando, "c"))
+	if (string_equals_ignore_case(comando, "CPU"))
 		return CPU;
-	if (string_equals_ignore_case(comando, "exit"))
+	if (string_equals_ignore_case(comando, "SALIR"))
 		return SALIR;
 
 	return NADA;

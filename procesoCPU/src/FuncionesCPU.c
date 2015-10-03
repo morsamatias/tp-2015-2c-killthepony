@@ -246,9 +246,10 @@ char* sent_ejecutar_leer(t_sentencia* sent,int socket_mem){
 int sent_ejecutar(t_sentencia* sent,int socket_mem){
 	porcentaje = porcentaje + 1;
 	char* pagina = NULL;
+	int st=0;
 	switch (sent->sentencia) {
 	case iniciar:
-		sent_ejecutar_iniciar(sent,socket_mem);
+		st=sent_ejecutar_iniciar(sent,socket_mem);
 		break;
 	case leer:
 		pagina  = sent_ejecutar_leer(sent,socket_mem);
@@ -271,7 +272,9 @@ int sent_ejecutar(t_sentencia* sent,int socket_mem){
 		break;
 	}
 
-	return 0;
+	return st;
+
+	//return 0;
 }
 
 void sent_free(t_sentencia* sent){
@@ -285,7 +288,8 @@ void sent_free(t_sentencia* sent){
 		 
 t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem){
 		
-	bool es_entrada_salida=false;		
+	bool es_entrada_salida=false;
+	int st=0;
 		
 	t_resultado_pcb resultado;		
 		
@@ -298,10 +302,10 @@ t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem){
  		 
 	sent = sentencia_crear(sents[pcb->pc], pcb->pid);
 	
-	while((sent->sentencia!=final)&&(!es_entrada_salida)&&(cantidad_a_ejecutar!=contador)){
+	while((sent->sentencia!=final)&&(!es_entrada_salida)&&(cantidad_a_ejecutar!=contador)&&(st==0)){
 			 if(sent->sentencia!=io){
 				porcentaje = porcentaje + 1;
-				sent_ejecutar(sent,socket_mem);
+				st = sent_ejecutar(sent,socket_mem);
 				sent_free(sent);		
 				pcb->pc++;		
 				sent = sentencia_crear(sents[pcb->pc], pcb->pid);
@@ -316,17 +320,20 @@ t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem){
 	if ((sent->sentencia==final)&&(cantidad_a_ejecutar!=contador)){
 		porcentaje = porcentaje + 1;
 		sent_ejecutar(sent,socket_mem);
- 		sent_free(sent);		 	
+
 		}
  		 
  	file_mmap_free(mcod, pcb->path);		 
  		 
 	free_split(sents);		
-	resultado.pcb=pcb;		
-	resultado.sentencia=sent->sentencia;		
+	resultado.pcb=pcb;
+	if(st==0)
+		resultado.sentencia=sent->sentencia;
+	else
+		resultado.sentencia=error;
 	resultado.tiempo=sent->tiempo;		
 	resultado.cantidad_sentencias=contador;		
-	
+	sent_free(sent);
  return resultado;		
 	
 }
