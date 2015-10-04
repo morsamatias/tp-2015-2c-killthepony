@@ -35,7 +35,15 @@ int main(void) {
 }
 char* swap_inicializar() {
 
+
+
 	TAMANIO_SWAP = CANTIDAD_PAGINAS() * TAMANIO_PAGINA();
+
+	char* TRUNC_DATA = string_from_format("truncate -s %d %s", TAMANIO_SWAP, NOMBRE_SWAP());
+	printf("%s\n", TRUNC_DATA);
+	system(TRUNC_DATA);
+	free(TRUNC_DATA);
+
 	char CREAR_DATA[1024];
 	sprintf(CREAR_DATA, "dd if=/dev/zero of=%s bs=%d count=%d", NOMBRE_SWAP(), TAMANIO_PAGINA(), CANTIDAD_PAGINAS());
 	printf("%s\n", CREAR_DATA);
