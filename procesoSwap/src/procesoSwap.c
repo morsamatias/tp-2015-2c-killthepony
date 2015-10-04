@@ -410,7 +410,7 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 
 			destroy_message(msg);
 
-			sleep(RETARDO_SWAP());
+			//sleep(RETARDO_SWAP());
 
 			if(paginas>swap_cant_huecos_libres()){
 				st=-1;
@@ -480,7 +480,8 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 
 			swap_liberar(pid);
 
-			sleep(RETARDO_SWAP());
+			//sleep(RETARDO_SWAP());
+
 			msg = argv_message(SWAP_OK, 0);
 			enviar_y_destroy_mensaje(socket_mem, msg);
 
