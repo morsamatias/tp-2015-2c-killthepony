@@ -344,6 +344,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 	t_cpu* cpu = NULL;
 	t_pcb* pcb = NULL;
 	char* pid_string;
+	int uso_cpu;
 	switch (msg->header.id) {
 	case CPU_NUEVO:
 
@@ -515,6 +516,21 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 			}
 		}
 		break;
+
+		case CPU_PORCENTAJE_UTILIZACION:
+
+			cpu = cpu_buscar_por_socket(msg->argv[0]);
+
+			uso_cpu=msg->argv[1];
+
+			if(cpu==NULL){
+				printf("Se produce un error por no existir la CPU");
+			}else{
+				cpu->usoUltimoMinuto=uso_cpu;
+			}
+
+		break;
+
 	default:
 
 		printf("No msgjjj\n");
