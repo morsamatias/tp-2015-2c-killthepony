@@ -12,7 +12,6 @@
 #include <stdlib.h>
 
 #include "procesoSwap.h"
-#include <pthread.h>
 
 bool FIN = false;
 int main(void) {
@@ -65,7 +64,6 @@ int inicializar(){
 
 	clean_file(LOGGER_PATH);
 	logger = log_create(LOGGER_PATH, "procesoSwap", true, LOG_LEVEL_TRACE);
-	pthread_mutex_init(&mutex, NULL);
 
 	swap = swap_inicializar();
 
@@ -232,7 +230,7 @@ int swap_ocupar_hueco(t_ocupado* ocupado){
 	return 0;
 }
 
-int swap_ocupar(int pid, int pagina, int paginas){
+t_ocupado* swap_ocupar(int pid, int pagina, int paginas){
 	//primero agrego a la lista de espacio ocupado lo que pide el proceso
 	t_ocupado* ocupado = malloc(sizeof(t_ocupado));
 	ocupado->pid = pid;
@@ -245,19 +243,31 @@ int swap_ocupar(int pid, int pagina, int paginas){
 
 	ordenar();
 
-	return 0;
+	return ocupado;
+}
+
+int hueco_inicio_bytes(t_ocupado* hueco){
+	return hueco->posicion * TAMANIO_PAGINA();
+}
+
+int hueco_tamanio_bytes(t_ocupado* hueco){
+	return hueco->cantidad * TAMANIO_PAGINA();
+}
+
+void hueco_print_info(const char* texto_inicial, t_ocupado* hueco){
+	log_info(logger, "%s > PID: %d, Paginas: %d, Inicio: byte %d, Tamaño: %d bytes", texto_inicial, hueco->pid, hueco->pid, hueco_inicio_bytes(hueco), hueco_tamanio_bytes(hueco));
 }
 
 int swap_nuevo_proceso(int pid, int paginas){
 	int comienzo = 0;
 	comienzo = swap_buscar_hueco_libre(paginas);
 	if(comienzo>=0){
-		swap_ocupar(pid, comienzo, paginas);
+		t_ocupado* hueco;
+		hueco = swap_ocupar(pid, comienzo, paginas);
+		hueco_print_info("mProc Asignado", hueco);
 		return 0;
 	}else{
-
-
-		log_trace(logger, "pid: %d, paginas: %d. No hay hueco libre para el proceso", pid, paginas);
+		log_trace(logger, "OCUPADO pid: %d, paginas: %d. No hay hueco libre para el proceso", pid, paginas);
 		return -1;
 	}
 
@@ -384,12 +394,22 @@ int swap_liberar(int pid){
 		return ocup->pid == pid;
 	}
 	list_remove_by_condition(esp_ocupado, (void*)_swap_buscar_ocupado_por_pid);
+
+
+	hueco_print_info("mProc Liberado", ocupado);
+
 	FREE_NULL(ocupado);
 
 	//ordenar();
 	ordenar_ocupado();
 
 	return 0;
+}
+
+void pagina_print_info(const char* texto_inicio, int pid, int pagina, char* contenido){
+	int inicio = pagina * TAMANIO_PAGINA();
+	int size = strlen(contenido);
+	log_info(logger, "%s > PID: %d, Pagina: %d, Inicio: byte %d, Tamaño: %d bytes, Contenido: %s", texto_inicio, pid, pagina, inicio, size, contenido);
 }
 
 void procesar_mensaje_mem(int socket_mem, t_msg* msg){
@@ -404,9 +424,9 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 
 			pid = msg->argv[0];
 			paginas = msg->argv[1];
-			pthread_mutex_lock(&mutex);
-			log_trace(logger, "SWAP_INICIAR . pid: %d, Paginas: %d", pid, paginas);
-			pthread_mutex_unlock(&mutex);
+
+			//log_trace(logger, "SWAP_INICIAR . pid: %d, Paginas: %d", pid, paginas);
+
 
 			destroy_message(msg);
 
@@ -420,7 +440,7 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 
 			if(st==-1){
 				msg = argv_message(SWAP_NO_OK, 0);
-				log_trace(logger, "No hay espacio suficiente para guardas %d paginas del proceso %d", paginas, pid);
+				log_error(logger, "No hay espacio suficiente para guardas %d paginas del proceso %d", paginas, pid);
 			}else{
 				msg = argv_message(SWAP_OK, 0);
 				log_trace(logger, "Se reservaron %d paginas para el proceso %d", paginas, pid);
@@ -434,12 +454,8 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			pagina = msg->argv[1];
 			destroy_message(msg);
 
-			log_trace(logger, "SWAP_LEER. pid: %d, Pagina: %d", pid, pagina);
-			//envio 1 = true
-			//contenido = string_from_format("Pid: %d, pag: %d, contenido: HOLAAA", pid, pagina);
 			contenido = swap_leer(pid, pagina);
-			log_trace(logger, "SWAP_LEER. pid: %d, Pagina: %d Contenido: %s", pid, pagina, contenido);
-
+			pagina_print_info("Lectura", pid, pagina, contenido);
 
 			sleep(RETARDO_SWAP());
 			msg = string_message(SWAP_OK,contenido , 0);
@@ -462,6 +478,8 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 
 			swap_escribir(pid, pagina, contenido);
 
+			pagina_print_info("Escritura", pid, pagina, contenido);
+
 			FREE_NULL(contenido);
 
 
@@ -475,7 +493,7 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 		case SWAP_FINALIZAR:
 			pid = msg->argv[0];
 			destroy_message(msg);
-			log_trace(logger, "SWAP_FINALIZAR. pid: %d", pid);
+			//log_trace(logger, "SWAP_FINALIZAR. pid: %d", pid);
 			//envio 1 = true
 
 			swap_liberar(pid);

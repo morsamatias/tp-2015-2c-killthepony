@@ -19,7 +19,6 @@ t_log* logger;
 
 char* swap;
 int TAMANIO_SWAP;
-pthread_mutex_t mutex;
 
 typedef struct{
 	int pid;
