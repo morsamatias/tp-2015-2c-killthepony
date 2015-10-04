@@ -31,8 +31,17 @@ typedef struct{
 	int cantidad;
 }t_libre;
 
+typedef struct{
+	int pid;
+	int cant_lecturas;
+	int cant_escrituras;
+}t_proceso;
+
+
 t_list* esp_ocupado;
 t_list* esp_libre;
+
+t_list* procesos;//para las estadisticas
 
 int iniciar_server();
 

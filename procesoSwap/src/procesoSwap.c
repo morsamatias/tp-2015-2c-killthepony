@@ -83,7 +83,7 @@ int inicializar(){
 
 	list_add(esp_libre, libre);
 
-
+	procesos = list_create();
 
 
 	return 0;
@@ -258,12 +258,29 @@ void hueco_print_info(const char* texto_inicial, t_ocupado* hueco){
 	log_info(logger, "%s > PID: %d, Paginas: %d, Inicio: byte %d, Tamaño: %d bytes", texto_inicial, hueco->pid, hueco->pid, hueco_inicio_bytes(hueco), hueco_tamanio_bytes(hueco));
 }
 
+t_proceso* proc_nuevo(int pid){
+	t_proceso* new = malloc(sizeof(*new));
+	new->pid = pid;
+	new->cant_lecturas = 0;
+	new->cant_escrituras = 0;
+
+	return new;
+}
+void est_nuevo_proceso(int pid){
+	t_proceso* proc = proc_nuevo(pid);
+
+	list_add(procesos, proc);
+}
+
 int swap_nuevo_proceso(int pid, int paginas){
 	int comienzo = 0;
 	comienzo = swap_buscar_hueco_libre(paginas);
 	if(comienzo>=0){
 		t_ocupado* hueco;
 		hueco = swap_ocupar(pid, comienzo, paginas);
+
+
+
 		hueco_print_info("mProc Asignado", hueco);
 		return 0;
 	}else{
@@ -412,6 +429,38 @@ void pagina_print_info(const char* texto_inicio, int pid, int pagina, char* cont
 	log_info(logger, "%s > PID: %d, Pagina: %d, Inicio: byte %d, Tamaño: %d bytes, Contenido: %s", texto_inicio, pid, pagina, inicio, size, contenido);
 }
 
+t_proceso* proc_buscar(int pid){
+	bool _proc_buscar(t_proceso* proc){
+		return proc->pid == pid;
+	}
+	return list_find(procesos, (void*)_proc_buscar);
+}
+
+void est_leer(int pid){
+	t_proceso* proc = proc_buscar(pid);
+	proc->cant_lecturas++;
+}
+
+void est_escribir(int pid){
+	t_proceso* proc = proc_buscar(pid);
+	proc->cant_escrituras++;
+}
+
+
+void est_print(int pid){
+	t_proceso* proc = proc_buscar(pid);
+
+	log_info(logger, "PID %d, Lecturas: %d, Escrituras: %d", pid, proc->cant_lecturas, proc->cant_escrituras);
+}
+
+void est_eliminar(int pid){
+	bool _proc_buscar(t_proceso* proc){
+		return proc->pid == pid;
+	}
+
+	list_remove_by_condition(procesos, (void*)_proc_buscar);
+}
+
 void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 	char* contenido;
 	int pid, pagina, paginas;
@@ -436,6 +485,7 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 				st=-1;
 			} else {
 				st=swap_nuevo_proceso(pid, paginas);
+				est_nuevo_proceso(pid);
 			}
 
 			if(st==-1){
@@ -455,9 +505,12 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			destroy_message(msg);
 
 			contenido = swap_leer(pid, pagina);
-			pagina_print_info("Lectura", pid, pagina, contenido);
+			est_leer(pid);
 
 			sleep(RETARDO_SWAP());
+			pagina_print_info("Lectura", pid, pagina, contenido);
+
+
 			msg = string_message(SWAP_OK,contenido , 0);
 			enviar_y_destroy_mensaje(socket_mem, msg);
 			free(contenido);
@@ -477,13 +530,14 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			log_trace(logger, "SWAP_ESCRIBIR. pid: %d, Pagina: %d, conteindo: %s", pid, pagina, contenido);
 
 			swap_escribir(pid, pagina, contenido);
+			est_escribir(pid);
+
+			sleep(RETARDO_SWAP());
 
 			pagina_print_info("Escritura", pid, pagina, contenido);
 
 			FREE_NULL(contenido);
 
-
-			sleep(RETARDO_SWAP());
 			//envio 1 = true
 			msg = argv_message(SWAP_OK, 0);
 			enviar_y_destroy_mensaje(socket_mem, msg);
@@ -497,6 +551,9 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			//envio 1 = true
 
 			swap_liberar(pid);
+
+			est_print(pid);
+			est_eliminar(pid);
 
 			//sleep(RETARDO_SWAP());
 
