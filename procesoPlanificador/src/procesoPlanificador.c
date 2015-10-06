@@ -211,14 +211,24 @@ void procesar_msg_consola(char* msg) {
 			while ((i + 1) <= list_size(cpus)) {
 
 				cpu = cpu_buscar(i);
+
+				if(cpu!=NULL){
+
+				t_msg* pedido_uso = argv_message(CPU_PORCENTAJE_UTILIZACION,0);
+
+				enviar_mensaje(cpu->socket,pedido_uso);
+
+				destroy_message(pedido_uso);}
+
 				//	cpu=(t_cpu)(list_get(cpus,i));
 
 				//int tiempoUsado = cpu->usoUltimoMinuto;
 				//uso = 60 / tiempoUsado;
 				//uso_rodondeado = round_2(uso, 0);
-				printf("Cpu %d: %d", cpu->id, cpu->usoUltimoMinuto);
+				//printf("Cpu %d: %d", cpu->id, cpu->usoUltimoMinuto);
 				i++;
 			}
+
 		} else {
 			printf("No hay CPUs activas por el momento");
 		}
@@ -520,13 +530,38 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		case CPU_PORCENTAJE_UTILIZACION:
 
 			cpu = cpu_buscar_por_socket(msg->argv[0]);
-
+			int i;
 			uso_cpu=msg->argv[1];
 
 			if(cpu==NULL){
 				printf("Se produce un error por no existir la CPU");
 			}else{
 				cpu->usoUltimoMinuto=uso_cpu;
+
+				if((list_count_satisfying(cpus,(void*) cpus_sin_dato_uso))<1){
+					i=0;
+
+					while((i+1)<=list_size(cpus)){
+
+
+									cpu = cpu_buscar(i);
+
+									if(cpu!=NULL){
+
+									log_trace(log_trace, "Cpu %d: %d", cpu->id, cpu->usoUltimoMinuto);
+
+									}
+
+									i++;
+
+
+				}
+
+			}else{
+
+				log_trace(log_trace,"Aún no está la información del uso de todas las CPUs")
+			}
+
 			}
 
 		break;
@@ -703,6 +738,12 @@ int es_el_pcb_buscado_en_ready(t_ready* ready) {
 double round_2(double X, int k) {
 
 	return floor(pow(10, k) * X + 0.5) / pow(10, k);
+
+}
+
+int cpus_sin_dato_uso(t_list* cpus, t_cpu* cpu){
+
+	return(cpu->usoUltimoMinuto==NULL);
 
 }
 
