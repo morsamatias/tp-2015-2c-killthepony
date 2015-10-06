@@ -10,8 +10,12 @@ void* hilo_porcentaje(numero){
 
 	porcentaje_a_planificador[numero]=0;
 	sleep(60);
-	porcentaje_a_planificador[numero]= (porcentaje[numero] * 100) / (60 / RETARDO()) ;
-
+	if (RETARDO()!=0){
+	 porcentaje_a_planificador[numero]= (porcentaje[numero] * 100) / (60 / RETARDO()) ;
+	}else{
+	 porcentaje_a_planificador[numero]= (porcentaje[numero] * 100) / (60 / RETARDO_MINIMO()) ;	
+	}
+	
 	porcentaje=0;
 
 	return NULL;
@@ -472,5 +476,8 @@ int RETARDO(){
 	return config_get_int_value(cfg,"RETARDO");
 }
 
+int RETARDO_MINIMO(){
+	return config_get_int_value(cfg,"RETARDO_MINIMO");
+}
 
 
