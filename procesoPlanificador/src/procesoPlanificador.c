@@ -263,6 +263,8 @@ int correr_proceso(char* path) {
 
 	pcb->estado = NEW;
 
+	log_trace(logger,"El proceso %d se encuentra en la cola de procesos Nuevos", pcb->pid);
+
 	pcb_agregar(pcb);
 
 	t_ready* new = malloc(sizeof(t_ready));
@@ -272,6 +274,8 @@ int correr_proceso(char* path) {
 	list_add(list_ready, new);
 
 	pcb->estado=READY;
+
+	log_trace(logger,"El proceso %d se encuentra en la cola de procesos Listos", pcb->pid);
 
 	t_cpu* cpu = NULL;
 	if (cpu_disponible()) {
@@ -444,6 +448,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 					pcb->estado=BLOCK;
 
+					log_trace(logger,"El proceso %d se encuentra en la cola de procesos en Bloqueados", pcb->pid);
+
 					pid_string = string_itoa(PID_GLOBAL);
 
 					pthread_create(&contador_IO_PCB, NULL, (void*) controlar_IO,
@@ -520,6 +526,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				pcb2->tiempo_total = difftime(time(NULL), time1);
 				pcb->estado=FINISH;
 
+				log_trace(logger,"El proceso %d se encuentra en la cola de procesos Finalizados", pcb->pid);
+
 				printf("Hay que finalizar el proceso");
 
 				break;
@@ -548,18 +556,16 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 									if(cpu!=NULL){
 
-									log_trace(log_trace, "Cpu %d: %d", cpu->id, cpu->usoUltimoMinuto);
+									log_trace(logger, "Cpu %d: %d", cpu->id, cpu->usoUltimoMinuto);
 
 									}
 
 									i++;
-
-
 				}
 
 			}else{
 
-				log_trace(log_trace,"Aún no está la información del uso de todas las CPUs")
+				log_trace(logger,"Aún no está la información del uso de todas las CPUs");
 			}
 
 			}
@@ -623,6 +629,8 @@ void controlar_IO(char* pid_string) {
 	list_add(list_ready, ready);
 
 	pcb->estado=READY;
+
+	log_trace(logger,"El proceso %d se encuentra en la cola de procesos Listos", pcb->pid);
 
 	pthread_exit(NULL);
 
@@ -727,6 +735,9 @@ void cambiar_a_exec(int pid) {
 	exec->pid = pid;
 	list_add(list_exec, exec);
 	pcb->estado=EXEC;
+
+	log_trace(logger,"El proceso %d se encuentra en la cola de procesos en Ejecución", pcb->pid);
+
 	return;
 
 }
