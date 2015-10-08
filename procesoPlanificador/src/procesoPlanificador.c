@@ -15,7 +15,11 @@
 #include "util.h"
 #include <math.h>
 int PID = 1;
-int PID_GLOBAL = 1;
+int PID_GLOBAL=1;
+int PID_GLOBAL_READY = 1;
+int PID_GLOBAL_EXEC = 1;
+int PID_GLOBAL_BLOCK = 1;
+int PID_GLOBAL_FINISH = 1;
 int IO_GLOBAL = 1;
 t_log* logger;
 char* LOG_PATH = "log.txt";
@@ -156,6 +160,7 @@ int get_nuevo_pid() {
 void procesar_msg_consola(char* msg) {
 
 	char* path;
+	char* path_completo=(char*)malloc(sizeof(char)*100);
 	int pid;
 	//char* buff  ;
 	//char comando[COMMAND_MAX_SIZE];
@@ -174,8 +179,11 @@ void procesar_msg_consola(char* msg) {
 	switch (cmd) {
 	case CORRER:
 		path = input_user[1];
-		printf("Correr path: %s\n", path);
-		correr_proceso(path);
+		printf("Correr path: %s\n", path_completo);
+		path_completo="/home/utnso/Escritorio/git/tp-2015-2c-killthepony/tests/";
+		strcat(path_completo,path);
+		printf("Correr path completo: %s\n", path_completo);
+		correr_proceso(path_completo);
 		break;
 	case FINALIZAR:
 		pid = atoi(input_user[1]);
@@ -280,11 +288,17 @@ int correr_proceso(char* path) {
 	t_cpu* cpu = NULL;
 	if (cpu_disponible()) {
 		cpu = cpu_seleccionar();
+		if(cpu!=NULL){
 		pcb->cpu_asignado = cpu->id;
-
 		cpu_ejecutar(cpu, pcb);
+		cpu->estado=1;}
+	else
+	{printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
 	}
-
+	}else
+	{
+		printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+	}
 	return 0;
 }
 /*
@@ -371,6 +385,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		if (!cpu_existe(id_cpu)) {
 			cpu = cpu_nuevo(id_cpu);
 			cpu->socket = socket;
+			cpu->estado=0;
 			cpu_agregar(cpu);
 		} else {
 			//si existe, modifico el socket, verificar bien si esta bien porque puedo quedar un socket abierto
@@ -405,7 +420,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 			pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
-			PID_GLOBAL = pcb->pid;
+			PID_GLOBAL_EXEC = pcb->pid;
 
 			if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)) {
 				list_remove_by_condition(list_exec,
@@ -413,15 +428,23 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 			}
 			t_ready* ready;
 
-			ready->pid = PID_GLOBAL;
+			ready->pid = PID_GLOBAL_EXEC;
 
 			list_add(list_ready, ready);
 
 			if (cpu_disponible()) {
-				cpu = cpu_seleccionar();
-				pcb->cpu_asignado = cpu->id;
-				cpu_ejecutar(cpu, pcb);
-			}
+					cpu = cpu_seleccionar();
+					if(cpu!=NULL){
+					pcb->cpu_asignado = cpu->id;
+					cpu_ejecutar(cpu, pcb);
+					cpu->estado=1;}
+				else
+				{printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+				}
+				}else
+				{
+					printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+				}
 
 		} else {
 			switch (msg->argv[0]) {
@@ -430,7 +453,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 				pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
-				PID_GLOBAL = pcb->pid;
+				PID_GLOBAL_BLOCK = pcb->pid;
 				IO_GLOBAL = msg->argv[1];
 
 				int cantIO = msg->argv[2];
@@ -442,7 +465,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 					t_block* block;
 
-					block->pid = PID_GLOBAL;
+					block->pid = PID_GLOBAL_BLOCK;
 
 					list_add(list_block, block);
 
@@ -450,7 +473,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 					log_trace(logger,"El proceso %d se encuentra en la cola de procesos en Bloqueados", pcb->pid);
 
-					pid_string = string_itoa(PID_GLOBAL);
+					pid_string = string_itoa(PID_GLOBAL_BLOCK);
 
 					pthread_create(&contador_IO_PCB, NULL, (void*) controlar_IO,
 							(void*) pid_string);
@@ -500,7 +523,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 				pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
-				PID_GLOBAL = pcb->pid;
+				PID_GLOBAL_FINISH = pcb->pid;
 				/*
 				 Tiempo de retorno: tiempo transcurrido entre la llegada de
 				 un proceso y su finalización.
@@ -520,19 +543,40 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				t_finish* finish;
 				t_pcb_finalizado* pcb2;
 
-				finish->pid = PID_GLOBAL;
+				finish->pid = PID_GLOBAL_FINISH;
 				list_add(list_finish, finish);
 
 				pcb2->tiempo_total = difftime(time(NULL), time1);
 				pcb->estado=FINISH;
 
+				cpu=cpu_buscar_por_socket(msg->argv[0]);
+
+				cpu->estado=0;
+
 				log_trace(logger,"El proceso %d se encuentra en la cola de procesos Finalizados", pcb->pid);
 
 				printf("Hay que finalizar el proceso");
 
-				break;
-			}
-		}
+				// Hay que ver si hay algún proceso en READY para ejecutar
+
+				if(list_size(list_ready)>0){
+					if (cpu_disponible()) {
+							cpu = cpu_seleccionar();
+							if(cpu!=NULL){
+							pcb->cpu_asignado = cpu->id;
+							cpu_ejecutar(cpu, pcb);
+							cpu->estado=1;}
+						else
+						{printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+						}
+						}else
+						{
+							printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+						}
+
+
+				}
+
 		break;
 
 		case CPU_PORCENTAJE_UTILIZACION:
@@ -616,7 +660,7 @@ void controlar_IO(char* pid_string) {
 
 	sleep(IO_GLOBAL);
 
-	PID_GLOBAL = atoi(pid_string);
+	PID_GLOBAL_BLOCK = atoi(pid_string);
 
 	t_pcb* pcb =list_find(pcbs,(void*)es_el_pcb_buscado_por_id);
 
@@ -717,15 +761,15 @@ int es_el_pid_en_block(int pid, t_list* list_block) {
 }
 
 int es_el_pcb_buscado_en_exec(t_exec* exec) {
-	return (exec->pid == PID_GLOBAL);
+	return (exec->pid == PID_GLOBAL_EXEC);
 }
 
 int es_el_pcb_buscado_en_block(t_block* block) {
-	return (block->pid == PID_GLOBAL);
+	return (block->pid == PID_GLOBAL_BLOCK);
 }
 
 void cambiar_a_exec(int pid) {
-	PID_GLOBAL = pid;
+	PID_GLOBAL_READY = pid;
 	list_remove_by_condition(list_ready, (void*) es_el_pcb_buscado_en_ready);
 	t_pcb* pcb;
 
@@ -743,7 +787,7 @@ void cambiar_a_exec(int pid) {
 }
 
 int es_el_pcb_buscado_en_ready(t_ready* ready) {
-	return (ready->pid == PID_GLOBAL);
+	return (ready->pid == PID_GLOBAL_READY);
 }
 
 double round_2(double X, int k) {
@@ -754,7 +798,8 @@ double round_2(double X, int k) {
 
 int cpus_sin_dato_uso(t_list* cpus, t_cpu* cpu){
 
-	return(cpu->usoUltimoMinuto==NULL);
+	return(cpu->usoUltimoMinuto==0);
 
 }
+
 

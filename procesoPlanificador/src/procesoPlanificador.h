@@ -65,6 +65,7 @@ typedef struct{
 	int id;
 	int socket;
 	int usoUltimoMinuto;
+	int estado;
 }t_cpu;
 
 t_list* procesosFinalizados;
@@ -115,9 +116,23 @@ int cpu_ejecutar(t_cpu* cpu, t_pcb* pcb){
 /*
  * seleecciona el mejor cpu segun el algoritmo
  */
-t_cpu* cpu_seleccionar(){
-	return list_get(cpus, 0);
+
+int cpu_libre (t_cpu* cpu){
+	return (cpu->estado==0);
 }
+
+t_cpu* cpu_seleccionar(){
+	if(list_any_satisfy(cpus,(void*) cpu_libre)){
+	return list_find(cpus, (void*) cpu_libre);}
+	else{
+		return NULL;
+	}
+}
+
+
+
+//int cpu_libre (t_cpu* cpu);
+
 
 /*
  * verifica si hay cpus disponibles para ejecutar un proceso
