@@ -43,6 +43,44 @@ typedef struct {
 }t_pcb;
 */
 
+typedef struct {
+	int pid;
+
+}t_ready;
+
+typedef struct {
+	int pid;
+}t_exec;
+
+
+
+
+typedef struct {
+	int pid;
+	int tiempoIO;
+	int estado;
+}t_block;
+
+
+
+
+typedef struct {
+	int pid;
+}t_finish;
+
+
+
+t_list* list_ready;/*lista de procesos listos para ejecutar*/
+
+t_list* list_exec;/*lista de procesos en ejecución*/
+
+t_list* list_block;/*lista de procesos bloqueados*/
+
+t_list* list_finish;/*lista de procesos terminados*/
+
+
+
+
 typedef struct{
 	int pid;
 	int cant_sentencias;
@@ -76,6 +114,8 @@ t_list* cpus;
 t_cpu* cpu_buscar(int id);
 t_cpu* cpu_buscar_por_socket(int socket);
 
+bool _estado_blockeado(t_block block);
+int esta_ocupado_IO();
 bool cpu_existe(int id);
 t_cpu* cpu_nuevo(int id);
 int cpu_disponible();
@@ -146,6 +186,10 @@ bool cpu_existe(int id){
 	return cpu !=NULL;
 }
 
+bool _estado_bloqueado(t_block block){
+	return block.estado==1;
+
+}
 t_cpu* cpu_buscar(int id){
 	bool _cpu_buscar(t_cpu* cpu){
 		return cpu->id == id;
@@ -169,35 +213,12 @@ int cpu_agregar(t_cpu* cpu){
 
 
 
-typedef struct {
-	int pid;
-}t_ready;
-
-typedef struct {
-	int pid;
-}t_exec;
-
-typedef struct {
-	int pid;
-}t_block;
-
-typedef struct {
-	int pid;
-}t_finish;
-
-t_list* list_ready;/*lista de procesos listos para ejecutar*/
-
-t_list* list_exec;/*lista de procesos en ejecución*/
-
-t_list* list_block;/*lista de procesos bloqueados*/
-
-t_list* list_finish;/*lista de procesos terminados*/
-
 t_pcb* es_el_pcb_buscado_por_id(int pid);
 
 int es_el_pcb_buscado(t_pcb* pcb);
 //t_pcb* es_el_pcb_buscado();
 
+void Hilo_IO(int pid);
 void controlar_IO (char* pid_string);
 
 //void controlar_IO (int pid);

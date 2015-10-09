@@ -41,6 +41,7 @@ int main(void) {
 	time1 = time(NULL);
 	//pthread_create(&th_server_cpu, NULL, (void*)iniciar_server_select, NULL);
 
+	pthread_create(&contador_IO_PCB, NULL, (void*) Hilo_IO,(void*)PID_GLOBAL);
 	t_cpu* cpu = NULL;
 	t_pcb* pcb = NULL;
 	int port = PUERTO_ESCUCHA();
@@ -399,7 +400,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		/////////////////////////////////
 		//agrego esto para que pasen los tests
 		//creo que habria que agregar un param mas si la ultima sentencia se ejecuto bien o mal
-		switch (msg->argv[1]) {
+		/*switch (msg->argv[1]) {
 		case io:
 			log_trace(logger, "pid: %d, Fin por IO, tiempo: %d", msg->argv[0], msg->argv[2]);
 			break;
@@ -412,9 +413,114 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		default:
 			log_trace(logger, "pid: %d, cant_sent_ejec: %d, Fin por otra cosa, seguramente porque termino su quantum", msg->argv[0], msg->argv[3]);
 		}
-		break;
+		break;*/
 		////////////////////////////////////////
 		///////////////////////////////////////
+
+
+
+		switch (msg->argv[1]){
+					case io:
+
+			pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
+
+							PID_GLOBAL_BLOCK = pcb->pid;
+							IO_GLOBAL = msg->argv[2];
+
+							int cantIO = msg->argv[3];
+
+						PID_GLOBAL_EXEC = pcb->pid;
+
+						if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)) {
+							list_remove_by_condition(list_exec,
+									(void*) es_el_pcb_buscado_en_exec);
+						}
+						t_block* blocked;
+
+						blocked->pid=msg->argv[0];
+
+						blocked->tiempoIO=cantIO;
+						blocked->estado=0;
+
+
+						list_add(list_block, blocked);
+
+						pcb->estado=BLOCK;
+
+						log_trace(logger,"El proceso %d se encuentra en la cola de procesos en Bloqueados", pcb->pid);
+
+
+
+
+			break;
+
+							case final:
+
+			pcb = es_el_pcb_buscado_por_id(msg->argv[1]);
+
+			PID_GLOBAL_FINISH = pcb->pid;
+			/*
+			 Tiempo de retorno: tiempo transcurrido entre la llegada de
+			 un proceso y su finalización.
+			 Tiempo de espera: tiempo que un proceso permanece en la
+			 cola de preparados.
+			 Tiempo de respuesta: tiempo que un proceso bloqueado
+			 tarda en entrar en la CPU desde que ocurre el suceso que lo
+			 bloquea.
+			 */
+
+			if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_en_exec)) {
+
+				list_remove_by_condition(list_exec,
+						(void*) es_el_pcb_buscado_en_exec);
+
+			}
+			t_finish* finish=malloc(sizeof(t_finish));
+			t_pcb_finalizado* pcb2;
+
+			finish->pid = PID_GLOBAL_FINISH;
+			list_add(list_finish, finish);
+
+			pcb2->tiempo_total = difftime(time(NULL), time1);
+			pcb->estado=FINISH;
+
+			cpu=cpu_buscar_por_socket(socket);
+
+			cpu->estado=1;
+
+			log_trace(logger,"El proceso %d se encuentra en la cola de procesos Finalizados", pcb->pid);
+
+			printf("Hay que finalizar el proceso");
+
+			// Hay que ver si hay algún proceso en READY para ejecutar
+
+			if(list_size(list_ready)>0){
+				if (cpu_disponible()) {
+						cpu = cpu_seleccionar();
+						if(cpu!=NULL){
+							t_ready* ready=list_get(list_ready,0);
+							t_pcb* pcb2;
+							pcb2=es_el_pcb_buscado_por_id(ready->pid);
+
+						pcb2->cpu_asignado = cpu->id;
+						cpu_ejecutar(cpu, pcb2);
+						cpu->estado=0;}
+					else
+					{printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+					}
+					}else
+					{
+						printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+					}
+
+
+			}
+
+			break;
+		} }
+
+		//termina case IO y final
+	/*
 
 		if (msg->argv[3] == (QUANTUM())) {
 
@@ -466,6 +572,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 					t_block* block;
 
 					block->pid = PID_GLOBAL_BLOCK;
+					block->tiempoIO=cantIO;
+					block->estado=0;
+
 
 					list_add(list_block, block);
 
@@ -474,9 +583,6 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 					log_trace(logger,"El proceso %d se encuentra en la cola de procesos en Bloqueados", pcb->pid);
 
 					pid_string = string_itoa(PID_GLOBAL_BLOCK);
-
-					pthread_create(&contador_IO_PCB, NULL, (void*) controlar_IO,
-							(void*) pid_string);
 				}
 
 				if ((list_size(list_ready)) != 0) {
@@ -489,7 +595,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				}
 
 				break;
-
+*/
 				/*
 
 				 case PCB_FINQ:
@@ -519,7 +625,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 				 break; */
 
-			case PCB_FINALIZAR:
+	/*		case PCB_FINALIZAR:
 
 				pcb = es_el_pcb_buscado_por_id(msg->argv[1]);
 
@@ -532,7 +638,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				 Tiempo de respuesta: tiempo que un proceso bloqueado
 				 tarda en entrar en la CPU desde que ocurre el suceso que lo
 				 bloquea.
-				 */
+
 
 				if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_en_exec)) {
 
@@ -582,7 +688,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				}
 
 		break;
-
+*/
 		case CPU_PORCENTAJE_UTILIZACION:
 
 			cpu = cpu_buscar_por_socket(socket);
@@ -704,13 +810,61 @@ int inicializar() {
 
 	return 0;
 }
+void Hilo_IO(int pid){
 
+while(1){
+
+	if ((list_size(list_block))!=0) {
+
+		if((list_any_satisfy(list_block, (void*) _estado_bloqueado))){
+
+
+
+		}else
+		{
+			t_block* block;
+			 block=list_get(list_block,0);
+			 block->estado=1;
+
+
+			 sleep(block->tiempoIO);
+
+				t_ready* ready;
+
+				ready->pid = block->pid;
+
+				PID_GLOBAL=block->pid;
+				list_add(list_ready, ready);
+
+				t_pcb* pcb;
+
+
+				pcb=es_el_pcb_buscado_por_id(block->pid);
+
+				pcb->estado= READY;
+
+				if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)) {
+					list_remove_by_condition(list_exec,
+							(void*) es_el_pcb_buscado_en_exec);
+				}
+
+
+		}
+
+
+
+	}
+
+
+}
+
+}
+}
 void controlar_IO(char* pid_string) {
 
 	t_block* block;
 
-	block = list_get(list_block,
-			es_el_pid_en_block(atoi(pid_string), list_block));
+	block = list_get(list_block, es_el_pid_en_block(atoi(pid_string), list_block));
 
 	sleep(IO_GLOBAL);
 
