@@ -118,7 +118,7 @@ int cpu_ejecutar(t_cpu* cpu, t_pcb* pcb){
  */
 
 int cpu_libre (t_cpu* cpu){
-	return (cpu->estado==0);
+	return (cpu->estado==1);
 }
 
 t_cpu* cpu_seleccionar(){
@@ -216,6 +216,6 @@ void procesar_msg_consola(char* msg);
 
 double round_2(double X, int k);
 
-int cpus_sin_dato_uso(t_list* cpus, t_cpu* cpu);
+int cpus_sin_dato_uso( t_cpu* cpu);
 
 #endif /* PROCESOPLANIFICADOR_H_ */
