@@ -22,7 +22,8 @@ int RETARDO_COMPACTACION();
 int SWAP_RETARDO();
 
 int RETARDO_SWAP(){
-	return config_get_int_value(cfg, "RETARDO_SWAP");
+	//return config_get_int_value(cfg, "RETARDO_SWAP");
+	return 0;
 }
 
 int PUERTO_ESCUCHA(){

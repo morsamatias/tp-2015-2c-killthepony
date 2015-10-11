@@ -13,19 +13,11 @@
 
 #include "procesoSwap.h"
 
+
 bool FIN = false;
 int main(void) {
 	inicializar();
 
-	/*
-	pthread_t th;
-	void _srv(){
-		server_socket_select(PUERTO_ESCUCHA(), procesar_mensaje_mem);
-	}
-	*/
-	//pthread_create(&th, NULL, (void*)_srv, NULL);
-	//pthread_detach(th);
-	//while(!FIN);
 	server_socket_select(PUERTO_ESCUCHA(), procesar_mensaje_mem);
 
 	finalizar();
@@ -70,8 +62,8 @@ int inicializar(){
 	////////////////////////////////////////
 	//fix temporal
 	//cargo el archivo de letras A porque sino me da error el envio de cadena vacia la lib de socket!!!
-	int TAMANIO_SWAP = CANTIDAD_PAGINAS() * TAMANIO_PAGINA();
-	memset(swap, 'A', TAMANIO_SWAP);
+	//int TAMANIO_SWAP = CANTIDAD_PAGINAS() * TAMANIO_PAGINA();
+	//memset(swap, 'A', TAMANIO_SWAP);
 	////////////////////////////////////
 
 	esp_ocupado =  list_create();
@@ -112,9 +104,6 @@ int swap_cant_huecos_libres(){
 }
 
 int compactar(){
-
-
-
 	//creo una nueva lista copia de la lista de ocupados
 	t_list* esp_ocupado_new = NULL;
 	esp_ocupado_new = list_create();
@@ -426,7 +415,7 @@ int swap_liberar(int pid){
 void pagina_print_info(const char* texto_inicio, int pid, int pagina, char* contenido){
 	int inicio = pagina * TAMANIO_PAGINA();
 	int size = strlen(contenido);
-	log_info(logger, "%s > PID: %d, Pagina: %d, Inicio: byte %d, Tamaño: %d bytes, Contenido: %s", texto_inicio, pid, pagina, inicio, size, contenido);
+	log_info(logger, "%s > PID: %d, Pagina: %d, Inicio: byte %d, Tamaño: %d bytes, Contenido: \"%s\"", texto_inicio, pid, pagina, inicio, size, contenido);
 }
 
 t_proceso* proc_buscar(int pid){
@@ -485,13 +474,14 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 				st=-1;
 			} else {
 				st=swap_nuevo_proceso(pid, paginas);
-				est_nuevo_proceso(pid);
+
 			}
 
 			if(st==-1){
 				msg = argv_message(SWAP_NO_OK, 0);
 				log_error(logger, "No hay espacio suficiente para guardas %d paginas del proceso %d", paginas, pid);
 			}else{
+				est_nuevo_proceso(pid);
 				msg = argv_message(SWAP_OK, 0);
 				log_trace(logger, "Se reservaron %d paginas para el proceso %d", paginas, pid);
 			}
@@ -527,7 +517,7 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			pagina = msg->argv[1];
 			contenido = string_duplicate(msg->stream);
 			destroy_message(msg);
-			log_trace(logger, "SWAP_ESCRIBIR. pid: %d, Pagina: %d, conteindo: %s", pid, pagina, contenido);
+			log_trace(logger, "SWAP_ESCRIBIR. pid: %d, Pagina: %d, conteindo: \"%s\"", pid, pagina, contenido);
 
 			swap_escribir(pid, pagina, contenido);
 			est_escribir(pid);
