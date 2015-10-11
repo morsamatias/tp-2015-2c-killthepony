@@ -680,6 +680,9 @@ t_msg *recibir_mensaje(int sock_fd) {
 		}
 
 		msg->stream[msg->header.length] = '\0';
+	}else{
+		//si es null, hago que cargue una cadena vacia para que pueda hacer printf
+		msg->stream = strdup("");
 	}
 
 	return msg;
