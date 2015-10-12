@@ -21,6 +21,7 @@ int PID_GLOBAL_EXEC = 1;
 int PID_GLOBAL_BLOCK = 1;
 int PID_GLOBAL_FINISH = 1;
 int IO_GLOBAL = 1;
+
 t_log* logger;
 char* LOG_PATH = "log.txt";
 
@@ -161,7 +162,7 @@ int get_nuevo_pid() {
 void procesar_msg_consola(char* msg) {
 
 	char* path;
-	char* path_completo=(char*)malloc(sizeof(char)*100);
+	char* path_completo=(char*)malloc(sizeof(char)*1000);
 	int pid;
 	//char* buff  ;
 	//char comando[COMMAND_MAX_SIZE];
@@ -179,12 +180,16 @@ void procesar_msg_consola(char* msg) {
 
 	switch (cmd) {
 	case CORRER:
-		path = input_user[1];
-		printf("Correr path: %s\n", path_completo);
-		path_completo="/home/utnso/Escritorio/git/tp-2015-2c-killthepony/tests/";
-		strcat(path_completo,path);
+		printf("Correr path: %s\n", path);
+		memset(path_completo, 0, 1000);
+		strcpy(path_completo, "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/tests/");
+		strcat(path_completo, path);
 		printf("Correr path completo: %s\n", path_completo);
-		correr_proceso(path_completo);
+		if(file_exists(path_completo)){
+			correr_proceso(path_completo); }
+		else{
+			printf("mcod no existente\n");
+		}
 		break;
 	case FINALIZAR:
 		pid = atoi(input_user[1]);
@@ -216,6 +221,9 @@ void procesar_msg_consola(char* msg) {
 
 	//	int uso;
 	//	int uso_rodondeado;
+
+		/*
+
 		if (list_size(cpus) > 0) {
 			while ((i + 1) <= list_size(cpus)) {
 
@@ -241,7 +249,20 @@ void procesar_msg_consola(char* msg) {
 		} else {
 			printf("No hay CPUs activas por el momento");
 		}
+
+		*/
+
+		t_cpu_especial* cpu_especial;
+
+		t_msg* pedido_uso = argv_message(CPU_PORCENTAJE_UTILIZACION,0);
+
+		enviar_mensaje(cpu_especial->id,pedido_uso);
+
+		destroy_message(pedido_uso);
+
 		break;
+
+
 		/*	case SALIR:			//exit
 		 fin = true;
 		 break;*/
@@ -264,15 +285,22 @@ int correr_proceso(char* path) {
 
 	if (algoritmo == 0) {
 
+		log_trace(logger,"El algoritmo de planificación será FIFO");
+
 		pcb->cant_a_ejectuar = get_cant_sent(path);
 	} else {
+
+		log_trace(logger,"El algoritmo de planificación será Round Robin");
+
 		pcb->cant_a_ejectuar = QUANTUM();
 		// en caso de que se RR es el Q
 	}
 
+	log_trace(logger,"Proceso mProc a ejecutar: %s", pcb->path);
+
 	pcb->estado = NEW;
 
-	log_trace(logger,"El proceso %d se encuentra en la cola de procesos Nuevos", pcb->pid);
+	log_trace(logger,"El proceso %d se encuentra en la cola de procesos Nuevos para ejecutar el programa Mcod %s", pcb->pid, pcb->path);
 
 	pcb_agregar(pcb);
 
@@ -374,6 +402,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 	t_pcb* pcb = NULL;
 	char* pid_string;
 	int uso_cpu;
+	t_cpu_especial* cpu_especial=malloc(sizeof(t_cpu_especial));
 	switch (msg->header.id) {
 	case CPU_NUEVO:
 
@@ -386,13 +415,36 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		if (!cpu_existe(id_cpu)) {
 			cpu = cpu_nuevo(id_cpu);
 			cpu->socket = socket;
-			cpu->estado=0;
+			cpu->estado=1;
 			cpu_agregar(cpu);
 		} else {
 			//si existe, modifico el socket, verificar bien si esta bien porque puedo quedar un socket abierto
 			cpu = cpu_buscar(id_cpu);
 			cpu->socket = socket;
 		}
+
+		if(list_size(list_ready)>0){
+						if (cpu_disponible()) {
+								cpu = cpu_seleccionar();
+								if(cpu!=NULL){
+									t_ready* ready=list_get(list_ready,0);
+									t_pcb* pcb2;
+									pcb2=es_el_pcb_buscado_por_id(ready->pid);
+
+								pcb2->cpu_asignado = cpu->id;
+								cpu_ejecutar(cpu, pcb2);
+								cpu->estado=0;}
+							else
+							{printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+							}
+							}else
+							{
+								printf("No existe CPU activa para asignarle un nuevo proceso");
+							}
+
+
+					}
+
 		break;
 
 	case SENTENCIAS_EJECUTADAS:
@@ -417,8 +469,6 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		////////////////////////////////////////
 		///////////////////////////////////////
 
-
-
 		switch (msg->argv[1]){
 					case io:
 
@@ -431,11 +481,11 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 						PID_GLOBAL_EXEC = pcb->pid;
 
-						if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)) {
+						if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_por_id)) {
 							list_remove_by_condition(list_exec,
 									(void*) es_el_pcb_buscado_en_exec);
 						}
-						t_block* blocked;
+						t_block* blocked=malloc(sizeof(t_block));
 
 						blocked->pid=msg->argv[0];
 
@@ -456,9 +506,11 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 							case final:
 
-			pcb = es_el_pcb_buscado_por_id(msg->argv[1]);
+			pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
 			PID_GLOBAL_FINISH = pcb->pid;
+
+			PID_GLOBAL_EXEC = pcb->pid;
 			/*
 			 Tiempo de retorno: tiempo transcurrido entre la llegada de
 			 un proceso y su finalización.
@@ -481,7 +533,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 			finish->pid = PID_GLOBAL_FINISH;
 			list_add(list_finish, finish);
 
-			pcb2->tiempo_total = difftime(time(NULL), time1);
+			//pcb2->tiempo_total = difftime(time(NULL), time1);
 			pcb->estado=FINISH;
 
 			cpu=cpu_buscar_por_socket(socket);
@@ -498,7 +550,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				if (cpu_disponible()) {
 						cpu = cpu_seleccionar();
 						if(cpu!=NULL){
-							t_ready* ready=list_get(list_ready,0);
+							t_ready* ready=malloc(sizeof(ready));
+
+							ready=list_get(list_ready,0);
 							t_pcb* pcb2;
 							pcb2=es_el_pcb_buscado_por_id(ready->pid);
 
@@ -510,17 +564,17 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 					}
 					}else
 					{
-						printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+						printf("No existe CPU activa para asignarle un nuevo proceso");
 					}
 
 
 			}
 
 			break;
-		} }
+		}
 
 		//termina case IO y final
-	/*
+
 
 		if (msg->argv[3] == (QUANTUM())) {
 
@@ -528,11 +582,11 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 			PID_GLOBAL_EXEC = pcb->pid;
 
-			if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)) {
+			if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_en_exec)) {
 				list_remove_by_condition(list_exec,
 						(void*) es_el_pcb_buscado_en_exec);
 			}
-			t_ready* ready;
+			t_ready* ready=malloc(sizeof(ready));
 
 			ready->pid = PID_GLOBAL_EXEC;
 
@@ -543,13 +597,13 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 					if(cpu!=NULL){
 					pcb->cpu_asignado = cpu->id;
 					cpu_ejecutar(cpu, pcb);
-					cpu->estado=1;}
+					cpu->estado=0;}
 				else
 				{printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
 				}
 				}else
 				{
-					printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+					printf("No existe CPU activa para asignarle un nuevo proceso");
 				}
 
 		} else {
@@ -560,16 +614,17 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				pcb = es_el_pcb_buscado_por_id(msg->argv[1]);
 
 				PID_GLOBAL_BLOCK = pcb->pid;
+				PID_GLOBAL_EXEC=pcb->pid;
 				IO_GLOBAL = msg->argv[2];
 
 				int cantIO = msg->argv[3];
 
-				if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)) {
+				if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_en_exec)) {
 
 					list_remove_by_condition(list_exec,
 							(void*) es_el_pcb_buscado_en_exec);
 
-					t_block* block;
+					t_block* block=malloc(sizeof(block));
 
 					block->pid = PID_GLOBAL_BLOCK;
 					block->tiempoIO=cantIO;
@@ -586,46 +641,61 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				}
 
 				if ((list_size(list_ready)) != 0) {
-					if (cpu_disponible()) {
-						cpu = cpu_seleccionar();
-						pcb->cpu_asignado = cpu->id;
-						cpu_ejecutar(cpu, pcb);
-					}
-
+					if (cpu_disponible()) cpu = cpu_seleccionar();
+					if(cpu!=NULL){
+					pcb->cpu_asignado = cpu->id;
+					cpu_ejecutar(cpu, pcb);
+					cpu->estado=0;}
+				else
+				{printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+				}
+				}else
+				{
+					printf("No existe CPU activa para asignarle un nuevo proceso");
 				}
 
-				break;
-*/
-				/*
 
-				 case PCB_FINQ:
+				break;
+
+				 /*case PCB_FINQ:
 				 //VUELVE EN EL FIN DEL QUANTUM
 
 				 pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
-				 PID_GLOBAL=pcb->pid;
+				 PID_GLOBAL_EXEC=pcb->pid;
 
-
-				 if(list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)){
+				 if(list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_en_exec)){
 
 				 list_remove_by_condition(list_exec, (void*) es_el_pcb_buscado_en_exec);
 
 				 }
+
+				 log_trace(logger,"El proceso de Pid %d finalizó su Quantum y pasa del estado en Ejecución al estado Listo", msg->argv[0]);
+
 				 t_ready* ready;
 
-				 ready->pid=PID_GLOBAL;
+				 ready->pid=PID_GLOBAL_EXEC;
 
 				 list_add(list_ready,ready);
 
-				 if(cpu_disponible()){
-				 cpu = cpu_seleccionar();
-				 pcb->cpu_asignado = cpu->id;
-				 cpu_ejecutar(cpu, pcb);
-				 }
+				 if ((list_size(list_ready)) != 0) {
+				 					if (cpu_disponible()) cpu = cpu_seleccionar();
+				 					if(cpu!=NULL){
+				 					pcb->cpu_asignado = cpu->id;
+				 					cpu_ejecutar(cpu, pcb);
+				 					cpu->estado=0;}
+				 				else
+				 				{printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+				 				}
+				 				}else
+				 				{
+				 					printf("No existe CPU activa para asignarle un nuevo proceso");
+				 				}
 
-				 break; */
+				 break;
+				 */
 
-	/*		case PCB_FINALIZAR:
+				case PCB_FINALIZAR:
 
 				pcb = es_el_pcb_buscado_por_id(msg->argv[1]);
 
@@ -637,7 +707,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				 cola de preparados.
 				 Tiempo de respuesta: tiempo que un proceso bloqueado
 				 tarda en entrar en la CPU desde que ocurre el suceso que lo
-				 bloquea.
+				 bloquea.*/
 
 
 				if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_en_exec)) {
@@ -659,7 +729,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 				cpu->estado=1;
 
-				log_trace(logger,"El proceso %d se encuentra en la cola de procesos Finalizados", pcb->pid);
+				log_trace(logger,"El proceso %d del programa Mcod %s se encuentra en la cola de procesos Finalizados", pcb->pid, pcb->path);
 
 				printf("Hay que finalizar el proceso");
 
@@ -669,7 +739,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 					if (cpu_disponible()) {
 							cpu = cpu_seleccionar();
 							if(cpu!=NULL){
-								t_ready* ready=list_get(list_ready,0);
+								t_ready* ready=malloc(sizeof(t_ready));
+
+								ready=list_get(list_ready,0);
 								t_pcb* pcb2;
 								pcb2=es_el_pcb_buscado_por_id(ready->pid);
 
@@ -681,14 +753,14 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 						}
 						}else
 						{
-							printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+							printf("No existe CPU activa para asignarle un nuevo proceso");
 						}
 
 
 				}
 
 		break;
-*/
+
 		case CPU_PORCENTAJE_UTILIZACION:
 
 			cpu = cpu_buscar_por_socket(socket);
@@ -734,7 +806,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 			log_trace(logger,"El proceso de Pid %d finalizó su Quantum y pasa del estado en Ejecución al estado Listo", msg->argv[1]);
 
-			t_ready* ready;
+			t_ready* ready=malloc(sizeof(ready));
 
 			ready->pid=msg->argv[1];
 
@@ -742,7 +814,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 			t_pcb* pcb=es_el_pcb_buscado_por_id(msg->argv[1]);
 
-			pcb->estado=EXEC;
+			pcb->estado=READY;
+
+			log_trace(logger,"El proceso %d se encuentra en la cola de Listos",pcb->pid);
 
 			pcb->pc=pcb->pc+QUANTUM();
 
@@ -756,7 +830,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 								if (cpu_disponible()) {
 										cpu = cpu_seleccionar();
 										if(cpu!=NULL){
-											t_ready* ready=list_get(list_ready,0);
+											t_ready* ready=malloc(sizeof(t_ready));
+											ready=list_get(list_ready,0);
 											t_pcb* pcb2;
 											pcb2=es_el_pcb_buscado_por_id(ready->pid);
 
@@ -768,13 +843,21 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 									}
 									}else
 									{
-										printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+										printf("No existe CPU activa para asignarle un proceso");
 									}
 
 
 							}
 
 			break;
+
+		case CPU_ESPECIAL:
+
+		cpu_especial->id=socket;
+
+		log_trace(logger, "Se conecta con el Planificador el Hilo al que se pedirán las solicitudes de Uso de CPUs");
+
+		break;
 
 	default:
 
@@ -784,6 +867,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 	return 0;
 }
+	}
 
 int finalizar() {
 	config_destroy(cfg);
@@ -810,6 +894,7 @@ int inicializar() {
 
 	return 0;
 }
+
 void Hilo_IO(int pid){
 
 while(1){
@@ -829,7 +914,7 @@ while(1){
 
 			 sleep(block->tiempoIO);
 
-				t_ready* ready;
+				t_ready* ready=malloc(sizeof(t_ready));
 
 				ready->pid = block->pid;
 
@@ -843,7 +928,7 @@ while(1){
 
 				pcb->estado= READY;
 
-				if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)) {
+				if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_por_id)) {
 					list_remove_by_condition(list_exec,
 							(void*) es_el_pcb_buscado_en_exec);
 				}
@@ -859,7 +944,7 @@ while(1){
 }
 
 }
-}
+
 void controlar_IO(char* pid_string) {
 
 	t_block* block;
@@ -910,7 +995,7 @@ int es_el_pcb_buscado(t_pcb* pcb){
 	return(PID_GLOBAL==pcb->pid);
 }
 
-/*t_pcb* es_el_pcb_buscado() {
+t_pcb* es_el_pcb_buscado_struct() {
 
 	int i = 0;
 	t_pcb* pcb;
@@ -918,6 +1003,8 @@ int es_el_pcb_buscado(t_pcb* pcb){
 	pcb = list_get(pcbs, i);
 
 	while ((i + 1) <= list_size(pcbs)) {
+
+		pcb = list_get(pcbs, i);
 
 		if (pcb->pid == PID_GLOBAL) {
 			break;
@@ -927,7 +1014,7 @@ int es_el_pcb_buscado(t_pcb* pcb){
 	}
 
 	return pcb;
-}*/
+}
 
 int pos_del_pcb(int pid) {
 

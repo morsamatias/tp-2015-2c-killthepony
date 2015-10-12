@@ -12,6 +12,8 @@
 #include <pthread.h>
 #include <commons/config.h>
 #include <commons/log.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 ////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////// ESTRUCTURAS //////////////////////////////////////
@@ -20,39 +22,38 @@
 typedef struct {
 	int PID;
 	int pagina;
-	int entrada;
+	int marco;
+	int modificado;
+	int presencia;
+	int usado;
 } t_pagina;
 
 typedef struct {
 	int PID;
-	int pagina;
-	int modificado;
-	char* contenido;
-} t_memoria;
-
-/*typedef struct {
-	int posicion_memoria;
-	int posicion_TLB;
-} t_pagina_proceso;
+	t_list* paginas;
+	float TLB_hit;
+	int TLB_total;
+} t_proceso;
 
 typedef struct {
-	int PID;
-	int cant_paginas;
-	t_list* paginas;
-} t_proceso;*/
-
+	char* contenido;
+	int	  libre;
+} t_marco;
 
 
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////// VARIABLES GLOBALES //////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
+
+pthread_t 	th_server_cpu;
+int 		socket_swap;
 t_log* 		logger;
 char* 		CONFIG_PATH = "config.txt";
 char* 		LOGGER_PATH = "log.txt";
 t_list* 	TLB;
 t_list*		paginas;
-t_list* 	memoria;
+t_marco**	memoria;
 t_config* 	cfg;
 int 		PUERTO_ESCUCHA();
 char* 		IP_SWAP();
@@ -63,14 +64,15 @@ int 		TAMANIO_MARCO();
 int 		ENTRADAS_TLB();
 int 		TLB_HABILITADA();
 int 		RETARDO_MEMORIA();
-char* 		ALGORITMO_REEMPLAZO();
+//char* 		ALGORITMO_REEMPLAZO();
 
-int			INDICE_TLB = 0;
 int 		gl_PID;
 int			gl_nro_pagina;
-int			gl_entrada;
-float		gl_TLB_acierto = 0.0;
-int			gl_TLB_total = 0;
+
+int			gl_TLB_hit;
+int			gl_TLB_total;
+
+
 
 
 
@@ -119,32 +121,31 @@ int conectar_con_swap();
 char* swap_leer_pagina(int pid, int pagina);
 int swap_nuevo_proceso(int pid, int paginas);
 int swap_escribir_pagina(int pid, int pagina, char* contenido);
+int swap_finalizar(int pid);
 
 //// NUEVAS
 
+void 		destruir_proceso							(t_proceso* proceso);
+int 		es_el_proceso_segun_PID						(t_proceso* proceso);
 void 		procesar_mensaje_cpu						(int socket, t_msg* msg);
 void 		crear_estructuras_de_un_proceso				(int PID, int paginas);
 int  		iniciar_proceso_CPU							(int pid, int paginas);
 int  		escribir_pagina								(int pid, int pagina, char* contenido);
-int  		es_la_memoria_segun_PID						(t_memoria* pagina);
-int  		es_la_memoria_segun_PID_y_pagina			(t_memoria* pagina);
-void 		setear_flag_modificado						(int pid, int nro_pagina);
-int 		buscar_pagina_en_TLB						(int PID,int nro_pagina);
+int 		buscar_marco_en_TLB							(int PID,int nro_pagina);
 t_pagina* 	crear_pagina								(int PID, int pagina, int entrada);
-t_memoria* 	crear_memoria								(int PID, int pagina, int modificado, char* contenido);
 void 		destruir_pagina								(t_pagina* pagina);
-void 		destruir_memoria							(t_memoria* memoria);
 int 		es_la_pagina_segun_PID_y_nro_pagina			(t_pagina* pagina);
 int 		es_la_pagina_segun_PID						(t_pagina* pagina);
-int 		buscar_pagina_en_paginas					(int PID,int nro_pagina);
-void		agregar_pagina_en_memoria					(int pid,int nro_pagina,char*buff_pag);
-void		modificar_pagina_en_memoria_segun_algoritmo	(int pid,int nro_pagina,char*buff_pag);
-void 		actualizar_entradas_en_tabla_de_paginas		(t_pagina* pagina);
-int 		reemplazar_pagina_en_memoria_segun_algoritmo(int PID, int pagina, char* contenido);
-char* 		usar_pagina_en_memoria_segun_algoritmo		(int PID, int nro_pagina, int entrada,int flag_TLB);
+int 		la_pagina_esta_cargada_en_memoria			(t_pagina* pagina);
+int 		buscar_marco_en_paginas						(int PID,int nro_pagina);
+void		agregar_pagina_en_memoria					(t_proceso* proceso,int nro_pagina,char*buff_pag);
+int 		reemplazar_pagina_en_memoria_segun_algoritmo(t_proceso* proceso, int pagina, char* contenido);
 void 		actualizar_entradas_en_tabla_de_paginas		(t_pagina* pagina);
 void 		agregar_pagina_en_TLB						(int PID, int pagina, int entrada);
-void 		recalcular_entrada							(t_pagina* pagina);
 void 		tasa_aciertos_TLB							();
+void 		tasa_aciertos_TLB_global					();
+void 		sumar_tasas_TLB								(t_proceso* proceso);
+int 		encontrar_marco_libre						();
+int 		buscar_marco_de_pagina_en_TLB_y_tabla_paginas(int pid, int nro_pagina);
 
 #endif /* PROCESOADMINDEMEMORIA_H_ */

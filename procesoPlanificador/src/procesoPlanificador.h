@@ -31,6 +31,8 @@ void cambiar_a_exec(int pid);
 
 t_list* pcbs;/*lista de pcbs*/
 
+
+
 /*
 typedef struct {
 	char path[MAX_PATH];
@@ -90,9 +92,9 @@ typedef struct{
 	int tiempo_total;
 }t_pcb_finalizado;
 
-
-
-
+typedef struct{
+	int id;
+}t_cpu_especial;
 
 void pcb_agregar(t_pcb* pcb){
 	list_add(pcbs, (void*)pcb);
@@ -215,7 +217,8 @@ int cpu_agregar(t_cpu* cpu){
 
 t_pcb* es_el_pcb_buscado_por_id(int pid);
 
-int es_el_pcb_buscado(t_pcb* pcb);
+t_pcb* es_el_pcb_buscado_struct(t_pcb* pcb);
+
 //t_pcb* es_el_pcb_buscado();
 
 void Hilo_IO(int pid);
