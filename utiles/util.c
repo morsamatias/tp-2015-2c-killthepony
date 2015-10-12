@@ -944,19 +944,33 @@ void print_msg(t_msg *msg) {
 		putchar(*(msg->stream + i));
 	puts("\n==================================================\n");
 }
-
 char *id_string(t_msg_id id) {
 	char *buf;
 	switch (id) {
 	case CPU_NUEVO:
 		buf = strdup("CPU_NUEVO");
 		break;
+	case MEM_OK:
+		buf = strdup("MEM_OK");
+		break;
+	case MEM_NO_OK:
+		buf = strdup("MEM_NO_OK");
+		break;
+	case SWAP_NO_OK:
+		buf = strdup("SWAP_NO_OK");
+		break;
+	case SWAP_OK:
+		buf = strdup("SWAP_OK");
+		break;
+
 	default:
 		buf = string_from_format("%d, <AGREGAR A LA LISTA>", id);
 		break;
 	}
 	return buf;
 }
+
+
 
 
 /*
