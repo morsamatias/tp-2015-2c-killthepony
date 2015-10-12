@@ -161,7 +161,7 @@ int get_nuevo_pid() {
 void procesar_msg_consola(char* msg) {
 
 	char* path;
-	char* path_completo=(char*)malloc(sizeof(char)*100);
+	char* path_completo=(char*)malloc(sizeof(char)*1000);
 	int pid;
 	//char* buff  ;
 	//char comando[COMMAND_MAX_SIZE];
@@ -179,12 +179,16 @@ void procesar_msg_consola(char* msg) {
 
 	switch (cmd) {
 	case CORRER:
-		path = input_user[1];
-		printf("Correr path: %s\n", path_completo);
-		path_completo="/home/utnso/Escritorio/git/tp-2015-2c-killthepony/tests/";
-		strcat(path_completo,path);
+		printf("Correr path: %s\n", path);
+		memset(path_completo, 0, 1000);
+		strcpy(path_completo, "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/tests/");
+		strcat(path_completo, path);
 		printf("Correr path completo: %s\n", path_completo);
-		correr_proceso(path_completo);
+		if(file_exists(path_completo)){
+			correr_proceso(path_completo); }
+		else{
+			printf("mcod no existente\n");
+		}
 		break;
 	case FINALIZAR:
 		pid = atoi(input_user[1]);
@@ -431,7 +435,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 						PID_GLOBAL_EXEC = pcb->pid;
 
-						if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)) {
+						if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_por_id)) {
 							list_remove_by_condition(list_exec,
 									(void*) es_el_pcb_buscado_en_exec);
 						}
@@ -456,9 +460,11 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 							case final:
 
-			pcb = es_el_pcb_buscado_por_id(msg->argv[1]);
+			pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
 			PID_GLOBAL_FINISH = pcb->pid;
+
+			PID_GLOBAL_EXEC = pcb->pid;
 			/*
 			 Tiempo de retorno: tiempo transcurrido entre la llegada de
 			 un proceso y su finalización.
@@ -481,7 +487,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 			finish->pid = PID_GLOBAL_FINISH;
 			list_add(list_finish, finish);
 
-			pcb2->tiempo_total = difftime(time(NULL), time1);
+			//pcb2->tiempo_total = difftime(time(NULL), time1);
 			pcb->estado=FINISH;
 
 			cpu=cpu_buscar_por_socket(socket);
@@ -517,10 +523,10 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 			}
 
 			break;
-		} }
+		}
 
 		//termina case IO y final
-	/*
+
 
 		if (msg->argv[3] == (QUANTUM())) {
 
@@ -528,7 +534,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 			PID_GLOBAL_EXEC = pcb->pid;
 
-			if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)) {
+			if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_por_id)) {
 				list_remove_by_condition(list_exec,
 						(void*) es_el_pcb_buscado_en_exec);
 			}
@@ -564,7 +570,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 				int cantIO = msg->argv[3];
 
-				if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)) {
+				if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_por_id)) {
 
 					list_remove_by_condition(list_exec,
 							(void*) es_el_pcb_buscado_en_exec);
@@ -595,8 +601,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				}
 
 				break;
-*/
-				/*
+
+
 
 				 case PCB_FINQ:
 				 //VUELVE EN EL FIN DEL QUANTUM
@@ -606,7 +612,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				 PID_GLOBAL=pcb->pid;
 
 
-				 if(list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)){
+				 if(list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_por_id)){
 
 				 list_remove_by_condition(list_exec, (void*) es_el_pcb_buscado_en_exec);
 
@@ -623,9 +629,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				 cpu_ejecutar(cpu, pcb);
 				 }
 
-				 break; */
+				 break;
 
-	/*		case PCB_FINALIZAR:
+				case PCB_FINALIZAR:
 
 				pcb = es_el_pcb_buscado_por_id(msg->argv[1]);
 
@@ -637,7 +643,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				 cola de preparados.
 				 Tiempo de respuesta: tiempo que un proceso bloqueado
 				 tarda en entrar en la CPU desde que ocurre el suceso que lo
-				 bloquea.
+				 bloquea.*/
 
 
 				if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_en_exec)) {
@@ -688,7 +694,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				}
 
 		break;
-*/
+
 		case CPU_PORCENTAJE_UTILIZACION:
 
 			cpu = cpu_buscar_por_socket(socket);
@@ -784,6 +790,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 	return 0;
 }
+	}
 
 int finalizar() {
 	config_destroy(cfg);
@@ -843,7 +850,7 @@ while(1){
 
 				pcb->estado= READY;
 
-				if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado)) {
+				if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_por_id)) {
 					list_remove_by_condition(list_exec,
 							(void*) es_el_pcb_buscado_en_exec);
 				}
@@ -859,7 +866,7 @@ while(1){
 }
 
 }
-}
+
 void controlar_IO(char* pid_string) {
 
 	t_block* block;
@@ -910,7 +917,7 @@ int es_el_pcb_buscado(t_pcb* pcb){
 	return(PID_GLOBAL==pcb->pid);
 }
 
-/*t_pcb* es_el_pcb_buscado() {
+t_pcb* es_el_pcb_buscado_struct() {
 
 	int i = 0;
 	t_pcb* pcb;
@@ -918,6 +925,8 @@ int es_el_pcb_buscado(t_pcb* pcb){
 	pcb = list_get(pcbs, i);
 
 	while ((i + 1) <= list_size(pcbs)) {
+
+		pcb = list_get(pcbs, i);
 
 		if (pcb->pid == PID_GLOBAL) {
 			break;
@@ -927,7 +936,7 @@ int es_el_pcb_buscado(t_pcb* pcb){
 	}
 
 	return pcb;
-}*/
+}
 
 int pos_del_pcb(int pid) {
 

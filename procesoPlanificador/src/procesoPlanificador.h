@@ -215,7 +215,8 @@ int cpu_agregar(t_cpu* cpu){
 
 t_pcb* es_el_pcb_buscado_por_id(int pid);
 
-int es_el_pcb_buscado(t_pcb* pcb);
+t_pcb* es_el_pcb_buscado_struct(t_pcb* pcb);
+
 //t_pcb* es_el_pcb_buscado();
 
 void Hilo_IO(int pid);
