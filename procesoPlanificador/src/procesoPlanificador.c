@@ -763,9 +763,44 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		case CPU_PORCENTAJE_UTILIZACION:
 
-			cpu = cpu_buscar_por_socket(socket);
-			int i;
-			uso_cpu=msg->argv[2];
+			//cpu = cpu_buscar_por_socket(socket);
+			int i=0;
+			int j=1;
+
+
+			int total_cpus=list_size(cpus);
+
+			while((i+1)<=list_size(cpus)){
+
+				uso_cpu=msg->argv[j];
+
+				cpu=list_get(cpus,0);
+
+				cpu->usoUltimoMinuto=uso_cpu;
+
+				i++;
+
+				j++;
+
+			}
+
+			i=0;
+
+			while((i+1)<=list_size(cpus)){
+
+							cpu = cpu_buscar(i);
+
+							if(cpu!=NULL){
+
+							log_trace(logger, "Cpu %d: %d", cpu->id, cpu->usoUltimoMinuto);
+
+							}
+
+							i++;
+						}
+
+
+			/*
 
 			if(cpu==NULL){
 				printf("Se produce un error por no existir la CPU");
@@ -794,7 +829,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				log_trace(logger,"Aún no está la información del uso de todas las CPUs");
 			}
 
-			}
+			}*/
 
 		break;
 
