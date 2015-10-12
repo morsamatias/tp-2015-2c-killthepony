@@ -390,7 +390,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		if (!cpu_existe(id_cpu)) {
 			cpu = cpu_nuevo(id_cpu);
 			cpu->socket = socket;
-			cpu->estado=0;
+			cpu->estado=1;
 			cpu_agregar(cpu);
 		} else {
 			//si existe, modifico el socket, verificar bien si esta bien porque puedo quedar un socket abierto
@@ -516,7 +516,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 					}
 					}else
 					{
-						printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+						printf("No existe CPU activa para asignarle un nuevo proceso");
 					}
 
 
@@ -534,7 +534,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 			PID_GLOBAL_EXEC = pcb->pid;
 
-			if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_por_id)) {
+			if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_en_exec)) {
 				list_remove_by_condition(list_exec,
 						(void*) es_el_pcb_buscado_en_exec);
 			}
@@ -549,13 +549,13 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 					if(cpu!=NULL){
 					pcb->cpu_asignado = cpu->id;
 					cpu_ejecutar(cpu, pcb);
-					cpu->estado=1;}
+					cpu->estado=0;}
 				else
 				{printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
 				}
 				}else
 				{
-					printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+					printf("No existe CPU activa para asignarle un nuevo proceso");
 				}
 
 		} else {
@@ -566,11 +566,12 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				pcb = es_el_pcb_buscado_por_id(msg->argv[1]);
 
 				PID_GLOBAL_BLOCK = pcb->pid;
+				PID_GLOBAL_EXEC=pcb->pid;
 				IO_GLOBAL = msg->argv[2];
 
 				int cantIO = msg->argv[3];
 
-				if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_por_id)) {
+				if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_en_exec)) {
 
 					list_remove_by_condition(list_exec,
 							(void*) es_el_pcb_buscado_en_exec);
@@ -592,44 +593,59 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				}
 
 				if ((list_size(list_ready)) != 0) {
-					if (cpu_disponible()) {
-						cpu = cpu_seleccionar();
-						pcb->cpu_asignado = cpu->id;
-						cpu_ejecutar(cpu, pcb);
-					}
-
+					if (cpu_disponible()) cpu = cpu_seleccionar();
+					if(cpu!=NULL){
+					pcb->cpu_asignado = cpu->id;
+					cpu_ejecutar(cpu, pcb);
+					cpu->estado=0;}
+				else
+				{printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
 				}
+				}else
+				{
+					printf("No existe CPU activa para asignarle un nuevo proceso");
+				}
+
 
 				break;
 
-
-
-				 case PCB_FINQ:
+				 /*case PCB_FINQ:
 				 //VUELVE EN EL FIN DEL QUANTUM
 
 				 pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
-				 PID_GLOBAL=pcb->pid;
+				 PID_GLOBAL_EXEC=pcb->pid;
 
-
-				 if(list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_por_id)){
+				 if(list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_en_exec)){
 
 				 list_remove_by_condition(list_exec, (void*) es_el_pcb_buscado_en_exec);
 
 				 }
+
+				 log_trace(logger,"El proceso de Pid %d finalizó su Quantum y pasa del estado en Ejecución al estado Listo", msg->argv[0]);
+
 				 t_ready* ready;
 
-				 ready->pid=PID_GLOBAL;
+				 ready->pid=PID_GLOBAL_EXEC;
 
 				 list_add(list_ready,ready);
 
-				 if(cpu_disponible()){
-				 cpu = cpu_seleccionar();
-				 pcb->cpu_asignado = cpu->id;
-				 cpu_ejecutar(cpu, pcb);
-				 }
+				 if ((list_size(list_ready)) != 0) {
+				 					if (cpu_disponible()) cpu = cpu_seleccionar();
+				 					if(cpu!=NULL){
+				 					pcb->cpu_asignado = cpu->id;
+				 					cpu_ejecutar(cpu, pcb);
+				 					cpu->estado=0;}
+				 				else
+				 				{printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+				 				}
+				 				}else
+				 				{
+				 					printf("No existe CPU activa para asignarle un nuevo proceso");
+				 				}
 
 				 break;
+				 */
 
 				case PCB_FINALIZAR:
 
@@ -687,7 +703,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 						}
 						}else
 						{
-							printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+							printf("No existe CPU activa para asignarle un nuevo proceso");
 						}
 
 
@@ -748,7 +764,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 			t_pcb* pcb=es_el_pcb_buscado_por_id(msg->argv[1]);
 
-			pcb->estado=EXEC;
+			pcb->estado=READY;
+
+			log_trace(logger,"El proceso %d se encuentra en la cola de Listos",pcb->pid);
 
 			pcb->pc=pcb->pc+QUANTUM();
 
@@ -774,7 +792,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 									}
 									}else
 									{
-										printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+										printf("No existe CPU activa para asignarle un proceso");
 									}
 
 
@@ -817,6 +835,7 @@ int inicializar() {
 
 	return 0;
 }
+
 void Hilo_IO(int pid){
 
 while(1){
