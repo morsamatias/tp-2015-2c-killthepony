@@ -21,6 +21,7 @@ int PID_GLOBAL_EXEC = 1;
 int PID_GLOBAL_BLOCK = 1;
 int PID_GLOBAL_FINISH = 1;
 int IO_GLOBAL = 1;
+
 t_log* logger;
 char* LOG_PATH = "log.txt";
 
@@ -220,6 +221,9 @@ void procesar_msg_consola(char* msg) {
 
 	//	int uso;
 	//	int uso_rodondeado;
+
+		/*
+
 		if (list_size(cpus) > 0) {
 			while ((i + 1) <= list_size(cpus)) {
 
@@ -245,7 +249,20 @@ void procesar_msg_consola(char* msg) {
 		} else {
 			printf("No hay CPUs activas por el momento");
 		}
+
+		*/
+
+		t_cpu_especial* cpu_especial;
+
+		t_msg* pedido_uso = argv_message(CPU_PORCENTAJE_UTILIZACION,0);
+
+		enviar_mensaje(cpu_especial->id,pedido_uso);
+
+		destroy_message(pedido_uso);
+
 		break;
+
+
 		/*	case SALIR:			//exit
 		 fin = true;
 		 break;*/
@@ -268,15 +285,22 @@ int correr_proceso(char* path) {
 
 	if (algoritmo == 0) {
 
+		log_trace(logger,"El algoritmo de planificación será FIFO");
+
 		pcb->cant_a_ejectuar = get_cant_sent(path);
 	} else {
+
+		log_trace(logger,"El algoritmo de planificación será Round Robin");
+
 		pcb->cant_a_ejectuar = QUANTUM();
 		// en caso de que se RR es el Q
 	}
 
+	log_trace(logger,"Proceso mProc a ejecutar: %s", pcb->path);
+
 	pcb->estado = NEW;
 
-	log_trace(logger,"El proceso %d se encuentra en la cola de procesos Nuevos", pcb->pid);
+	log_trace(logger,"El proceso %d se encuentra en la cola de procesos Nuevos para ejecutar el programa Mcod %s", pcb->pid, pcb->path);
 
 	pcb_agregar(pcb);
 
@@ -378,6 +402,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 	t_pcb* pcb = NULL;
 	char* pid_string;
 	int uso_cpu;
+	t_cpu_especial* cpu_especial=malloc(sizeof(t_cpu_especial));
 	switch (msg->header.id) {
 	case CPU_NUEVO:
 
@@ -397,6 +422,29 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 			cpu = cpu_buscar(id_cpu);
 			cpu->socket = socket;
 		}
+
+		if(list_size(list_ready)>0){
+						if (cpu_disponible()) {
+								cpu = cpu_seleccionar();
+								if(cpu!=NULL){
+									t_ready* ready=list_get(list_ready,0);
+									t_pcb* pcb2;
+									pcb2=es_el_pcb_buscado_por_id(ready->pid);
+
+								pcb2->cpu_asignado = cpu->id;
+								cpu_ejecutar(cpu, pcb2);
+								cpu->estado=0;}
+							else
+							{printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+							}
+							}else
+							{
+								printf("No existe CPU activa para asignarle un nuevo proceso");
+							}
+
+
+					}
+
 		break;
 
 	case SENTENCIAS_EJECUTADAS:
@@ -421,8 +469,6 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		////////////////////////////////////////
 		///////////////////////////////////////
 
-
-
 		switch (msg->argv[1]){
 					case io:
 
@@ -439,7 +485,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 							list_remove_by_condition(list_exec,
 									(void*) es_el_pcb_buscado_en_exec);
 						}
-						t_block* blocked;
+						t_block* blocked=malloc(sizeof(t_block));
 
 						blocked->pid=msg->argv[0];
 
@@ -504,7 +550,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				if (cpu_disponible()) {
 						cpu = cpu_seleccionar();
 						if(cpu!=NULL){
-							t_ready* ready=list_get(list_ready,0);
+							t_ready* ready=malloc(sizeof(ready));
+
+							ready=list_get(list_ready,0);
 							t_pcb* pcb2;
 							pcb2=es_el_pcb_buscado_por_id(ready->pid);
 
@@ -538,7 +586,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				list_remove_by_condition(list_exec,
 						(void*) es_el_pcb_buscado_en_exec);
 			}
-			t_ready* ready;
+			t_ready* ready=malloc(sizeof(ready));
 
 			ready->pid = PID_GLOBAL_EXEC;
 
@@ -576,7 +624,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 					list_remove_by_condition(list_exec,
 							(void*) es_el_pcb_buscado_en_exec);
 
-					t_block* block;
+					t_block* block=malloc(sizeof(block));
 
 					block->pid = PID_GLOBAL_BLOCK;
 					block->tiempoIO=cantIO;
@@ -681,7 +729,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 				cpu->estado=1;
 
-				log_trace(logger,"El proceso %d se encuentra en la cola de procesos Finalizados", pcb->pid);
+				log_trace(logger,"El proceso %d del programa Mcod %s se encuentra en la cola de procesos Finalizados", pcb->pid, pcb->path);
 
 				printf("Hay que finalizar el proceso");
 
@@ -691,7 +739,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 					if (cpu_disponible()) {
 							cpu = cpu_seleccionar();
 							if(cpu!=NULL){
-								t_ready* ready=list_get(list_ready,0);
+								t_ready* ready=malloc(sizeof(t_ready));
+
+								ready=list_get(list_ready,0);
 								t_pcb* pcb2;
 								pcb2=es_el_pcb_buscado_por_id(ready->pid);
 
@@ -756,7 +806,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 			log_trace(logger,"El proceso de Pid %d finalizó su Quantum y pasa del estado en Ejecución al estado Listo", msg->argv[1]);
 
-			t_ready* ready;
+			t_ready* ready=malloc(sizeof(ready));
 
 			ready->pid=msg->argv[1];
 
@@ -780,7 +830,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 								if (cpu_disponible()) {
 										cpu = cpu_seleccionar();
 										if(cpu!=NULL){
-											t_ready* ready=list_get(list_ready,0);
+											t_ready* ready=malloc(sizeof(t_ready));
+											ready=list_get(list_ready,0);
 											t_pcb* pcb2;
 											pcb2=es_el_pcb_buscado_por_id(ready->pid);
 
@@ -799,6 +850,14 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 							}
 
 			break;
+
+		case CPU_ESPECIAL:
+
+		cpu_especial->id=socket;
+
+		log_trace(logger, "Se conecta con el Planificador el Hilo al que se pedirán las solicitudes de Uso de CPUs");
+
+		break;
 
 	default:
 
@@ -855,7 +914,7 @@ while(1){
 
 			 sleep(block->tiempoIO);
 
-				t_ready* ready;
+				t_ready* ready=malloc(sizeof(t_ready));
 
 				ready->pid = block->pid;
 
