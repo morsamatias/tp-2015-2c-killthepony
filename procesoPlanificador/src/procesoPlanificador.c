@@ -1138,10 +1138,10 @@ int es_el_pcb_buscado(t_pcb* pcb){
 	return(PID_GLOBAL==pcb->pid);
 }
 
-t_pcb* es_el_pcb_buscado_struct() {
+t_pcb* es_el_pcb_buscado_struct(t_pcb * pcb) {
 
 	int i = 0;
-	t_pcb* pcb;
+	//t_pcb* pcb;
 
 	pcb = list_get(pcbs, i);
 
