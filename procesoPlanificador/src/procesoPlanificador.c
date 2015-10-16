@@ -178,7 +178,7 @@ void procesar_msg_consola(char* msg) {
 	input_user = separar_por_espacios(msg);
 	e_comando cmd = parsear_comando(input_user[0]);
 	int espacio=encontrar_espacio(msg);
-	path=string_substring_until(msg,(espacio+1));
+	path=string_substring_from(msg,(espacio+1));
 	switch (cmd) {
 	case CORRER:
 
