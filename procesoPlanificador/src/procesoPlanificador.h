@@ -92,6 +92,12 @@ typedef struct{
 	int tiempo_total;
 }t_pcb_finalizado;
 
+// tiempo de retorno: tiempo que tarda en terminar su ejecución un proceso
+
+// tiempo de respuesta: tiempo que transcurre desde que se inicia una solicitud hasta que se recibe la primer respuesta
+
+// tiempo de espero: tiempo total que pasa un proceso en la cola de listos
+
 typedef struct{
 	int id;
 }t_cpu_especial;

@@ -14,6 +14,7 @@
 #include "string.h"
 #include "util.h"
 #include <math.h>
+#include <time.h>
 int PID = 1;
 int PID_GLOBAL=1;
 int PID_GLOBAL_READY = 1;
