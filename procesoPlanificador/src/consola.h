@@ -37,5 +37,7 @@ char** separar_por_espacios(char* string) ;
  */
 void strip(char *s);
 
+int encontrar_espacio(char* msg);
+
 
 #endif /* CONSOLA_H_ */

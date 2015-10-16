@@ -57,3 +57,15 @@ void leer_comando_consola(char* comando) {
 	//memset(comando, ' ', COMMAND_MAX_SIZE-strlen(comando));
 
 }
+
+
+int encontrar_espacio(char* msg)
+{
+	int tam,i;
+	tam=string_length(msg);
+	for( i=0;i<tam;i++)
+	{
+		if (msg[i]==' ') return(i);
+	}
+	return(-1);
+}

@@ -177,9 +177,11 @@ void procesar_msg_consola(char* msg) {
 	//separo todoo en espacios ej: [copiar, archivo1, directorio0]
 	input_user = separar_por_espacios(msg);
 	e_comando cmd = parsear_comando(input_user[0]);
-
+	int espacio=encontrar_espacio(msg);
+	path=string_substring_until(msg,(espacio+1));
 	switch (cmd) {
 	case CORRER:
+
 		printf("Correr path: %s\n", path);
 		memset(path_completo, 0, 1000);
 		strcpy(path_completo, "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/tests/");
@@ -252,7 +254,7 @@ void procesar_msg_consola(char* msg) {
 
 		*/
 
-		t_cpu_especial* cpu_especial;
+		t_cpu_especial* cpu_especial=malloc(sizeof(t_cpu_especial));
 
 		t_msg* pedido_uso = argv_message(CPU_PORCENTAJE_UTILIZACION,0);
 
@@ -410,6 +412,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 	t_pcb* pcb = NULL;
 	char* pid_string;
 	int uso_cpu;
+	int n;
+	int m;
 	t_cpu_especial* cpu_especial=malloc(sizeof(t_cpu_especial));
 	switch (msg->header.id) {
 	case CPU_NUEVO:
@@ -753,7 +757,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 			break;
 default:
 
-	printf("no se entiende el msg");
+	printf("El código de mensaje enviado es incorrecto");
 
 								break;
 
@@ -925,31 +929,30 @@ break;
 		case CPU_PORCENTAJE_UTILIZACION:
 
 			//cpu = cpu_buscar_por_socket(socket);
-			int i=0;
-			int j=1;
-
+			n=0;
+			m=1;
 
 			int total_cpus=list_size(cpus);
 
-			while((i+1)<=list_size(cpus)){
+			while((n+1)<=total_cpus){
 
-				uso_cpu=msg->argv[j];
+				uso_cpu=msg->argv[m];
 
 				cpu=list_get(cpus,0);
 
 				cpu->usoUltimoMinuto=uso_cpu;
 
-				i++;
+				n++;
 
-				j++;
+				m++;
 
 			}
 
-			i=0;
+			n=0;
 
-			while((i+1)<=list_size(cpus)){
+			while((n+1)<=list_size(cpus)){
 
-							cpu = cpu_buscar(i);
+							cpu = cpu_buscar(n);
 
 							if(cpu!=NULL){
 
@@ -957,7 +960,7 @@ break;
 
 							}
 
-							i++;
+							n++;
 						}
 
 
@@ -1010,7 +1013,7 @@ break;
 
 	return 0;
 }
-	}
+
 
 int finalizar() {
 	config_destroy(cfg);
@@ -1102,7 +1105,7 @@ void controlar_IO(char* pid_string) {
 
 	list_remove_by_condition(list_block, (void*) es_el_pcb_buscado_en_block);
 
-	t_ready* ready;
+	t_ready* ready=malloc(sizeof(t_ready));
 
 	ready->pid = block->pid;
 
