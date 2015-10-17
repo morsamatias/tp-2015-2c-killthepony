@@ -680,6 +680,16 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 			pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
+			pcb->cantidad_IO = pcb->cantidad_IO + 1;
+
+									if (pcb->cantidad_IO == 1){
+
+										pcb->tiempo_entrada_salida=clock();
+
+										pcb->tiempo_respuesta=difftime(pcb->tiempo_entrada_salida,pcb->tiempo_inicio_proceso);
+
+									}
+
 							PID_GLOBAL_BLOCK = pcb->pid;
 							IO_GLOBAL = msg->argv[2];
 
@@ -742,13 +752,17 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 			//pcb2->tiempo_total = difftime(time(NULL), time1);
 			pcb->estado=FINISH;
 
+			pcb->tiempo_fin_proceso=clock();
+
+			pcb->tiempo_retorno=difftime(pcb->tiempo_inicio_proceso,pcb->tiempo_fin_proceso);
+
 			cpu=cpu_buscar_por_socket(socket);
 
 			cpu->estado=1;
 
 			log_trace(logger,"El proceso %d se encuentra en la cola de procesos Finalizados", pcb->pid);
 
-			printf("Hay que finalizar el proceso");
+			log_trace(logger,"Métricas del Proceso %d \n El Tiempo de Retorno fue de %d \n El Tiempo de Respuesta fue de %d \n El Tiempo de Espera fue de \n",pcb->pid,pcb->tiempo_retorno, pcb->tiempo_respuesta);
 
 			// Hay que ver si hay algún proceso en READY para ejecutar
 
