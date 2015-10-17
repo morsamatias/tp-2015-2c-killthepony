@@ -139,6 +139,12 @@ typedef struct {
 	int pid;
 	int estado;
 	int cpu_asignado;//para saber a que cpu fue asignado, en el caso de que el cpu se desconecte, busco el pcb que hay que replanificar
+	clock_t tiempo_inicio_proceso;
+	clock_t tiempo_fin_proceso;
+	int tiempo_retorno;
+	clock_t tiempo_entrada_salida;
+	int tiempo_respuesta;
+	int cantidad_IO;
 }t_pcb;
 
 typedef struct {

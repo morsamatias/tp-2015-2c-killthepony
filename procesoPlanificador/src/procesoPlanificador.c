@@ -303,6 +303,10 @@ int correr_proceso(char* path) {
 
 	pcb->estado = NEW;
 
+	pcb->tiempo_inicio_proceso=clock();
+
+	pcb->cantidad_IO=0;
+
 	log_trace(logger,"El proceso %d se encuentra en la cola de procesos Nuevos para ejecutar el programa Mcod %s", pcb->pid, pcb->path);
 
 	pcb_agregar(pcb);
@@ -411,7 +415,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 	int id_cpu;
 	t_cpu* cpu = NULL;
 	t_pcb* pcb = NULL;
-	char* pid_string;
+	//char* pid_string;
 	int uso_cpu;
 	int n;
 	int m;
@@ -470,6 +474,16 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 						pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
+						pcb->cantidad_IO = pcb->cantidad_IO + 1;
+
+						if (pcb->cantidad_IO == 1){
+
+							pcb->tiempo_entrada_salida=clock();
+
+							pcb->tiempo_respuesta=difftime(pcb->tiempo_entrada_salida,pcb->tiempo_inicio_proceso);
+
+						}
+
 										PID_GLOBAL_BLOCK = pcb->pid;
 										IO_GLOBAL = msg->argv[2];
 
@@ -524,7 +538,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 						}
 						t_finish* finish=malloc(sizeof(t_finish));
-						t_pcb_finalizado* pcb2;
+
+						//t_pcb_finalizado* pcb2;
 
 						finish->pid = PID_GLOBAL_FINISH;
 						list_add(list_finish, finish);
@@ -532,13 +547,19 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 						//pcb2->tiempo_total = difftime(time(NULL), time1);
 						pcb->estado=FINISH;
 
+						pcb->tiempo_fin_proceso=clock();
+
+						pcb->tiempo_retorno=difftime(pcb->tiempo_inicio_proceso,pcb->tiempo_fin_proceso);
+
 						cpu=cpu_buscar_por_socket(socket);
 
 						cpu->estado=1;
 
 						log_trace(logger,"El proceso %d se encuentra en la cola de procesos Finalizados", pcb->pid);
 
-						printf("Hay que finalizar el proceso");
+						log_trace(logger,"Métricas del Proceso %d \n El Tiempo de Retorno fue de %d \n El Tiempo de Respuesta fue de %d \n El Tiempo de Espera fue de \n",pcb->pid,pcb->tiempo_retorno, pcb->tiempo_respuesta);
+
+						//printf("Hay que finalizar el proceso");
 
 						// Hay que ver si hay algún proceso en READY para ejecutar
 
