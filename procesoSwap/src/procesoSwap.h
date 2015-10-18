@@ -47,6 +47,8 @@ int iniciar_server();
 
 int inicializar();
 int finalizar();
+t_ocupado* swap_ocupar(int pid, int pagina, int paginas);
+int swap_buscar_hueco_libre(int paginas);
 
 int swap_ocupar_hueco(t_ocupado* ocupado);
 int ordenar();

@@ -25,9 +25,6 @@ int main(void) {
 	return EXIT_SUCCESS;
 }
 char* swap_inicializar() {
-
-
-
 	TAMANIO_SWAP = CANTIDAD_PAGINAS() * TAMANIO_PAGINA();
 
 	char* TRUNC_DATA = string_from_format("truncate -s %d %s", TAMANIO_SWAP, NOMBRE_SWAP());
@@ -42,12 +39,23 @@ char* swap_inicializar() {
 
 	log_trace(logger, "Creado archivo swap %s de %d paginas de tamaño %d", NOMBRE_SWAP(), CANTIDAD_PAGINAS(), TAMANIO_PAGINA());
 
+
+
 	return file_get_mapped(NOMBRE_SWAP());
 }
 
 void swap_destroy() {
 	munmap(swap, TAMANIO_SWAP);
 //mapped = NULL;
+}
+
+void esp_libre_inicializar(){
+	esp_libre = list_create();
+	t_libre* libre = malloc(sizeof(t_libre));
+	libre->posicion = 0;
+	libre->cantidad = CANTIDAD_PAGINAS();
+
+	list_add(esp_libre, libre);
 }
 
 int inicializar(){
@@ -58,6 +66,14 @@ int inicializar(){
 	logger = log_create(LOGGER_PATH, "procesoSwap", true, LOG_LEVEL_TRACE);
 
 	swap = swap_inicializar();
+	/////////////////////////////////////
+	//inicializo las paginas con nros del 1 al X
+	int i;
+	for (i = 0; i < CANTIDAD_PAGINAS(); ++i) {
+		memset(swap + i, i, TAMANIO_PAGINA());
+	}
+	/////////////////////////
+
 
 	////////////////////////////////////////
 	//fix temporal
@@ -68,12 +84,7 @@ int inicializar(){
 
 	esp_ocupado =  list_create();
 
-	esp_libre =  list_create();
-	t_libre* libre = malloc(sizeof(t_libre));
-	libre->posicion = 0;
-	libre->cantidad = CANTIDAD_PAGINAS();
-
-	list_add(esp_libre, libre);
+	esp_libre_inicializar();
 
 	procesos = list_create();
 
@@ -81,14 +92,30 @@ int inicializar(){
 	return 0;
 }
 
+void libre_destroy(t_libre* libre){
+	FREE_NULL(libre);
+}
+
+void ocupado_destroy(t_ocupado* ocupado){
+	FREE_NULL(ocupado);
+}
+
+void proceso_destroy(t_proceso* proc){
+	FREE_NULL(proc);
+}
 int finalizar(){
 
 	config_destroy(cfg);
 	log_destroy(logger);
 	swap_destroy();
 
-	list_destroy(esp_libre);
-	list_destroy(esp_ocupado);
+	list_destroy_and_destroy_elements(esp_libre, (void*)libre_destroy);
+	list_destroy_and_destroy_elements(esp_ocupado, (void*)ocupado_destroy);
+	list_destroy_and_destroy_elements(procesos, (void*)proceso_destroy);
+
+
+
+	printf("Fin OK \n");
 	return 0;
 }
 
@@ -104,11 +131,30 @@ int swap_cant_huecos_libres(){
 }
 
 int compactar(){
+	log_trace(logger, "Iniciando compactacion");
 	//creo una nueva lista copia de la lista de ocupados
 	t_list* esp_ocupado_new = NULL;
 	esp_ocupado_new = list_create();
+	typedef struct{
+		int pid;
+		int tamanio;
+		char* contenido;
+	}t_pagina_tmp;
+	t_list* paginas_tmp = list_create();
+	t_pagina_tmp* page_tmp;
+	//int tam_hueco;
 	void _copiar(t_ocupado* ocup){
+		page_tmp = malloc(sizeof(*page_tmp));
+		page_tmp->pid = ocup->pid;
+
+		//me guardo el contenido de tod0 el hueco
+		page_tmp->tamanio = ocup->cantidad*TAMANIO_PAGINA();
+		page_tmp->contenido = malloc(page_tmp->tamanio );
+		memcpy(page_tmp->contenido, swap+ocup->posicion, page_tmp->tamanio );
+		list_add(paginas_tmp, page_tmp);
+
 		list_add(esp_ocupado_new, ocup);
+
 	}
 	list_iterate(esp_ocupado, (void*)_copiar);
 
@@ -116,11 +162,33 @@ int compactar(){
 	esp_ocupado->elements_count = 0;
 
 	//limpio la lista de esp libre
-	list_clean(esp_libre);
+	list_destroy(esp_libre);
+	esp_libre_inicializar();
 
+	//inicializo toda la particion
+	memset(swap, 0, TAMANIO_SWAP);
+	//int comienzo = 0;
 
+	void _ocupar_hueco(t_ocupado* o){
+		o->posicion= swap_buscar_hueco_libre(o->cantidad);
+		swap_ocupar(o->pid, o->posicion, o->cantidad);
+
+		bool _buscar_page_tmp(t_pagina_tmp* p){
+			return p->pid ==o->pid;
+		}
+		page_tmp = list_find(paginas_tmp, (void*)_buscar_page_tmp);
+		memcpy(swap + (o->posicion), page_tmp->contenido, page_tmp->tamanio);
+	}
 	//ocupo tod0 de nuevo
-	list_iterate(esp_ocupado_new, (void*)swap_ocupar_hueco);
+	list_iterate(esp_ocupado_new, (void*)_ocupar_hueco);
+
+
+	//limpio tmp
+	void _pagina_tmp_destroy(t_pagina_tmp* p){
+		free(p->contenido);
+		//free(p);
+	}
+	list_destroy_and_destroy_elements(paginas_tmp, (void*)_pagina_tmp_destroy);
 
 	//ordenpor las dudas
 	ordenar();
@@ -137,14 +205,14 @@ int compactar(){
 	*/
 
 
-
+	log_trace(logger, "Compactacion OK");
 	return 0;
 }
 
 /*
  * si no encuentra nada devuelve -1;
  */
-int swap_buscar_hueco_libre(paginas){
+int swap_buscar_hueco_libre(int paginas){
 
 	bool _swap_buscar_hueco_libre(t_libre* libre){
 		return libre->cantidad >= paginas;
@@ -273,7 +341,7 @@ int swap_nuevo_proceso(int pid, int paginas){
 		hueco_print_info("mProc Asignado", hueco);
 		return 0;
 	}else{
-		log_trace(logger, "OCUPADO pid: %d, paginas: %d. No hay hueco libre para el proceso", pid, paginas);
+		log_warning(logger, "OCUPADO pid: %d, paginas: %d. No hay hueco libre para el proceso", pid, paginas);
 		return -1;
 	}
 
@@ -401,7 +469,6 @@ int swap_liberar(int pid){
 	}
 	list_remove_by_condition(esp_ocupado, (void*)_swap_buscar_ocupado_por_pid);
 
-
 	hueco_print_info("mProc Liberado", ocupado);
 
 	FREE_NULL(ocupado);
@@ -447,9 +514,22 @@ void est_eliminar(int pid){
 		return proc->pid == pid;
 	}
 
-	list_remove_by_condition(procesos, (void*)_proc_buscar);
+	list_remove_and_destroy_by_condition(procesos, (void*)_proc_buscar,(void*) proceso_destroy);
 }
-
+void print_ocupado() {
+	printf("ESPACIO OCUPADO*********************\n");
+	void _print_ocupado(t_ocupado* o) {
+		printf("pid:%d, pos:%d, cant:%d\n", o->pid, o->posicion, o->cantidad);
+	}
+	list_iterate(esp_ocupado, (void*) _print_ocupado);
+}
+void print_libre() {
+	printf("ESPACIO LIBRE********************\n");
+	void _print_libre(t_libre* l) {
+		printf("pos:%d, cant:%d\n", l->posicion, l->cantidad);
+	}
+	list_iterate(esp_libre, (void*) _print_libre);
+}
 void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 	char* contenido;
 	int pid, pagina, paginas;
@@ -487,6 +567,8 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			}
 
 			enviar_y_destroy_mensaje(socket_mem, msg);
+
+
 			break;
 
 		case SWAP_LEER:
@@ -550,12 +632,22 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			msg = argv_message(SWAP_OK, 0);
 			enviar_y_destroy_mensaje(socket_mem, msg);
 
-			FIN = true;
-			return ;
+			//FIN = true;
+			//return ;
+			break;
+		case -10:
+			destroy_message(msg);
+
+			finalizar();
+
+			exit(0);
 			break;
 		default:
 			break;
-	}
+	}//FIN SWITCH
+	printf("**********************************************\n");
+	print_ocupado();
+	print_libre();
 
 
 }
