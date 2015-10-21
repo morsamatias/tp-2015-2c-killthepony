@@ -551,6 +551,14 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 						pcb->tiempo_retorno=difftime(pcb->tiempo_inicio_proceso,pcb->tiempo_fin_proceso);
 
+						if (pcb->cantidad_IO == 0){
+
+							pcb->tiempo_entrada_salida=clock();
+
+							pcb->tiempo_respuesta=difftime(pcb->tiempo_fin_proceso,pcb->tiempo_inicio_proceso);
+
+						}
+
 						cpu=cpu_buscar_por_socket(socket);
 
 						cpu->estado=1;
@@ -744,7 +752,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 			}
 			t_finish* finish=malloc(sizeof(t_finish));
-			t_pcb_finalizado* pcb2;
+
 
 			finish->pid = PID_GLOBAL_FINISH;
 			list_add(list_finish, finish);
@@ -755,6 +763,15 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 			pcb->tiempo_fin_proceso=clock();
 
 			pcb->tiempo_retorno=difftime(pcb->tiempo_inicio_proceso,pcb->tiempo_fin_proceso);
+
+			if (pcb->cantidad_IO == 0){
+
+				pcb->tiempo_entrada_salida=clock();
+
+				pcb->tiempo_respuesta=difftime(pcb->tiempo_fin_proceso,pcb->tiempo_inicio_proceso);
+
+			}
+
 
 			cpu=cpu_buscar_por_socket(socket);
 
