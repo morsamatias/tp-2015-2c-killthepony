@@ -145,6 +145,9 @@ typedef struct {
 	clock_t tiempo_entrada_salida;
 	int tiempo_respuesta;
 	int cantidad_IO;
+	clock_t tiempo_inicio_ready;
+	clock_t tiempo_fin_ready;
+	int tiempo_espera;
 }t_pcb;
 
 typedef struct {

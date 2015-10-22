@@ -307,6 +307,8 @@ int correr_proceso(char* path) {
 
 	pcb->cantidad_IO=0;
 
+	pcb->tiempo_espera=0;
+
 	log_trace(logger,"El proceso %d se encuentra en la cola de procesos Nuevos para ejecutar el programa Mcod %s", pcb->pid, pcb->path);
 
 	pcb_agregar(pcb);
@@ -318,6 +320,8 @@ int correr_proceso(char* path) {
 	list_add(list_ready, new);
 
 	pcb->estado=READY;
+
+	pcb->tiempo_inicio_ready=clock();
 
 	log_trace(logger,"El proceso %d se encuentra en la cola de procesos Listos", pcb->pid);
 
@@ -645,6 +649,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 				pcb->estado=READY;
 
+				pcb->tiempo_inicio_ready=clock();
+
 				log_trace(logger,"El proceso %d se encuentra en la cola de Listos",pcb->pid);
 
 				pcb->pc=pcb->pc+QUANTUM();
@@ -690,13 +696,13 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 			pcb->cantidad_IO = pcb->cantidad_IO + 1;
 
-									if (pcb->cantidad_IO == 1){
+						if (pcb->cantidad_IO == 1){
 
-										pcb->tiempo_entrada_salida=clock();
+							pcb->tiempo_entrada_salida=clock();
 
-										pcb->tiempo_respuesta=difftime(pcb->tiempo_entrada_salida,pcb->tiempo_inicio_proceso);
+							pcb->tiempo_respuesta=difftime(pcb->tiempo_entrada_salida,pcb->tiempo_inicio_proceso);
 
-									}
+						}
 
 							PID_GLOBAL_BLOCK = pcb->pid;
 							IO_GLOBAL = msg->argv[2];
@@ -1127,6 +1133,8 @@ while(1){
 
 				pcb->estado= READY;
 
+				pcb->tiempo_inicio_ready=clock();
+
 				if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_por_id)) {
 					list_remove_by_condition(list_exec,
 							(void*) es_el_pcb_buscado_en_exec);
@@ -1273,6 +1281,10 @@ void cambiar_a_exec(int pid) {
 	t_exec* exec = malloc(sizeof(t_exec));
 	exec->pid = pid;
 	list_add(list_exec, exec);
+	pcb->tiempo_fin_ready=clock();
+
+	pcb->tiempo_espera=pcb->tiempo_espera + difftime(pcb->tiempo_fin_ready,pcb->tiempo_inicio_ready);
+
 	pcb->estado=EXEC;
 
 	log_trace(logger,"El proceso %d se encuentra en la cola de procesos en Ejecución", pcb->pid);
