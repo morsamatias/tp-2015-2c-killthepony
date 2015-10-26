@@ -1083,7 +1083,10 @@ int finalizar() {
 int inicializar() {
 
 	cfg = config_create(CONFIG_PATH);
-	logger = log_create(LOG_PATH, "planificador", true, LOG_LEVEL_TRACE);
+
+	int tipo_logueo= TIPO_LOG();
+
+	logger = log_create(LOG_PATH, "planificador", true, tipo_logueo);
 
 	cpus = list_create();
 

@@ -19,6 +19,8 @@ int ALGORITMO_PLANIFICACION();
 
 int QUANTUM();
 
+int TIPO_LOG();
+
 /*
  *
  */
@@ -35,6 +37,9 @@ int QUANTUM(){
 	return config_get_int_value(cfg, "QUANTUM");
 }
 
+int TIPO_LOG(){
+	return config_get_int_value(cfg, "TIPO_LOG");
+}
 
 
 #endif /* CONFIG_PLANIF_H_ */
