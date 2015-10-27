@@ -255,7 +255,7 @@ void procesar_msg_consola(char* msg) {
 
 		*/
 
-		t_cpu_especial* cpu_especial=malloc(sizeof(t_cpu_especial));
+		t_cpu_especial* cpu_especial;
 
 		t_msg* pedido_uso = argv_message(CPU_PORCENTAJE_UTILIZACION,0);
 
@@ -304,6 +304,8 @@ int correr_proceso(char* path) {
 	pcb->estado = NEW;
 
 	pcb->tiempo_inicio_proceso=clock();
+
+	log_trace(logger,"Tiempo de inicio del proceso %d es %ld", pcb->pid, pcb->tiempo_inicio_proceso);
 
 	pcb->cantidad_IO=0;
 
@@ -423,7 +425,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 	int uso_cpu;
 	int n;
 	int m;
-	t_cpu_especial* cpu_especial=malloc(sizeof(t_cpu_especial));
+	t_cpu_especial* cpu_especial;
 	switch (msg->header.id) {
 	case CPU_NUEVO:
 
@@ -483,6 +485,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 						if (pcb->cantidad_IO == 1){
 
 							pcb->tiempo_entrada_salida=clock();
+
+							log_trace(logger,"Tiempo en el que el proceso %d inicia la Entrada-Salida es %ld", pcb->pid, pcb->tiempo_entrada_salida);
 
 							pcb->tiempo_respuesta=difftime(pcb->tiempo_entrada_salida,pcb->tiempo_inicio_proceso);
 
@@ -552,6 +556,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 						pcb->estado=FINISH;
 
 						pcb->tiempo_fin_proceso=clock();
+
+						log_trace(logger,"Tiempo en el que el proceso %d finaliza operatoria es %ld", pcb->pid, pcb->tiempo_fin_proceso);
 
 						pcb->tiempo_retorno=difftime(pcb->tiempo_inicio_proceso,pcb->tiempo_fin_proceso);
 
@@ -700,6 +706,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 							pcb->tiempo_entrada_salida=clock();
 
+							log_trace(logger,"Tiempo en el que el proceso %d inicia la Entrada-Salida es %ld", pcb->pid, pcb->tiempo_entrada_salida);
+
 							pcb->tiempo_respuesta=difftime(pcb->tiempo_entrada_salida,pcb->tiempo_inicio_proceso);
 
 						}
@@ -767,6 +775,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 			pcb->estado=FINISH;
 
 			pcb->tiempo_fin_proceso=clock();
+
+			log_trace(logger,"Tiempo en el que el proceso %d finaliza operatoria es %ld", pcb->pid, pcb->tiempo_fin_proceso);
 
 			pcb->tiempo_retorno=difftime(pcb->tiempo_inicio_proceso,pcb->tiempo_fin_proceso);
 
@@ -1100,6 +1110,8 @@ int inicializar() {
 
 	list_exec = list_create();
 
+	t_cpu_especial* cpu_especial=malloc(sizeof(t_cpu_especial));
+
 	return 0;
 }
 
@@ -1285,6 +1297,8 @@ void cambiar_a_exec(int pid) {
 	exec->pid = pid;
 	list_add(list_exec, exec);
 	pcb->tiempo_fin_ready=clock();
+
+	log_trace(logger,"Tiempo de fin del proceso en ready %d es %ld", pcb->pid, pcb->tiempo_fin_ready);
 
 	pcb->tiempo_espera=pcb->tiempo_espera + difftime(pcb->tiempo_fin_ready,pcb->tiempo_inicio_ready);
 
