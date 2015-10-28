@@ -470,13 +470,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		break;
 
-	case SENTENCIAS_EJECUTADAS:
 
 
-
-		if (ALGORITMO_PLANIFICACION()==0){
-			switch (msg->argv[1]){
-								case io:
+		case PCB_IO:
 
 						pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
@@ -522,7 +518,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 						break;
 
-										case final:
+			case   PCB_FINALIZAR:
 
 						pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
@@ -608,9 +604,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 						break;
 
 
-					}
 
-		}
 
 		/////////////////////////////////
 		//agrego esto para que pasen los tests
@@ -633,11 +627,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		///////////////////////////////////////
 
 		//RR
-		else {
 
-			if (msg->argv[4]==QUANTUM()){
-
-
+case PCB__FIN_QUANTUM:
 
 				PID_GLOBAL_EXEC=(msg->argv[1]);
 
@@ -690,152 +681,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 								}
 
-			}
-
-
-			else{
-
-		switch (msg->argv[1]){
-					case io:
-
-			pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
-
-			pcb->cantidad_IO = pcb->cantidad_IO + 1;
-
-						if (pcb->cantidad_IO == 1){
-
-							pcb->tiempo_entrada_salida=clock();
-
-							log_trace(logger,"Tiempo en el que el proceso %d inicia la Entrada-Salida es %ld", pcb->pid, pcb->tiempo_entrada_salida);
-
-							pcb->tiempo_respuesta=difftime(pcb->tiempo_entrada_salida,pcb->tiempo_inicio_proceso);
-
-						}
-
-							PID_GLOBAL_BLOCK = pcb->pid;
-							IO_GLOBAL = msg->argv[2];
-
-							int cantIO = msg->argv[3];
-
-						PID_GLOBAL_EXEC = pcb->pid;
-
-						if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_por_id)) {
-							list_remove_by_condition(list_exec,
-									(void*) es_el_pcb_buscado_en_exec);
-						}
-						t_block* blocked=malloc(sizeof(t_block));
-
-						blocked->pid=msg->argv[0];
-
-						blocked->tiempoIO=cantIO;
-						blocked->estado=0;
-
-
-						list_add(list_block, blocked);
-
-						pcb->estado=BLOCK;
-
-						log_trace(logger,"El proceso %d se encuentra en la cola de procesos en Bloqueados", pcb->pid);
-
-
-
-
 			break;
 
-							case final:
-
-			pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
-
-			PID_GLOBAL_FINISH = pcb->pid;
-
-			PID_GLOBAL_EXEC = pcb->pid;
-			/*
-			 Tiempo de retorno: tiempo transcurrido entre la llegada de
-			 un proceso y su finalización.
-			 Tiempo de espera: tiempo que un proceso permanece en la
-			 cola de preparados.
-			 Tiempo de respuesta: tiempo que un proceso bloqueado
-			 tarda en entrar en la CPU desde que ocurre el suceso que lo
-			 bloquea.
-			 */
-
-			if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_en_exec)) {
-
-				list_remove_by_condition(list_exec,
-						(void*) es_el_pcb_buscado_en_exec);
-
-			}
-			t_finish* finish=malloc(sizeof(t_finish));
-
-
-			finish->pid = PID_GLOBAL_FINISH;
-			list_add(list_finish, finish);
-
-			//pcb2->tiempo_total = difftime(time(NULL), time1);
-			pcb->estado=FINISH;
-
-			pcb->tiempo_fin_proceso=clock();
-
-			log_trace(logger,"Tiempo en el que el proceso %d finaliza operatoria es %ld", pcb->pid, pcb->tiempo_fin_proceso);
-
-			pcb->tiempo_retorno=difftime(pcb->tiempo_inicio_proceso,pcb->tiempo_fin_proceso);
-
-			if (pcb->cantidad_IO == 0){
-
-				pcb->tiempo_entrada_salida=clock();
-
-				pcb->tiempo_respuesta=difftime(pcb->tiempo_fin_proceso,pcb->tiempo_inicio_proceso);
-
-			}
-
-
-			cpu=cpu_buscar_por_socket(socket);
-
-			cpu->estado=1;
-
-			log_trace(logger,"El proceso %d se encuentra en la cola de procesos Finalizados", pcb->pid);
-
-			log_trace(logger,"Métricas del Proceso %d \n El Tiempo de Retorno fue de %d \n El Tiempo de Respuesta fue de %d \n El Tiempo de Espera fue de \n",pcb->pid,pcb->tiempo_retorno, pcb->tiempo_respuesta);
-
-			// Hay que ver si hay algún proceso en READY para ejecutar
-
-			if(list_size(list_ready)>0){
-				if (cpu_disponible()) {
-						cpu = cpu_seleccionar();
-						if(cpu!=NULL){
-							t_ready* ready=malloc(sizeof(ready));
-
-							ready=list_get(list_ready,0);
-							t_pcb* pcb2;
-							pcb2=es_el_pcb_buscado_por_id(ready->pid);
-
-						pcb2->cpu_asignado = cpu->id;
-						cpu_ejecutar(cpu, pcb2);
-						cpu->estado=0;}
-					else
-					{printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
-					}
-					}else
-					{
-						printf("No existe CPU activa para asignarle un nuevo proceso");
-					}
-
-
-			}
-
-			break;
-default:
-
-	printf("El código de mensaje enviado es incorrecto");
-
-								break;
-
-		}
-		}
-
-
-		}
-break;
 		//////////////////////////////////////////////////////TERMINA CASE RR
 
 		//termina case IO y final
@@ -1074,10 +921,11 @@ break;
 
 		break;
 
-	default:
+		default:
 
-		printf("No msgjjj\n");
-		break;
+			printf("El código de mensaje enviado es incorrecto");
+
+										break;
 	}
 
 	return 0;
