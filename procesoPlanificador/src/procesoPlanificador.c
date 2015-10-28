@@ -628,7 +628,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		//RR
 
-case PCB__FIN_QUANTUM:
+case PCB_FIN_QUANTUM:
 
 				PID_GLOBAL_EXEC=(msg->argv[1]);
 
