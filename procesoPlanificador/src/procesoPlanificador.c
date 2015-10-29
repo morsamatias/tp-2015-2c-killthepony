@@ -183,8 +183,16 @@ void procesar_msg_consola(char* msg) {
 	switch (cmd) {
 	case CORRER:
 
+
+
+		path= input_user[1];
+		/*if(file_exists(path)){
+					correr_proceso(path); }
+				else{
+					printf("mcod no existente, por favor intente ejecutar otro mcod\n");
+				}*/
 		printf("Correr path: %s\n", path);
-		memset(path_completo, 0, 1000);
+	//	memset(path_completo, 0, 1000);
 		strcpy(path_completo, "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/tests/");
 		strcat(path_completo, path);
 		printf("Correr path completo: %s\n", path_completo);
