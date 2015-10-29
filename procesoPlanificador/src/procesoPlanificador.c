@@ -425,7 +425,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 	int uso_cpu;
 	int n;
 	int m;
-	t_cpu_especial* cpu_especial;
+	t_cpu_especial* cpu_especial=malloc(sizeof(t_cpu_especial));
 	switch (msg->header.id) {
 	case CPU_NUEVO:
 
@@ -879,6 +879,7 @@ case PCB_FIN_QUANTUM:
 							n++;
 						}
 
+			break;
 
 			/*
 
@@ -911,7 +912,7 @@ case PCB_FIN_QUANTUM:
 
 			}*/
 
-		break;
+
 
 		case CPU_ESPECIAL:
 
@@ -958,7 +959,7 @@ int inicializar() {
 
 	list_exec = list_create();
 
-	t_cpu_especial* cpu_especial=malloc(sizeof(t_cpu_especial));
+	//t_cpu_especial* cpu_especial=malloc(sizeof(t_cpu_especial));
 
 	return 0;
 }
