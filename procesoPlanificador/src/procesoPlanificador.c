@@ -497,9 +497,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 						}
 
 										PID_GLOBAL_BLOCK = pcb->pid;
-										IO_GLOBAL = msg->argv[2];
+										IO_GLOBAL = msg->argv[1];
 
-										int cantIO = msg->argv[3];
+										int cantIO = msg->argv[1];
 
 									PID_GLOBAL_EXEC = pcb->pid;
 
@@ -521,6 +521,76 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 									log_trace(logger,"El proceso %d se encuentra en la cola de procesos en Bloqueados", pcb->pid);
 
+									log_trace(logger,"Operaciones realizadas por el proceso %d hasta el momento son:", pcb->pid);
+
+									int m=2;
+
+									while(msg->argv[m]!='\0'){
+
+										switch (msg->argv[m]) {
+
+										case iniciar:
+
+											log_trace(logger,"	mProc	%d	-	Iniciado.", pcb->pid);
+
+											m++;
+
+											break;
+
+
+										case leer:
+
+											log_trace(logger,"mProc	%d	-	Pagina	%d	leida:", pcb->pid,msg->argv[m+1]);
+
+											m++;
+
+											m++;
+
+											break;
+
+										case escribir:
+
+											log_trace(logger,"mProc	%d	-	Pagina	%d	escrita:", pcb->pid,msg->argv[m+1]);
+
+											m++;
+
+											m++;
+
+											break;
+
+										case io:
+
+											log_trace(logger,"mProc	%d	en	entrada-salida	de	tiempo	%d.", pcb->pid,msg->argv[1]);
+
+											m++;
+
+											break;
+
+										case final:
+
+											log_trace(logger,"mProc	%d	Finalizado.", pcb->pid);
+
+											m++;
+
+											break;
+
+										case error:
+
+											log_trace(logger,"mProc	%d	-	Fallo.", pcb->pid);
+
+											m++;
+
+											break;
+
+										 default:
+
+											log_trace(logger,"No se comprende el mensaje enviado");
+
+											break;
+
+										}
+
+									}
 
 
 
@@ -609,6 +679,77 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 						}
 
+						log_trace(logger,"Operaciones realizadas por el proceso %d hasta el momento son:", pcb->pid);
+
+							int m=1;
+
+							while(msg->argv[m]!='\0'){
+
+								switch (msg->argv[m]) {
+
+								case iniciar:
+
+									log_trace(logger,"	mProc	%d	-	Iniciado.", pcb->pid);
+
+									m++;
+
+									break;
+
+
+								case leer:
+
+									log_trace(logger,"mProc	%d	-	Pagina	%d	leida:", pcb->pid,msg->argv[m+1]);
+
+									m++;
+
+									m++;
+
+									break;
+
+								case escribir:
+
+									log_trace(logger,"mProc	%d	-	Pagina	%d	escrita:", pcb->pid,msg->argv[m+1]);
+
+									m++;
+
+									m++;
+
+									break;
+
+								case io:
+
+									log_trace(logger,"mProc	%d	en	entrada-salida	de	tiempo	%d.", pcb->pid,msg->argv[1]);
+
+									m++;
+
+									break;
+
+								case final:
+
+									log_trace(logger,"mProc	%d	Finalizado.", pcb->pid);
+
+									m++;
+
+									break;
+
+								case error:
+
+									log_trace(logger,"mProc	%d	-	Fallo.", pcb->pid);
+
+									m++;
+
+									break;
+
+								 default:
+
+									log_trace(logger,"No se comprende el mensaje enviado");
+
+									break;
+
+								}
+
+							}
+
 						break;
 
 
@@ -688,6 +829,77 @@ case PCB_FIN_QUANTUM:
 
 
 								}
+
+				log_trace(logger,"Operaciones realizadas por el proceso %d hasta el momento son:", pcb->pid);
+
+					int m=1;
+
+					while(msg->argv[m]!='\0'){
+
+						switch (msg->argv[m]) {
+
+						case iniciar:
+
+							log_trace(logger,"	mProc	%d	-	Iniciado.", pcb->pid);
+
+							m++;
+
+							break;
+
+
+						case leer:
+
+							log_trace(logger,"mProc	%d	-	Pagina	%d	leida:", pcb->pid,msg->argv[m+1]);
+
+							m++;
+
+							m++;
+
+							break;
+
+						case escribir:
+
+							log_trace(logger,"mProc	%d	-	Pagina	%d	escrita:", pcb->pid,msg->argv[m+1]);
+
+							m++;
+
+							m++;
+
+							break;
+
+						case io:
+
+							log_trace(logger,"mProc	%d	en	entrada-salida	de	tiempo	%d.", pcb->pid,msg->argv[1]);
+
+							m++;
+
+							break;
+
+						case final:
+
+							log_trace(logger,"mProc	%d	Finalizado.", pcb->pid);
+
+							m++;
+
+							break;
+
+						case error:
+
+							log_trace(logger,"mProc	%d	-	Fallo.", pcb->pid);
+
+							m++;
+
+							break;
+
+						 default:
+
+							log_trace(logger,"No se comprende el mensaje enviado");
+
+							break;
+
+						}
+
+					}
 
 			break;
 
