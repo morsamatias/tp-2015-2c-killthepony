@@ -4,6 +4,37 @@
 char* CONFIG_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoCPU/Debug/config.txt";
 char* LOGGER_PATH = "log.txt";
 
+//////////////////////////////////////HILO RESPONDE PORCENTAJE///////////////////
+
+void* hilo_responder_porcentaje(){
+
+		//int numero = *cantidad_cpu;
+
+
+		socket_planificador_especial = conectar_con_planificador_especial();
+
+		if (socket_planificador_especial){
+
+			while(true){
+
+					log_trace(logger, "Esperando peticiones del planificador");
+					if(recibir_mensaje(socket_planificador_especial)){
+
+						log_trace(logger, "Nuevo mensaje del planificador");
+						enviar_porcentaje_a_planificador();
+			}
+		}
+	      }else
+			log_trace(logger,"Error al conectarse con la memoria y el planificador. \n");
+
+		return NULL;
+}
+
+///////////////////////////////////////FUNCION ENVIAR PORCENTAJE/////////////////////////
+
+
+
+
 ///////////////////////////////////////PORCENTAJE////////////////////////////////////////
 
 void* hilo_porcentaje(numero){
@@ -359,19 +390,20 @@ int avisar_a_planificador(t_resultado_pcb respuesta,int socket_planif){
 }
 
 
-int enviar_porcentaje_a_planificador(int porcentaje_a_enviar,int numero){
+int enviar_porcentaje_a_planificador(){
 
 	t_msg* mensaje_a_planificador;
 
 	int i=0;
 
-	mensaje_a_planificador = argv_message(CPU_PORCENTAJE_UTILIZACION,1,porcentaje_a_planificador[numero]);
+	mensaje_a_planificador = argv_message(CPU_PORCENTAJE_UTILIZACION,CANTIDAD_HILOS(),porcentaje_a_planificador[0],porcentaje_a_planificador[1],porcentaje_a_planificador[2],porcentaje_a_planificador[3],porcentaje_a_planificador[4],porcentaje_a_planificador[5]);
 
-	i = enviar_y_destroy_mensaje(socket_planificador[numero],mensaje_a_planificador);
+	i = enviar_y_destroy_mensaje(socket_planificador_especial,mensaje_a_planificador);
 
 	return i;
 
 }
+
 
 
 
@@ -423,6 +455,31 @@ int conectar_con_planificador(){
 
 	return sock;
 }
+
+
+int conectar_con_planificador_especial(){
+	int sock ;
+	sock = client_socket(IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
+
+	if(sock<0){
+		log_trace(logger, "Error al conectar con el planificador. %s:%d", IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
+	}else{
+		log_trace(logger, "Conectado con planificador. %s:%d", IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
+	}
+
+	//envio handshake
+	//envio un msj con el id del proceso
+	t_msg* msg = string_message(CPU_ESPECIAL, "Hola soy un CPU", 1, ID() );
+	if (enviar_mensaje(sock, msg)>0){
+		log_trace(logger, "Mensaje enviado OK");
+	}
+	destroy_message(msg);
+
+	//enviar_mensaje_cpu(sock);
+
+	return sock;
+}
+
 
 
 int inicializar(){

@@ -38,6 +38,7 @@ t_config* cfg;
 //int socket_mem;
 
 int* socket_planificador;
+int socket_planificador_especial;
 int* socket_memoria;
 
 int* porcentaje;
@@ -65,6 +66,8 @@ typedef struct{
 int inicializar();
 int finalizar();
 int conectar_con_planificador();
+int conectar_con_planificador_especial();
+void* hilo_responder_porcentaje();
 int procesar_mensaje_planif(t_msg* msg,int numero);
 t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem);
 int procesar_mensaje_planif(t_msg* msg,int numero);
