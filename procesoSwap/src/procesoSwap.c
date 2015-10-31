@@ -78,8 +78,8 @@ int inicializar(){
 	////////////////////////////////////////
 	//fix temporal
 	//cargo el archivo de letras A porque sino me da error el envio de cadena vacia la lib de socket!!!
-	//int TAMANIO_SWAP = CANTIDAD_PAGINAS() * TAMANIO_PAGINA();
-	//memset(swap, 'A', TAMANIO_SWAP);
+	int TAMANIO_SWAP = CANTIDAD_PAGINAS() * TAMANIO_PAGINA();
+	memset(swap, 'A', TAMANIO_SWAP);
 	////////////////////////////////////
 
 	esp_ocupado =  list_create();

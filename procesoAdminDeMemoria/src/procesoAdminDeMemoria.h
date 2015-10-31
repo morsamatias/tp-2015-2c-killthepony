@@ -143,7 +143,7 @@ void 		destruir_pagina								(t_pagina* pagina);
 int 		es_la_pagina_segun_PID_y_nro_pagina			(t_pagina* pagina);
 int 		es_la_pagina_segun_PID						(t_pagina* pagina);
 int 		la_pagina_esta_cargada_en_memoria			(t_pagina* pagina);
-int 		buscar_marco_en_paginas						(int PID,int nro_pagina);
+int 		buscar_marco_en_paginas						(t_proceso* proceso,int nro_pagina);
 void		agregar_pagina_en_memoria					(t_proceso* proceso,int nro_pagina,char*buff_pag);
 int 		reemplazar_pagina_en_memoria_segun_algoritmo(t_proceso* proceso, int pagina, char* contenido);
 void 		actualizar_entradas_en_tabla_de_paginas		(t_pagina* pagina);

@@ -41,7 +41,7 @@ typedef struct{
 t_list* esp_ocupado;
 t_list* esp_libre;
 
-t_list* procesos;//para las estadisticas
+t_list* procesos ;//para las estadisticas
 
 int iniciar_server();
 

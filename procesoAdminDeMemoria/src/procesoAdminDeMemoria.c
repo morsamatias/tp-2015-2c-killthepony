@@ -33,8 +33,10 @@ int inicializar(){ ///////////////////
 	// ESTRUCTURA MEMORIA
 	memoria = (t_marco**)malloc(CANTIDAD_MARCOS()*sizeof(t_marco*));
 
-	for(i=0;i<CANTIDAD_MARCOS();i++)
+	for(i=0;i<CANTIDAD_MARCOS();i++){
 		memoria[i] = (t_marco*)malloc((TAMANIO_MARCO()+1)*sizeof(char)+sizeof(int));
+		memoria[i]->libre = 1;
+	}
 
 	// ESTRUCTURA TLB y TABLA DE PAGINAS
 	TLB 	= list_create();
@@ -122,7 +124,6 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			gl_PID=pid;
 			gl_nro_pagina=nro_pagina;
 			proceso = list_find(paginas,(void*)es_el_proceso_segun_PID);
-
 
 			// BUSCO EL MARCO EN LA TLB Y EN LA TABLA DE PAGINAS
 			b_marco = buscar_marco_de_pagina_en_TLB_y_tabla_paginas(pid,nro_pagina);
@@ -349,7 +350,7 @@ t_busq_marco buscar_marco_de_pagina_en_TLB_y_tabla_paginas(int pid, int nro_pagi
 	// SE FIJA SI ESTA LA PAGINA EN MEMORIA
 	if(busc_marco.marco == -1){
 		sleep(RETARDO_MEMORIA());
-		busc_marco.marco = buscar_marco_en_paginas(pid,nro_pagina);
+		busc_marco.marco = buscar_marco_en_paginas(proceso,nro_pagina);
 		busc_marco.TLB_HIT=0;
 	}else{
 		proceso->TLB_hit++;
@@ -361,9 +362,11 @@ t_busq_marco buscar_marco_de_pagina_en_TLB_y_tabla_paginas(int pid, int nro_pagi
 
 int encontrar_marco_libre(){ ////////////////
 	int i;
-	for (i=0;i<CANTIDAD_MARCOS();i++)
+	for (i=0;i<CANTIDAD_MARCOS();i++){
 		if(memoria[i]->libre)
-			return i;
+					return i;
+	}
+
 	// EN CASO QUE ESTE LLENA LA MEMORIA
 	return -1;
 }
@@ -493,12 +496,12 @@ int buscar_marco_en_TLB(int PID,int nro_pagina){
 	}
 }
 
-int buscar_marco_en_paginas(int PID,int nro_pagina){
+int buscar_marco_en_paginas(t_proceso* proceso,int nro_pagina){
 	t_pagina* pagina;
-	gl_PID=PID;
+	gl_PID=proceso->PID;
 	gl_nro_pagina=nro_pagina;
-	if(list_any_satisfy(paginas,(void*)es_la_pagina_segun_PID_y_nro_pagina)){
-		pagina = list_find(paginas,(void*)es_la_pagina_segun_PID_y_nro_pagina);
+	if(list_any_satisfy(proceso->paginas,(void*)es_la_pagina_segun_PID_y_nro_pagina)){
+		pagina = list_find(proceso->paginas,(void*)es_la_pagina_segun_PID_y_nro_pagina);
 		return pagina->marco;
 	} else {
 		return -2;
@@ -567,6 +570,8 @@ t_pagina* crear_pagina(int PID, int pagina, int marco){
 	new_pagina->marco = marco;
 	new_pagina->pagina = pagina;
 	new_pagina->modificado = 0;
+	new_pagina->presencia=0;
+	new_pagina->usado=0;
 	return new_pagina;
 }
 
