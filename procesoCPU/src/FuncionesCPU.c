@@ -1,108 +1,106 @@
-
 #include "procesoCPU.h"
 
-char* CONFIG_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoCPU/Debug/config.txt";
+char* CONFIG_PATH =
+		"/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoCPU/Debug/config.txt";
 char* LOGGER_PATH = "log.txt";
 
 //////////////////////////////////////HILO RESPONDE PORCENTAJE///////////////////
 
-void* hilo_responder_porcentaje(){
+void* hilo_responder_porcentaje() {
 
-		//int numero = *cantidad_cpu;
+	//int numero = *cantidad_cpu;
 
+	socket_planificador_especial = conectar_con_planificador_especial();
 
-		socket_planificador_especial = conectar_con_planificador_especial();
+	if (socket_planificador_especial) {
 
-		printf("Conectado con planificador socket especial.\n");
+		while (true) {
 
-		if (socket_planificador_especial){
+			log_trace(logger, "Esperando peticiones del planificador");
+			recibir_mensaje(socket_planificador_especial);
 
-			while(true){
-
-					log_trace(logger, "Esperando peticiones del planificador");
-					recibir_mensaje(socket_planificador_especial);
-
-						log_trace(logger, "Nuevo mensaje del planificador");
-						enviar_porcentaje_a_planificador();
+			log_trace(logger, "Nuevo mensaje del planificador");
+			enviar_porcentaje_a_planificador();
 
 		}
-	      }else
-			log_trace(logger,"Error al conectarse con la memoria y el planificador. \n");
+	} else
+		log_trace(logger,
+				"Error al conectarse con la memoria y el planificador. \n");
 
-		return NULL;
+	return NULL;
 }
 
 ///////////////////////////////////////FUNCION ENVIAR PORCENTAJE/////////////////////////
 
-
-
-
 ///////////////////////////////////////PORCENTAJE////////////////////////////////////////
 
-void* hilo_porcentaje(numero){
+void* hilo_porcentaje( numero) {
 
-	porcentaje_a_planificador[numero]=0;
+	porcentaje_a_planificador[numero] = 0;
 	sleep(60);
-	if (RETARDO()!=0){
-	 porcentaje_a_planificador[numero]= (porcentaje[numero] * 100) / (60 / RETARDO()) ;
-	}else{
-	 porcentaje_a_planificador[numero]= (porcentaje[numero] * 100) / (60 / RETARDO_MINIMO()) ;	
+	if (RETARDO() != 0) {
+		porcentaje_a_planificador[numero] = (porcentaje[numero] * 100)
+				/ (60 / RETARDO());
+	} else {
+		porcentaje_a_planificador[numero] = (porcentaje[numero] * 100)
+				/ (60 / RETARDO_MINIMO());
 	}
-	
-	porcentaje=0;
+
+	porcentaje = 0;
 
 	return NULL;
 }
 ///////////////////////////////////////HILOS////////////////////////////////////////////
-void* hilo_cpu(int *numero_hilo){
+void* hilo_cpu(int *numero_hilo) {
 
-	int numero= *numero_hilo;
+	int numero = *numero_hilo;
 
 	t_msg* mensaje_planificador = NULL;
 
 	//int* cantidad_sentencias_ejecutadas = malloc(10*(sizeof(int)));
 
+	socket_memoria[numero] = conectar_con_memoria(numero);
+	socket_planificador[numero] = conectar_con_planificador(numero);
 
-	socket_memoria[numero] = conectar_con_memoria();
-	socket_planificador[numero] = conectar_con_planificador();
+	if (socket_memoria && socket_planificador) {
 
-	if (socket_memoria && socket_planificador){
+		while (true) {
 
-		while(true){
-
-				log_trace(logger, "Esperando peticiones del planificador");
-				mensaje_planificador = recibir_mensaje(socket_planificador[numero]);
-				log_trace(logger, "Nuevo mensaje del planificador");
-				procesar_mensaje_planif(mensaje_planificador,numero);//pasarle socket_planificador y de memoria
+			log_trace(logger, "Esperando peticiones del planificador");
+			mensaje_planificador = recibir_mensaje(socket_planificador[numero]);
+			log_trace(logger, "Nuevo mensaje del planificador");
+			procesar_mensaje_planif(mensaje_planificador, numero); //pasarle socket_planificador y de memoria
 		}
-      }else
-		log_trace(logger,"Error al conectarse con la memoria y el planificador. \n");
+	} else
+		log_trace(logger,
+				"Error al conectarse con la memoria y el planificador. \n");
 
 	return NULL;
 }
 
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-int procesar_mensaje_planif(t_msg* msg,int numero){
+int procesar_mensaje_planif(t_msg* msg, int numero) {
 	//print_msg(msg);
 	t_pcb* pcb = NULL;
 	t_resultado_pcb mensaje_planificador;
 
-	switch(msg->header.id){
+	switch (msg->header.id) {
 	case PCB_A_EJECUTAR:
 		destroy_message(msg);
 
 		pcb = recibir_mensaje_pcb(socket_planificador[numero]);
 		//pcb_print(pcb);
 
-		log_trace(logger, "Ejecutando %s, PC: %d, cant: %d, cant_sent: %d", pcb->path, pcb->pc, pcb->cant_a_ejectuar, pcb->cant_sentencias);
-		mensaje_planificador = ejecutar(pcb,socket_memoria[numero]);
-		log_trace(logger, "Fin ejecucion %s, PC: %d, cant: %d, cant_sent: %d", pcb->path, pcb->pc, pcb->cant_a_ejectuar, pcb->cant_sentencias);
-		avisar_a_planificador(mensaje_planificador,socket_planificador[numero]);
+		log_trace(logger, "Ejecutando %s, PC: %d, cant: %d, cant_sent: %d",
+				pcb->path, pcb->pc, pcb->cant_a_ejectuar, pcb->cant_sentencias);
+		mensaje_planificador = ejecutar(pcb, socket_memoria[numero]);
+		log_trace(logger, "Fin ejecucion %s, PC: %d, cant: %d, cant_sent: %d",
+				pcb->path, pcb->pc, pcb->cant_a_ejectuar, pcb->cant_sentencias);
+		avisar_a_planificador(mensaje_planificador,
+				socket_planificador[numero]);
+
 		free(pcb);
-
 		break;
-
 
 	}
 
@@ -110,64 +108,58 @@ int procesar_mensaje_planif(t_msg* msg,int numero){
 	return 0;
 }
 
-int pcb_tiene_que_seguir_ejecutando(t_pcb* pcb){
-	return pcb->pc < pcb->cant_sentencias ;
+int pcb_tiene_que_seguir_ejecutando(t_pcb* pcb) {
+	return pcb->pc < pcb->cant_sentencias;
 }
 
 /*
  * formatear para que quede solo texto
  */
 
-
-char* get_texto_solo(char* texto){
+char* get_texto_solo(char* texto) {
 	char* txt;
 	//borro la commilla de principio y final
-	int len = strlen(texto)-2;
-	txt = malloc(len+1);
-	memset(txt, 0, len);//inicializo en 0
-	memcpy(txt, texto+1, len);
+	int len = strlen(texto) - 2;
+	txt = malloc(len + 1);
+	memset(txt, 0, len); //inicializo en 0
+	memcpy(txt, texto + 1, len);
 	txt[len] = '\0';
 	return txt;
 }
 /*
  * el param seria p.e: escribir 3 "hola"
  */
-t_sentencia* sentencia_crear(char* sentencia, int pid){
+t_sentencia* sentencia_crear(char* sentencia, int pid) {
 	t_sentencia* sent = malloc(sizeof(*sent));
 
 	sent->pid = pid;
 
-	char** split =  string_split(sentencia, " ");
+	char** split = string_split(sentencia, " ");
 
-	if(string_starts_with(sentencia, "iniciar ")){
+	if (string_starts_with(sentencia, "iniciar ")) {
 		sent->sentencia = iniciar;
 		sent->cant_paginas = atoi(split[1]);
-	}
-	else if(string_starts_with(sentencia, "leer ")){
+	} else if (string_starts_with(sentencia, "leer ")) {
 		sent->sentencia = leer;
 		sent->pagina = atoi(split[1]);
-	}
-	else if(string_starts_with(sentencia, "escribir ")){
+	} else if (string_starts_with(sentencia, "escribir ")) {
 		sent->sentencia = escribir;
 		sent->pagina = atoi(split[1]);
 
 		sent->texto = get_texto_solo(split[2]);
-	}
-	else if(string_starts_with(sentencia, "entrada-salida ")){
+	} else if (string_starts_with(sentencia, "entrada-salida ")) {
 		sent->sentencia = io;
 		sent->tiempo = atoi(split[1]);
-	}
-	else if(string_starts_with(sentencia, "finalizar")){
+	} else if (string_starts_with(sentencia, "finalizar")) {
 		sent->sentencia = final;
-	}else{
+	} else {
 		printf("Error para desconocidoooooooooooooooooooooooooooooooooo\n");
 		sent->sentencia = error;
 	}
 	return sent;
 }
 
-
-int sent_ejecutar_iniciar(t_sentencia* sent,int socket_mem){
+int sent_ejecutar_iniciar(t_sentencia* sent, int socket_mem) {
 
 	int rs = 0;
 	t_msg* msg = NULL;
@@ -194,8 +186,7 @@ int sent_ejecutar_iniciar(t_sentencia* sent,int socket_mem){
 	}
 }
 
-
-int sent_ejecutar_finalizar(t_sentencia* sent,int socket_mem){
+int sent_ejecutar_finalizar(t_sentencia* sent, int socket_mem) {
 	int rs = 0;
 	t_msg* msg = NULL;
 	msg = argv_message(MEM_FINALIZAR, 1, sent->pid);
@@ -221,8 +212,7 @@ int sent_ejecutar_finalizar(t_sentencia* sent,int socket_mem){
 	}
 }
 
-
-int sent_ejecutar_escribir(t_sentencia* sent,int socket_mem){
+int sent_ejecutar_escribir(t_sentencia* sent, int socket_mem) {
 	int rs = 0;
 
 	t_msg* msg = NULL;
@@ -251,8 +241,7 @@ int sent_ejecutar_escribir(t_sentencia* sent,int socket_mem){
 	}
 }
 
-
-char* sent_ejecutar_leer(t_sentencia* sent,int socket_mem){
+char* sent_ejecutar_leer(t_sentencia* sent, int socket_mem) {
 	char* pagina = NULL;
 
 	t_msg* msg = NULL;
@@ -280,20 +269,21 @@ char* sent_ejecutar_leer(t_sentencia* sent,int socket_mem){
 	}
 }
 
-int sent_ejecutar(t_sentencia* sent,int socket_mem){
+int sent_ejecutar(t_sentencia* sent, int socket_mem) {
 	porcentaje = porcentaje + 1;
 	char* pagina = NULL;
-	int st=0;
+	int st = 0;
 	switch (sent->sentencia) {
 	case iniciar:
-		st=sent_ejecutar_iniciar(sent,socket_mem);
+		st = sent_ejecutar_iniciar(sent, socket_mem);
 		break;
 	case leer:
-		pagina  = sent_ejecutar_leer(sent,socket_mem);
-		FREE_NULL(pagina);
+		pagina = sent_ejecutar_leer(sent, socket_mem);
+		FREE_NULL(pagina)
+		;
 		break;
 	case escribir:
-		sent_ejecutar_escribir(sent,socket_mem);
+		sent_ejecutar_escribir(sent, socket_mem);
 		break;
 	case io:
 
@@ -302,7 +292,7 @@ int sent_ejecutar(t_sentencia* sent,int socket_mem){
 		log_trace(logger, "Error de sentencia en archivo");
 		break;
 	case final:
-		sent_ejecutar_finalizar(sent,socket_mem);
+		sent_ejecutar_finalizar(sent, socket_mem);
 		break;
 	default:
 		log_trace(logger, "case default");
@@ -314,137 +304,127 @@ int sent_ejecutar(t_sentencia* sent,int socket_mem){
 	//return 0;
 }
 
-void sent_free(t_sentencia* sent){
-	if(sent->sentencia == escribir)
+void sent_free(t_sentencia* sent) {
+	if (sent->sentencia == escribir)
 		free(sent->texto);
 	free(sent);
 }
 
+t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem) {
 
+	bool es_entrada_salida = false;
+	int st = 0;
 
-		 
-t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem){
-		
-	bool es_entrada_salida=false;
-	int st=0;
-		
-	t_resultado_pcb resultado;		
-		
-	int cantidad_a_ejecutar=pcb->cant_a_ejectuar;		
-	int contador=0;		
- 		 
- 	char* mcod = file_get_mapped(pcb->path);		 
- 	char** sents = string_split(mcod, "\n");		 	
- 	t_sentencia* sent = NULL;		 
- 		 
+	t_resultado_pcb resultado;
+
+	int cantidad_a_ejecutar = pcb->cant_a_ejectuar;
+	int contador = 0;
+
+	char* mcod = file_get_mapped(pcb->path);
+	char** sents = string_split(mcod, "\n");
+	t_sentencia* sent = NULL;
+
 	sent = sentencia_crear(sents[pcb->pc], pcb->pid);
-	
-	while((sent->sentencia!=final)&&(!es_entrada_salida)&&(cantidad_a_ejecutar!=contador)&&(st==0)){
 
-			sleep(RETARDO());
+	while ((sent->sentencia != final) && (!es_entrada_salida)
+			&& (cantidad_a_ejecutar != contador) && (st == 0)) {
 
-			 if(sent->sentencia!=io){
+		sleep(RETARDO());
 
-				porcentaje = porcentaje + 1;
-				st = sent_ejecutar(sent,socket_mem);
-				sent_free(sent);		
-				pcb->pc++;		
-				sent = sentencia_crear(sents[pcb->pc], pcb->pid);
-				contador=contador+1;
- 		 
-			}else{		
-				es_entrada_salida=true;		
-			}		
-	}		
- 		 
- 		 
-	if ((sent->sentencia==final)&&(cantidad_a_ejecutar!=contador)){
+		if (sent->sentencia != io) {
+
+			porcentaje = porcentaje + 1;
+			st = sent_ejecutar(sent, socket_mem);
+			sent_free(sent);
+			pcb->pc++;
+			sent = sentencia_crear(sents[pcb->pc], pcb->pid);
+			contador = contador + 1;
+
+		} else {
+			es_entrada_salida = true;
+		}
+	}
+
+	if ((sent->sentencia == final) && (cantidad_a_ejecutar != contador)) {
 		sleep(RETARDO());
 		porcentaje = porcentaje + 1;
-		sent_ejecutar(sent,socket_mem);
+		sent_ejecutar(sent, socket_mem);
 
-		}
- 		 
- 	file_mmap_free(mcod, pcb->path);		 
- 		 
-	free_split(sents);		
-	resultado.pcb=pcb;
-	if(st==0)
-		resultado.sentencia=sent->sentencia;
+	}
+
+	file_mmap_free(mcod, pcb->path);
+
+	free_split(sents);
+	resultado.pcb = pcb;
+	if (st == 0)
+		resultado.sentencia = sent->sentencia;
 	else
-		resultado.sentencia=error;
-	resultado.tiempo=sent->tiempo;		
-	resultado.cantidad_sentencias=contador;		
+		resultado.sentencia = error;
+	resultado.tiempo = sent->tiempo;
+	resultado.cantidad_sentencias = contador;
 	sent_free(sent);
- return resultado;		
-	
+	return resultado;
+
 }
 
+int avisar_a_planificador(t_resultado_pcb respuesta, int socket_planif) {
+	t_msg* mensaje_a_planificador;
 
 
+	int i = 0;
+	printf("Sentencia: %d - IO: %d - FINAL: %d - ERROR: %d ",respuesta.sentencia,io,final,error);
+	switch(respuesta.sentencia){
+		case io:
+			mensaje_a_planificador = argv_message(PCB_IO, 4, respuesta.pcb->pid,
+							respuesta.sentencia, respuesta.tiempo,
+							respuesta.cantidad_sentencias);
+			break;
+		case final:
+			mensaje_a_planificador = argv_message(PCB_FINALIZAR, 4, respuesta.pcb->pid,
+							respuesta.sentencia, respuesta.tiempo,
+							respuesta.cantidad_sentencias);
+			break;
+		case error:
+			mensaje_a_planificador = argv_message(PCB_ERROR, 4, respuesta.pcb->pid,
+					respuesta.sentencia, respuesta.tiempo,
+					respuesta.cantidad_sentencias);
+			break;
+		default:
+			mensaje_a_planificador = argv_message(PCB_FIN_QUANTUM, 4,
+				respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo,
+				respuesta.cantidad_sentencias);
+			break;
+	}
 
-int avisar_a_planificador(t_resultado_pcb respuesta,int socket_planif){
-		
-	t_msg* mensaje_a_planificador = NULL;
 
-	int i=0;
-
-	if(respuesta.sentencia== io)
-		mensaje_a_planificador = (PCB_IO,4,respuesta.pcb->pid,respuesta.sentencia,respuesta.tiempo,respuesta.cantidad_sentencias);
-
-	if(respuesta.sentencia == finalizar)
-		mensaje_a_planificador = (PCB_FINALIZAR,4,respuesta.pcb->pid,respuesta.sentencia,respuesta.tiempo,respuesta.cantidad_sentencias);
-
-	if(respuesta.sentencia == error){
-		mensaje_a_planificador = (PCB_ERROR,4,respuesta.pcb->pid,respuesta.sentencia,respuesta.tiempo,respuesta.cantidad_sentencias);
-		
-	if(mensaje_a_planificador!=NULL)
-		mensaje_a_planificador = (PCB_FIN_QUANTUM,4,respuesta.pcb->pid,respuesta.sentencia,respuesta.tiempo,respuesta.cantidad_sentencias);
-
-
-	i = enviar_y_destroy_mensaje(socket_planif,mensaje_a_planificador);
+	i = enviar_y_destroy_mensaje(socket_planif, mensaje_a_planificador);
 
 	return i;
 }
 
 int enviar_porcentaje_a_planificador() {
-	va_list arguments;
-	int c = CANTIDAD_HILOS();
-	va_start(arguments, c);
+
+	int i,l;
 	t_msg* mensaje_a_planificador;
-	int i = 0;
+	/*mensaje_a_planificador = argv_message(CPU_PORCENTAJE_UTILIZACION,
+			CANTIDAD_HILOS(), porcentaje_a_planificador[0],
+			porcentaje_a_planificador[1], porcentaje_a_planificador[2],
+			porcentaje_a_planificador[3], porcentaje_a_planificador[4],
+			porcentaje_a_planificador[5]);*/
+	for (l=0;l<CANTIDAD_HILOS();l++){
 
-	int32_t *val = malloc(CANTIDAD_HILOS() * sizeof *val);
+		mensaje_a_planificador = argv_message(CPU_PORCENTAJE_UTILIZACION,1,porcentaje_a_planificador[l]);
+		i = enviar_y_destroy_mensaje(socket_planificador_especial,
+			mensaje_a_planificador);
 
-	int i;
-	for (i = 0; i < CANTIDAD_HILOS(); i++) {
-		val[i] = porcentaje_a_planificador[i];
 	}
 
-	t_msg *new = malloc(sizeof *new);
-	new->header.id = CPU_PORCENTAJE_UTILIZACION;
-	new->header.argc = CANTIDAD_HILOS();
-	new->argv = val;
-	new->header.length = 0;
-	new->stream = NULL;
-
-	va_end(arguments);
-
-//////////////////////////////////////////
-	//mensaje_a_planificador = argv_message(CPU_PORCENTAJE_UTILIZACION,CANTIDAD_HILOS(),porcentaje_a_planificador[0],porcentaje_a_planificador[1],porcentaje_a_planificador[2],porcentaje_a_planificador[3],porcentaje_a_planificador[4],porcentaje_a_planificador[5]);
-	mensaje_a_planificador = new;
-	i = enviar_y_destroy_mensaje(socket_planificador_especial,
-			mensaje_a_planificador);
 
 	return i;
 
 }
 
-
-
-
-
-int conectar_con_memoria(){
+int conectar_con_memoria(int numero) {
 	int sock;
 	sock = client_socket(IP_MEMORIA(), PUERTO_MEMORIA());
 
@@ -452,13 +432,13 @@ int conectar_con_memoria(){
 		log_trace(logger, "Error al conectar con  admin Mem. %s:%d",
 				IP_MEMORIA(), PUERTO_MEMORIA());
 	} else {
-		log_trace(logger, "Conectado con admin Mem. %s:%d",
-				IP_MEMORIA(), PUERTO_MEMORIA());
+		log_trace(logger, "Conectado con admin Mem. %s:%d", IP_MEMORIA(),
+				PUERTO_MEMORIA());
 	}
 
 	//envio handshake
 	//envio un msj con el id del proceso
-	t_msg* msg = string_message(CPU_NUEVO, "Hola soy un CPU", 1, ID());
+	t_msg* msg = string_message(CPU_NUEVO, "Hola soy un CPU", 1, numero);
 	if (enviar_mensaje(sock, msg) > 0) {
 		log_trace(logger, "Mensaje enviado OK");
 	}
@@ -469,20 +449,22 @@ int conectar_con_memoria(){
 	return sock;
 }
 
-int conectar_con_planificador(){
-	int sock ;
+int conectar_con_planificador(int numero) {
+	int sock;
 	sock = client_socket(IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
 
-	if(sock<0){
-		log_trace(logger, "Error al conectar con el planificador. %s:%d", IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
-	}else{
-		log_trace(logger, "Conectado con planificador. %s:%d", IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
+	if (sock < 0) {
+		log_trace(logger, "Error al conectar con el planificador. %s:%d",
+				IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
+	} else {
+		log_trace(logger, "Conectado con planificador. %s:%d",
+				IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
 	}
 
 	//envio handshake
 	//envio un msj con el id del proceso
-	t_msg* msg = string_message(CPU_NUEVO, "Hola soy un CPU", 1, ID() );
-	if (enviar_mensaje(sock, msg)>0){
+	t_msg* msg = string_message(CPU_NUEVO, "Hola soy un CPU", 1, numero);
+	if (enviar_mensaje(sock, msg) > 0) {
 		log_trace(logger, "Mensaje enviado OK");
 	}
 	destroy_message(msg);
@@ -492,21 +474,22 @@ int conectar_con_planificador(){
 	return sock;
 }
 
-
-int conectar_con_planificador_especial(){
-	int sock ;
+int conectar_con_planificador_especial() {
+	int sock;
 	sock = client_socket(IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
 
-	if(sock<0){
-		log_trace(logger, "Error al conectar con el planificador. %s:%d", IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
-	}else{
-		log_trace(logger, "Conectado con planificador. %s:%d", IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
+	if (sock < 0) {
+		log_trace(logger, "Error al conectar con el planificador especial. %s:%d",
+				IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
+	} else {
+		log_trace(logger, "Conectado con planificador especial. %s:%d",
+				IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
 	}
 
 	//envio handshake
 	//envio un msj con el id del proceso
-	t_msg* msg = string_message(CPU_ESPECIAL, "Hola soy un CPU", 1, ID() );
-	if (enviar_mensaje(sock, msg)>0){
+	t_msg* msg = string_message(CPU_ESPECIAL, "Hola soy un CPU", 1, -1);
+	if (enviar_mensaje(sock, msg) > 0) {
 		log_trace(logger, "Mensaje enviado OK");
 	}
 	destroy_message(msg);
@@ -516,13 +499,10 @@ int conectar_con_planificador_especial(){
 	return sock;
 }
 
-
-
-int inicializar(){
+int inicializar() {
 
 	cfg = config_create(CONFIG_PATH);
 	printf("IP planif: %s:%d\n", IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
-
 
 	clean_file(LOGGER_PATH);
 	logger = log_create(LOGGER_PATH, "procesoCPU", true, LOG_LEVEL_TRACE);
@@ -532,7 +512,7 @@ int inicializar(){
 	return 0;
 }
 
-int finalizar(){
+int finalizar() {
 
 	config_destroy(cfg);
 	log_destroy(logger);
@@ -543,34 +523,29 @@ int finalizar(){
 //////////////////////////////////////////////////FUNCIONES CONFIGURACION////////////////////////
 
 
-int ID(){
-	return config_get_int_value(cfg, "ID");
-}
-
-char* IP_MEMORIA(){
+char* IP_MEMORIA() {
 	return config_get_string_value(cfg, "IP_MEMORIA");
 }
-int PUERTO_MEMORIA(){
+int PUERTO_MEMORIA() {
 	return config_get_int_value(cfg, "PUERTO_MEMORIA");
 }
 
-char* IP_PLANIFICADOR(){
+char* IP_PLANIFICADOR() {
 	return config_get_string_value(cfg, "IP_PLANIFICADOR");
 }
-int PUERTO_PLANIFICADOR(){
+int PUERTO_PLANIFICADOR() {
 	return config_get_int_value(cfg, "PUERTO_PLANIFICADOR");
 }
 
-int CANTIDAD_HILOS(){
-	return config_get_int_value(cfg,"CANTIDAD_HILOS");
+int CANTIDAD_HILOS() {
+	return config_get_int_value(cfg, "CANTIDAD_HILOS");
 }
 
-int RETARDO(){
-	return config_get_int_value(cfg,"RETARDO");
+int RETARDO() {
+	return config_get_int_value(cfg, "RETARDO");
 }
 
-int RETARDO_MINIMO(){
-	return config_get_int_value(cfg,"RETARDO_MINIMO");
+int RETARDO_MINIMO() {
+	return config_get_int_value(cfg, "RETARDO_MINIMO");
 }
-
 

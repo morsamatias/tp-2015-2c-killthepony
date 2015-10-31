@@ -65,7 +65,7 @@ typedef struct{
 
 int inicializar();
 int finalizar();
-int conectar_con_planificador();
+int conectar_con_planificador(int numero);
 int conectar_con_planificador_especial();
 int enviar_porcentaje_a_planificador();
 void* hilo_responder_porcentaje();
@@ -77,15 +77,15 @@ int pcb_tiene_que_seguir_ejecutando(t_pcb* pcb);
 int sent_ejecutar_iniciar(t_sentencia* sent,int socket_mem);
 char* sent_ejecutar_leer(t_sentencia* sent,int socket_mem);
 int sent_ejecutar_finalizar(t_sentencia* sent,int socket_mem);
-int conectar_con_memoria();
+int conectar_con_memoria(int numero);
 void* hilo_cpu(int *numero_hilo);
 char* IP_PLANIFICADOR();
 int PUERTO_PLANIFICADOR();
 char* IP_MEMORIA();
 int PUERTO_MEMORIA();
-int ID();
 int CANTIDAD_HILOS();
 int RETARDO();
+int RETARDO_MINIMO();
 
 int avisar_a_planificador(t_resultado_pcb respuesta,int socket_planif);
 

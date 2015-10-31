@@ -34,7 +34,8 @@ int inicializar(){ ///////////////////
 	memoria = (t_marco**)malloc(CANTIDAD_MARCOS()*sizeof(t_marco*));
 
 	for(i=0;i<CANTIDAD_MARCOS();i++){
-		memoria[i] = (t_marco*)malloc((TAMANIO_MARCO()+1)*sizeof(char)+sizeof(int));
+		memoria[i] = (t_marco*)malloc(sizeof(t_marco));
+		memoria[i]->contenido = malloc((TAMANIO_MARCO()+1)*sizeof(char));
 		memoria[i]->libre = 1;
 	}
 

@@ -98,9 +98,9 @@ typedef struct{
 
 // tiempo de espero: tiempo total que pasa un proceso en la cola de listos
 
-typedef struct{
+/*typedef struct{
 	int id;
-}t_cpu_especial;
+}t_cpu_especial;*/
 
 void pcb_agregar(t_pcb* pcb){
 	list_add(pcbs, (void*)pcb);
@@ -113,6 +113,8 @@ typedef struct{
 	int usoUltimoMinuto;
 	int estado;
 }t_cpu;
+
+int cpu_especial;
 
 t_list* procesosFinalizados;
 
@@ -132,19 +134,27 @@ int cpu_ejecutar(t_cpu* cpu, t_pcb* pcb);
 int procesar_mensaje_cpu(int socket, t_msg* msg);
 t_pcb* pcb_buscar_por_cpu(int cpu);
 
+int gl_id;
+int gl_cpu;
+int gl_socket;
+
+bool _pcb_buscar_por_cpu(t_pcb* pcb){
+
+		return pcb->cpu_asignado == gl_cpu;
+	}
+
 t_pcb* pcb_buscar_por_cpu(int cpu){
 
-	bool _pcb_buscar_por_cpu(t_pcb* pcb){
-		return pcb->cpu_asignado == cpu;
-	}
+	gl_cpu=cpu;
 	return list_find(pcbs, (void*)_pcb_buscar_por_cpu);
 }
 
-t_cpu* cpu_buscar_por_socket(int socket){
-	bool _cpu_buscar_por_socket(t_cpu* cpu){
-		return cpu->socket == socket;
+bool _cpu_buscar_por_socket(t_cpu* cpu){
+		return cpu->socket == gl_socket;
 	}
+t_cpu* cpu_buscar_por_socket(int socket){
 
+	gl_socket=socket;
 	return list_find(cpus, (void*)_cpu_buscar_por_socket);
 }
 
@@ -198,10 +208,11 @@ bool _estado_bloqueado(t_block block){
 	return block.estado==1;
 
 }
-t_cpu* cpu_buscar(int id){
-	bool _cpu_buscar(t_cpu* cpu){
-		return cpu->id == id;
+bool _cpu_buscar(t_cpu* cpu){
+		return cpu->id == gl_id;
 	}
+t_cpu* cpu_buscar(int id){
+	gl_id=id;
 	return list_find(cpus, (void*)_cpu_buscar);
 }
 

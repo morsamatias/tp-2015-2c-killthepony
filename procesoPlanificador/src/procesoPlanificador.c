@@ -263,11 +263,10 @@ void procesar_msg_consola(char* msg) {
 
 		*/
 
-		t_cpu_especial* cpu_especial;
 
 		t_msg* pedido_uso = argv_message(CPU_PORCENTAJE_UTILIZACION,0);
 
-		enviar_mensaje(cpu_especial->id,pedido_uso);
+		enviar_mensaje(cpu_especial,pedido_uso);
 
 		destroy_message(pedido_uso);
 
@@ -435,10 +434,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 	int segundos;
 	int n;
 	int m;
-	t_cpu_especial* cpu_especial=malloc(sizeof(t_cpu_especial));
+
 	switch (msg->header.id) {
 	case CPU_NUEVO:
-
 		//el ID esta en la pos 0
 		id_cpu = msg->argv[0];
 		log_trace(logger, "Nuevo CPU id: %d", id_cpu);
@@ -605,7 +603,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 						break;
 
 			case   PCB_FINALIZAR:
-
+					log_trace(logger,"EMPEZO A FINALIZAR");
 						pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
 						PID_GLOBAL_FINISH = pcb->pid;
@@ -1151,6 +1149,19 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		case CPU_PORCENTAJE_UTILIZACION:
 
+			cpu = cpu_buscar_por_socket(socket);
+			cpu->usoUltimoMinuto = uso_cpu;
+
+			log_trace(logger, "Cpu %d: %d", cpu->id, cpu->usoUltimoMinuto);
+
+			break;
+
+
+		// NUEVA VERSION
+
+
+			// ULTIMA VERSION
+			/*
 			//cpu = cpu_buscar_por_socket(socket);
 			n=0;
 			m=1;
@@ -1187,7 +1198,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 						}
 
 			break;
-
+ULTIMA VERSION*/
 			/*
 
 			if(cpu==NULL){
@@ -1223,7 +1234,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		case CPU_ESPECIAL:
 
-		cpu_especial->id=socket;
+		cpu_especial=socket;
 
 		log_trace(logger, "Se conecta con el Planificador el Hilo al que se pedirán las solicitudes de Uso de CPUs");
 
