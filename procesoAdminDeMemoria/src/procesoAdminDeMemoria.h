@@ -40,6 +40,11 @@ typedef struct {
 	int	  libre;
 } t_marco;
 
+typedef struct {
+	int marco;
+	int TLB_HIT;
+} t_busq_marco;
+
 
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////// VARIABLES GLOBALES //////////////////////////////////////
@@ -71,6 +76,7 @@ int			gl_nro_pagina;
 
 int			gl_TLB_hit;
 int			gl_TLB_total;
+pthread_t 	t_tasas_globales;
 
 
 
@@ -143,9 +149,9 @@ int 		reemplazar_pagina_en_memoria_segun_algoritmo(t_proceso* proceso, int pagin
 void 		actualizar_entradas_en_tabla_de_paginas		(t_pagina* pagina);
 void 		agregar_pagina_en_TLB						(int PID, int pagina, int entrada);
 void 		tasa_aciertos_TLB							();
-void 		tasa_aciertos_TLB_global					();
+void 		tasa_aciertos_TLB_total						();
 void 		sumar_tasas_TLB								(t_proceso* proceso);
 int 		encontrar_marco_libre						();
-int 		buscar_marco_de_pagina_en_TLB_y_tabla_paginas(int pid, int nro_pagina);
+t_busq_marco buscar_marco_de_pagina_en_TLB_y_tabla_paginas(int pid, int nro_pagina);
 
 #endif /* PROCESOADMINDEMEMORIA_H_ */

@@ -12,10 +12,11 @@
 
 
 int main(void) {
-	inicializar();
-	socket_swap = conectar_con_swap();
-	server_socket_select(PUERTO_ESCUCHA(), procesar_mensaje_cpu);
-	finalizar();
+	inicializar(); 																	// INICIALIZA ESTRUCTURAS
+	socket_swap = conectar_con_swap(); 												// SE CONECTA CON EL SWAP
+	pthread_create(&t_tasas_globales, NULL, (void*) tasa_aciertos_TLB_total,NULL);	// CREO EL HILO QUE MANEJA LAS ESTADISTICAS GLOBALES DE TASA
+	server_socket_select(PUERTO_ESCUCHA(), procesar_mensaje_cpu); 					// PROCESA LOS MENSAJES
+	finalizar();																	// ELIMINA ESTRUCTURAS
 	return EXIT_SUCCESS;
 }
 
@@ -72,10 +73,11 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 	//print_msg(msg);
 	char* buff_pag  = NULL;
 	char* buff_pag_esc  = NULL;
-	int st,pid,nro_pagina,cant_paginas,marco,lugares;
+	int st,pid,nro_pagina,cant_paginas, flag_reemplazo;
 	t_msg* resp = NULL;
 	t_proceso* proceso;
 	t_pagina* pagina;
+	t_busq_marco* b_marco;
 
 
 //	t_pagina* pagina;
@@ -113,23 +115,24 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			pid 		= msg->argv[0];
 			nro_pagina  = msg->argv[1];
 			destroy_message(msg);
-			log_trace(logger, "Leer pagina %d del proceso", nro_pagina,pid);
+			log_trace(logger, "Leer pagina %d del proceso %d", nro_pagina,pid);
+			flag_reemplazo=0;
 
 			// BUSCO EL PROCESO
 			gl_PID=pid;
 			proceso = list_find(paginas,(void*)es_el_proceso_segun_PID);
 
 			// BUSCO EL MARCO EN LA TLB Y EN LA TABLA DE PAGINAS
-			marco = buscar_marco_de_pagina_en_TLB_y_tabla_paginas(pid,nro_pagina);
+			b_marco = buscar_marco_de_pagina_en_TLB_y_tabla_paginas(pid,nro_pagina);
 
 			// POSIBLES VALORES = >=0 (posicion en memoria) -1 (no esta en memoria) -2 (no existe la pagina)
-			if(marco == -2){
+			if(b_marco->marco == -2){
 				st = 0;
 			}else{
-				if(marco == -1){
+				if(b_marco->marco == -1){
 					cant_paginas = list_count_satisfying(proceso->paginas,(void*)la_pagina_esta_cargada_en_memoria);
-					marco = encontrar_marco_libre();
-					if(marco == -1 /* NO HAY MAS LUGAR*/ && cant_paginas==0 /* NO HAY PAGINAS PARA SACAR*/){
+					b_marco->marco = encontrar_marco_libre();
+					if(b_marco->marco == -1 /* NO HAY MAS LUGAR*/ && cant_paginas==0 /* NO HAY PAGINAS PARA SACAR*/){
 						st=3;
 					}else{
 						buff_pag = swap_leer_pagina(pid, nro_pagina);
@@ -139,6 +142,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 								st = 2;
 							}else{
 								st = reemplazar_pagina_en_memoria_segun_algoritmo(proceso,nro_pagina,buff_pag);
+								flag_reemplazo=1;
 							}
 							sleep(RETARDO_MEMORIA());
 						}else{
@@ -148,7 +152,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 				}
 				else {
 					sleep(RETARDO_MEMORIA());
-					buff_pag = string_duplicate(memoria[marco]->contenido);
+					buff_pag = string_duplicate(memoria[b_marco->marco]->contenido);
 					st = 2;
 				}
 			}
@@ -166,7 +170,12 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 				case 2:
 					//sleep(RETARDO_MEMORIA());
 					resp = string_message(MEM_OK, buff_pag, 0);
-					log_info(logger, "La pagina %d del proceso %d fue leida correctamente",nro_pagina,pid);
+					if(flag_reemplazo)
+						log_info(logger, "Lectura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d",
+								nro_pagina,pid, b_marco->TLB_HIT, b_marco->marco);
+					else
+						log_info(logger, "Lectura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d - Algoritmo: %s",
+								nro_pagina,pid, b_marco->TLB_HIT, b_marco->marco, ALGORITMO_REEMPLAZO());
 					break;
 				case 3:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
@@ -190,6 +199,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			nro_pagina 	= msg->argv[1];
 			destroy_message(msg);
 			log_trace(logger, "Escribir en Memoria la pagina %d del PID %d y texto: \"%s\"", nro_pagina, pid,buff_pag);
+			flag_reemplazo=0;
 
 			// BUSCO EL PROCESO y la PAGINA
 			gl_PID=pid;
@@ -198,15 +208,15 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			pagina  = list_find(proceso->paginas,(void*)es_la_pagina_segun_PID_y_nro_pagina);
 
 			// BUSCO EL MARCO EN LA TLB Y EN LA TABLA DE PAGINAS
-			marco = buscar_marco_de_pagina_en_TLB_y_tabla_paginas(pid,nro_pagina);
+			b_marco->marco = buscar_marco_de_pagina_en_TLB_y_tabla_paginas(pid,nro_pagina);
 
-			if(marco == -2){
+			if(b_marco->marco == -2){
 				st = 0;
 			}else{
-				if(marco == -1){
+				if(b_marco->marco == -1){
 					cant_paginas = list_count_satisfying(proceso->paginas,(void*)la_pagina_esta_cargada_en_memoria);
-					marco = encontrar_marco_libre();
-					if(marco == -1 /* NO HAY MAS LUGAR*/ && cant_paginas==0 /* NO HAY PAGINAS PARA SACAR*/){
+					b_marco->marco = encontrar_marco_libre();
+					if(b_marco->marco == -1 /* NO HAY MAS LUGAR*/ && cant_paginas==0 /* NO HAY PAGINAS PARA SACAR*/){
 						st=3;
 					}else{
 						// OPCIONAL
@@ -220,6 +230,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 								st = 2;
 							}else{
 								st = reemplazar_pagina_en_memoria_segun_algoritmo(proceso,nro_pagina,buff_pag);
+								flag_reemplazo=1;
 							}
 							pagina->modificado=1;
 							sleep(RETARDO_MEMORIA());
@@ -229,80 +240,42 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 					}
 				}
 				else {
-					strncpy(memoria[marco]->contenido,buff_pag,TAMANIO_MARCO());
-					memoria[marco]->contenido[TAMANIO_MARCO()]='\0';
+					strncpy(memoria[b_marco->marco]->contenido,buff_pag,TAMANIO_MARCO());
+					memoria[b_marco->marco]->contenido[TAMANIO_MARCO()]='\0';
 					pagina->modificado=1;
 					sleep(RETARDO_MEMORIA());
 					st = 2;
 				}
 			}
 
-/*
-			if(marco == -2){
-				st = 0;
-				log_error(logger, "No existe la pagina %d del proceso %d",nro_pagina,pid);
-			}else{
-				if(marco == -1){
-					if(memoria->elements_count<CANTIDAD_MARCOS()){
-						// OPCIONAL
-							buff_pag_esc = swap_leer_pagina(pid, nro_pagina);
-							FREE_NULL(buff_pag_esc);
-						// OPCIONAL
-						gl_PID=pid;
-						gl_nro_pagina=nro_pagina;
-						cant_paginas = list_count_satisfying(paginas,(void*)es_la_pagina_segun_PID_y_nro_pagina);
-
-						if(cant_paginas<MAXIMO_MARCOS_POR_PROCESO()){
-							agregar_pagina_en_memoria(pid,nro_pagina,buff_pag);
-							st = 1;
-						}else{
-							st = reemplazar_pagina_en_memoria_segun_algoritmo(pid,nro_pagina,buff_pag);
-						}
-
-					}else{
-						st=0;
-						log_error(logger, "No hay lugar en memoria para guardar la pagina %d del proceso %d",nro_pagina,pid);
-					}
-				}
-				else {
-					sleep(RETARDO_MEMORIA());
-					usar_pagina_en_memoria_segun_algoritmo(pid,nro_pagina,marco,flag_TLB);
-					pagina_en_memoria = list_get(memoria,marco);
-					free(pagina_en_memoria->contenido);
-					pagina_en_memoria->contenido=buff_pag;
-					st = 1;
-					log_info(logger, "La pagina %d del proceso %d fue modificada exitosamente",nro_pagina,pid);
-				}
-				setear_flag_modificado(pid,nro_pagina);
-			}
-
-			if(st==1||st==2){
-				resp = argv_message(MEM_OK, 1, 0);
-			}else{
-				resp = argv_message(MEM_NO_OK, 1, 0);
-			}*/
+			// BORRADO DE CODIGO EN BKP
 
 			switch(st){
 				case 0:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
-					log_error(logger, "No existe la pagina %d solicitada por el proceso %d",nro_pagina,pid);
+					log_error(logger, "Escritura Erronea --> No existe la pagina %d solicitada por el proceso %d",nro_pagina,pid);
 					break;
 				case 1:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
-					log_error(logger, "La pagina %d del proceso %d no fue recibida bien del SWAP",nro_pagina,pid);
+					log_error(logger, "Escritura Erronea --> La pagina %d del proceso %d no fue recibida bien del SWAP",nro_pagina,pid);
 					break;
 				case 2:
 					//sleep(RETARDO_MEMORIA());
 					resp = argv_message(MEM_OK, 1 ,0);
-					log_info(logger, "La pagina %d del proceso %d fue escrita correctamente",nro_pagina,pid);
+					if(!flag_reemplazo)
+						log_info(logger, "Escritura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d",
+								nro_pagina,pid, b_marco->TLB_HIT, b_marco->marco);
+					else
+						log_info(logger, "Escritura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d - Algoritmo: %s",
+								nro_pagina,pid, b_marco->TLB_HIT, b_marco->marco, ALGORITMO_REEMPLAZO());
 					break;
 				case 3:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
-					log_error(logger, "No hay lugar en memoria para guardar la pagina %d del proceso %d",nro_pagina,pid);
+					log_error(logger, "Escritura Erronea --> No hay lugar en memoria para guardar la pagina %d del proceso %d",nro_pagina,pid);
 					break;
 				case 4:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
-					log_error(logger, "No se pudo guardar la informacion de la pagina desalojada del proceso %d en SWAP",pid);
+					log_error(logger, "Escritura Erronea --> No se pudo guardar la informacion de la pagina desalojada del proceso %d en SWAP",pid);
 					break;
 			}
 
@@ -346,30 +319,32 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 	//destroy_message(msg);
 }
 
-int buscar_marco_de_pagina_en_TLB_y_tabla_paginas(int pid, int nro_pagina){
+t_busq_marco buscar_marco_de_pagina_en_TLB_y_tabla_paginas(int pid, int nro_pagina){
 	t_proceso* proceso;
-	int marco;
+	t_busq_marco busc_marco;
 
 	gl_PID=pid;
 	proceso = list_find(paginas,(void*)es_el_proceso_segun_PID);
 
 	// SE FIJA SI ESTA LA PAGINA EN LA TLB
 	if(TLB_HABILITADA()){
-		marco = buscar_marco_en_TLB(pid,nro_pagina);
+		busc_marco.marco = buscar_marco_en_TLB(pid,nro_pagina);
 	} else {
-		marco = -1;
+		busc_marco.marco = -1;
 	}
 	proceso->TLB_total++;
 
 	// SE FIJA SI ESTA LA PAGINA EN MEMORIA
-	if(marco == -1){
+	if(busc_marco.marco == -1){
 		sleep(RETARDO_MEMORIA());
-		marco = buscar_marco_en_paginas(pid,nro_pagina);
+		busc_marco.marco = buscar_marco_en_paginas(pid,nro_pagina);
+		busc_marco.TLB_HIT=0;
 	}else{
 		proceso->TLB_hit++;
+		busc_marco.TLB_HIT=1;
 	}
 
-	return marco;
+	return busc_marco;
 }
 
 int encontrar_marco_libre(){ ////////////////
@@ -383,11 +358,16 @@ int encontrar_marco_libre(){ ////////////////
 
 void tasa_aciertos_TLB_total(){
 	float valor;
-	gl_TLB_hit=0.0;
-	gl_TLB_total = 0;
-	list_iterate(paginas,(void*)sumar_tasas_TLB);
-	valor= (gl_TLB_hit/gl_TLB_total)*100;
-	log_info(logger, "TLB - Tasa de aciertos: %f",valor);
+	while(1){
+		sleep(60);
+		gl_TLB_hit=0.0;
+		gl_TLB_total = 0;
+		list_iterate(paginas,(void*)sumar_tasas_TLB);
+		if(gl_TLB_total!=0){
+			valor= (gl_TLB_hit/gl_TLB_total)*100;
+			log_info(logger, "TLB - Tasa de aciertos: %f",valor);
+		}
+	}
 }
 
 void sumar_tasas_TLB(t_proceso* proceso){
@@ -397,7 +377,6 @@ void sumar_tasas_TLB(t_proceso* proceso){
 
 void tasa_aciertos_TLB(t_proceso* proceso){
 	float valor;
-
 	valor= (proceso->TLB_hit/proceso->TLB_total)*100;
 	log_info(logger, "Tasa de aciertos para el proceso %d: %f",proceso->PID,valor);
 }
@@ -578,121 +557,14 @@ void destruir_pagina(t_pagina* pagina){
 
 void destruir_proceso(t_proceso* proceso){
 	gl_PID = proceso->PID;
+
+	// SACO LAS POSIBLES PAGINAS DE LA TLB
 	list_remove_by_condition(TLB,(void*)es_la_pagina_segun_PID);
+
+	// IMPRIMO LAS ESTADISTICAS DE ACIERTO DE TLB DEL PROCESO
+	tasa_aciertos_TLB(proceso);
+
+	// ELIMINO LAS PAGINAS EN LA TABLA DE PAGINAS
 	list_destroy_and_destroy_elements(proceso->paginas,(void*)destruir_pagina);
 	free(proceso);
 }
-
-/*
-void borrar_paginas_de_un_proceso_en_la_memoria(t_pagina* pagina){
-	if(pagina->PID==gl_PID && pagina->entrada){
-		list_remove_and_destroy_element(memoria,pagina->entrada,(void*)destruir_memoria);
-	}
-}
-
-void compactar_lista_memoria(){
-	t_list* aux = list_create(); //CREO LISTA COMO BKP
-	list_add_all(aux,memoria);   //MUEVO TOD O LO QUE ESTA EN MEMORIA A LA AUX, ORDENANDOLO
-	list_clean(memoria);		 //LIMPIO LA MEMORIA
-	list_add_all(memoria,aux);	 //VUELVO A METER TOD O EN LA MEMORIA ORDENADO
-}
-*/
-
-/*
-void borrar_paginas_de_un_proceso_en_la_memoria(t_pagina* pagina){
-	if(pagina->PID==gl_PID && pagina->entrada){
-		list_remove_and_destroy_element(memoria,pagina->entrada,(void*)destruir_memoria);
-	}
-}
-
-void compactar_lista_memoria(){
-	t_list* aux = list_create(); //CREO LISTA COMO BKP
-	list_add_all(aux,memoria);   //MUEVO TOD O LO QUE ESTA EN MEMORIA A LA AUX, ORDENANDOLO
-	list_clean(memoria);		 //LIMPIO LA MEMORIA
-	list_add_all(memoria,aux);	 //VUELVO A METER TOD O EN LA MEMORIA ORDENADO
-}
-*/
-/*void eliminar_estructuras_de_un_proceso(t_proceso* proceso){
-	int i;
-	t_pagina_proceso pagina;
-
-	// DEJO DISPONIBLE TODAS LAS ENTRADAS USADAS POR EL PROCESO QUE TIENE EN LA MEMORIA
-	for(i=0;i<proceso->cant_paginas;i++){
-		pagina = list_get(proceso->paginas,i);
-		if(pagina.posicion_memoria!=-1){
-				memoria[pagina.posicion_memoria].libre=1;
-				memoria[pagina.posicion_memoria].modificado=0;
-			}
-		if(pagina.posicion_TLB!=-1){
-				quitar_de_la_lista_de_prioridad_TLB(proceso->PID,i);
-			}
-	}
-
-	free(proceso);
-}
-
-void quitar_de_la_lista_de_prioridad_TLB(int PID, int pagina){
-	int i;
-	for(i=0;i<ENTRADAS_TLB();i++){
-		if(TLB[i].PID == PID && TLB[i].pagina == pagina){
-			TLB[i].PID = -1;
-			TLB[i].entrada = -1;
-			TLB[i].orden_seleccion = 0;
-			TLB[i].pagina = -1;
-		} else
-			TLB[i].orden_seleccion++;
-	}
-}
-
-void eliminar_estructuras_de_todos_los_procesos(t_proceso* proceso){
-	int i;
-	t_pagina_proceso pagina;
-
-	// DEJO DISPONIBLE TODAS LAS ENTRADAS USADAS POR EL PROCESO QUE TIENE EN LA MEMORIA
-	for(i=0;i<proceso->cant_paginas;i++){
-			pagina = list_get(proceso->paginas,i);
-			if(pagina.posicion_memoria!=-1){
-					memoria[pagina.posicion_memoria].libre=1;
-					memoria[pagina.posicion_memoria].modificado=0;
-				}
-			if(pagina.posicion_TLB!=-1){
-					quitar_de_la_lista_de_prioridad_TLB(proceso->PID,i);
-				}
-		}
-
-	// LIBERO EL ESPACIO EN EL SWAP
-	swap_finalizar(proceso->PID);
-
-	free(proceso);
-}
-
-int escribir_pagina(int pid, int pagina, char* contenido){
-	int estado;
-	t_proceso proceso;
-	int entrada;
-	int pos_tlb;
-
-	// LE MANDO AL SWAP PARA QUE GUARDE LA INFO
-	estado = swap_escribir_pagina(pid, pagina, contenido);
-	if(estado==-1) return estado;
-
-	if(string_equals_ignore_case("FIFO",ALGORITMO_REEMPLAZO())){
-		entrada = encontrar_pagina_libre_FIFO(pid);
-	} else {
-		//COMPLETAR CON EL RESTO DE LOS ALGORITMOS
-		entrada = 0;
-	}
-
-	memoria[entrada].libre = 0;
-	memoria[entrada].modificado = 0;
-	memoria[entrada].bloque = contenido;
-
-	entrada = encontrar_pagina_en_TLB();
-	TLB[pos_tlb].PID = pid;
-	TLB[pos_tlb].entrada = entrada;
-	TLB[pos_tlb].pagina = pagina;
-	TLB[pos_tlb].
-
-
-	return 1;
-}*/
