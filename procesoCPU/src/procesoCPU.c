@@ -7,6 +7,8 @@ int main(void) {
 	inicializar();
 	int contador=CANTIDAD_HILOS();
 	
+	int flag = 1;
+
 	socket_planificador = malloc(contador*sizeof(int));
 	socket_memoria = malloc(contador*sizeof(int));
 	
@@ -19,8 +21,9 @@ int main(void) {
 
 	for( ;contador>0;contador=contador-1){
 
-		if(CANTIDAD_HILOS()==contador){
+		if(flag==1){
 			pthread_create(&(hilo[contador+1]), NULL,(void*)&hilo_responder_porcentaje,NULL );
+			flag = 0;
 		}
 
 		vector[contador]=contador;

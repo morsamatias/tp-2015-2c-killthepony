@@ -13,16 +13,18 @@ void* hilo_responder_porcentaje(){
 
 		socket_planificador_especial = conectar_con_planificador_especial();
 
+		printf("Conectado con planificador socket especial.\n");
+
 		if (socket_planificador_especial){
 
 			while(true){
 
 					log_trace(logger, "Esperando peticiones del planificador");
-					if(recibir_mensaje(socket_planificador_especial)){
+					recibir_mensaje(socket_planificador_especial);
 
 						log_trace(logger, "Nuevo mensaje del planificador");
 						enviar_porcentaje_a_planificador();
-			}
+
 		}
 	      }else
 			log_trace(logger,"Error al conectarse con la memoria y el planificador. \n");
@@ -338,14 +340,17 @@ t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem){
 	sent = sentencia_crear(sents[pcb->pc], pcb->pid);
 	
 	while((sent->sentencia!=final)&&(!es_entrada_salida)&&(cantidad_a_ejecutar!=contador)&&(st==0)){
+
 			sleep(RETARDO());
+
 			 if(sent->sentencia!=io){
+
 				porcentaje = porcentaje + 1;
 				st = sent_ejecutar(sent,socket_mem);
 				sent_free(sent);		
 				pcb->pc++;		
 				sent = sentencia_crear(sents[pcb->pc], pcb->pid);
-				contador=contador+1;		
+				contador=contador+1;
  		 
 			}else{		
 				es_entrada_salida=true;		
@@ -376,29 +381,60 @@ t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem){
 }
 
 
+
+
 int avisar_a_planificador(t_resultado_pcb respuesta,int socket_planif){
 		
-	t_msg* mensaje_a_planificador;		
+	t_msg* mensaje_a_planificador = NULL;
 
 	int i=0;
 
-	mensaje_a_planificador = argv_message(SENTENCIAS_EJECUTADAS,4,respuesta.pcb->pid,respuesta.sentencia,respuesta.tiempo,respuesta.cantidad_sentencias);
+	if(respuesta.sentencia== io)
+		mensaje_a_planificador = (PCB_IO,4,respuesta.pcb->pid,respuesta.sentencia,respuesta.tiempo,respuesta.cantidad_sentencias);
+
+	if(respuesta.sentencia == finalizar)
+		mensaje_a_planificador = (PCB_FINALIZAR,4,respuesta.pcb->pid,respuesta.sentencia,respuesta.tiempo,respuesta.cantidad_sentencias);
+
+	if(respuesta.sentencia == error){
+		mensaje_a_planificador = (PCB_ERROR,4,respuesta.pcb->pid,respuesta.sentencia,respuesta.tiempo,respuesta.cantidad_sentencias);
 		
+	if(mensaje_a_planificador!=NULL)
+		mensaje_a_planificador = (PCB_FIN_QUANTUM,4,respuesta.pcb->pid,respuesta.sentencia,respuesta.tiempo,respuesta.cantidad_sentencias);
+
+
 	i = enviar_y_destroy_mensaje(socket_planif,mensaje_a_planificador);
 
 	return i;
 }
 
-
-int enviar_porcentaje_a_planificador(){
-
+int enviar_porcentaje_a_planificador() {
+	va_list arguments;
+	int c = CANTIDAD_HILOS();
+	va_start(arguments, c);
 	t_msg* mensaje_a_planificador;
+	int i = 0;
 
-	int i=0;
+	int32_t *val = malloc(CANTIDAD_HILOS() * sizeof *val);
 
-	mensaje_a_planificador = argv_message(CPU_PORCENTAJE_UTILIZACION,CANTIDAD_HILOS(),porcentaje_a_planificador[0],porcentaje_a_planificador[1],porcentaje_a_planificador[2],porcentaje_a_planificador[3],porcentaje_a_planificador[4],porcentaje_a_planificador[5]);
+	int i;
+	for (i = 0; i < CANTIDAD_HILOS(); i++) {
+		val[i] = porcentaje_a_planificador[i];
+	}
 
-	i = enviar_y_destroy_mensaje(socket_planificador_especial,mensaje_a_planificador);
+	t_msg *new = malloc(sizeof *new);
+	new->header.id = CPU_PORCENTAJE_UTILIZACION;
+	new->header.argc = CANTIDAD_HILOS();
+	new->argv = val;
+	new->header.length = 0;
+	new->stream = NULL;
+
+	va_end(arguments);
+
+//////////////////////////////////////////
+	//mensaje_a_planificador = argv_message(CPU_PORCENTAJE_UTILIZACION,CANTIDAD_HILOS(),porcentaje_a_planificador[0],porcentaje_a_planificador[1],porcentaje_a_planificador[2],porcentaje_a_planificador[3],porcentaje_a_planificador[4],porcentaje_a_planificador[5]);
+	mensaje_a_planificador = new;
+	i = enviar_y_destroy_mensaje(socket_planificador_especial,
+			mensaje_a_planificador);
 
 	return i;
 
