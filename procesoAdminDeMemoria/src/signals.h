@@ -42,7 +42,7 @@ if(pid==-1){
 }
 
 
-if (fork()==0){
+if (pid==0){
 
 
 	//procesoHijo
@@ -76,7 +76,7 @@ void manejar_SIGUSR2(){
 	}
 
 
-	if (fork()==0){
+	if (pid==0){
 
 
 		//procesoHijo
@@ -117,7 +117,7 @@ int pid= fork();
 	}
 
 
-	if (fork()==0){
+	if (pid==0){
 
 
 		//procesoHijo
