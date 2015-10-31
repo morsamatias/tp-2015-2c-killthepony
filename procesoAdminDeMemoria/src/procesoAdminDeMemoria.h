@@ -60,7 +60,7 @@ t_list* 	TLB;
 t_list*		paginas;
 t_marco**	memoria;
 t_config* 	cfg;
-int 		PUERTO_ESCUCHA();
+/*int 		PUERTO_ESCUCHA();
 char* 		IP_SWAP();
 int 		PUERTO_SWAP();
 int 		MAXIMO_MARCOS_POR_PROCESO();
@@ -69,7 +69,7 @@ int 		TAMANIO_MARCO();
 int 		ENTRADAS_TLB();
 int 		TLB_HABILITADA();
 int 		RETARDO_MEMORIA();
-//char* 		ALGORITMO_REEMPLAZO();
+char* 		ALGORITMO_REEMPLAZO();*/
 
 int 		gl_PID;
 int			gl_nro_pagina;

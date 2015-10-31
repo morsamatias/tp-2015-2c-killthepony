@@ -77,7 +77,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 	t_msg* resp = NULL;
 	t_proceso* proceso;
 	t_pagina* pagina;
-	t_busq_marco* b_marco;
+	t_busq_marco b_marco;
 
 
 //	t_pagina* pagina;
@@ -120,19 +120,21 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 
 			// BUSCO EL PROCESO
 			gl_PID=pid;
+			gl_nro_pagina=nro_pagina;
 			proceso = list_find(paginas,(void*)es_el_proceso_segun_PID);
+
 
 			// BUSCO EL MARCO EN LA TLB Y EN LA TABLA DE PAGINAS
 			b_marco = buscar_marco_de_pagina_en_TLB_y_tabla_paginas(pid,nro_pagina);
 
 			// POSIBLES VALORES = >=0 (posicion en memoria) -1 (no esta en memoria) -2 (no existe la pagina)
-			if(b_marco->marco == -2){
+			if(b_marco.marco == -2){
 				st = 0;
 			}else{
-				if(b_marco->marco == -1){
+				if(b_marco.marco == -1){
 					cant_paginas = list_count_satisfying(proceso->paginas,(void*)la_pagina_esta_cargada_en_memoria);
-					b_marco->marco = encontrar_marco_libre();
-					if(b_marco->marco == -1 /* NO HAY MAS LUGAR*/ && cant_paginas==0 /* NO HAY PAGINAS PARA SACAR*/){
+					b_marco.marco = encontrar_marco_libre();
+					if(b_marco.marco == -1 /* NO HAY MAS LUGAR*/ && cant_paginas==0 /* NO HAY PAGINAS PARA SACAR*/){
 						st=3;
 					}else{
 						buff_pag = swap_leer_pagina(pid, nro_pagina);
@@ -152,7 +154,12 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 				}
 				else {
 					sleep(RETARDO_MEMORIA());
-					buff_pag = string_duplicate(memoria[b_marco->marco]->contenido);
+					buff_pag = string_duplicate(memoria[b_marco.marco]->contenido);
+					// SI ES LRU MUEVO LA PAGINA AL FINAL
+					if(string_equals_ignore_case(ALGORITMO_REEMPLAZO(),"LRU")){
+						pagina  = list_remove_by_condition(proceso->paginas,(void*)es_la_pagina_segun_PID_y_nro_pagina);
+						list_add(proceso->paginas,pagina);
+					}
 					st = 2;
 				}
 			}
@@ -172,10 +179,10 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 					resp = string_message(MEM_OK, buff_pag, 0);
 					if(flag_reemplazo)
 						log_info(logger, "Lectura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d",
-								nro_pagina,pid, b_marco->TLB_HIT, b_marco->marco);
+								nro_pagina,pid, b_marco.TLB_HIT, b_marco.marco);
 					else
 						log_info(logger, "Lectura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d - Algoritmo: %s",
-								nro_pagina,pid, b_marco->TLB_HIT, b_marco->marco, ALGORITMO_REEMPLAZO());
+								nro_pagina,pid, b_marco.TLB_HIT, b_marco.marco, ALGORITMO_REEMPLAZO());
 					break;
 				case 3:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
@@ -208,15 +215,15 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			pagina  = list_find(proceso->paginas,(void*)es_la_pagina_segun_PID_y_nro_pagina);
 
 			// BUSCO EL MARCO EN LA TLB Y EN LA TABLA DE PAGINAS
-			b_marco->marco = buscar_marco_de_pagina_en_TLB_y_tabla_paginas(pid,nro_pagina);
+			b_marco = buscar_marco_de_pagina_en_TLB_y_tabla_paginas(pid,nro_pagina);
 
-			if(b_marco->marco == -2){
+			if(b_marco.marco == -2){
 				st = 0;
 			}else{
-				if(b_marco->marco == -1){
+				if(b_marco.marco == -1){
 					cant_paginas = list_count_satisfying(proceso->paginas,(void*)la_pagina_esta_cargada_en_memoria);
-					b_marco->marco = encontrar_marco_libre();
-					if(b_marco->marco == -1 /* NO HAY MAS LUGAR*/ && cant_paginas==0 /* NO HAY PAGINAS PARA SACAR*/){
+					b_marco.marco = encontrar_marco_libre();
+					if(b_marco.marco == -1 /* NO HAY MAS LUGAR*/ && cant_paginas==0 /* NO HAY PAGINAS PARA SACAR*/){
 						st=3;
 					}else{
 						// OPCIONAL
@@ -240,9 +247,14 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 					}
 				}
 				else {
-					strncpy(memoria[b_marco->marco]->contenido,buff_pag,TAMANIO_MARCO());
-					memoria[b_marco->marco]->contenido[TAMANIO_MARCO()]='\0';
+					strncpy(memoria[b_marco.marco]->contenido,buff_pag,TAMANIO_MARCO());
+					memoria[b_marco.marco]->contenido[TAMANIO_MARCO()]='\0';
 					pagina->modificado=1;
+					// SI ES LRU MUEVO LA PAGINA AL FINAL
+					if(string_equals_ignore_case(ALGORITMO_REEMPLAZO(),"LRU")){
+						list_remove_by_condition(proceso->paginas,(void*)es_la_pagina_segun_PID_y_nro_pagina);
+						list_add(proceso->paginas,pagina);
+					}
 					sleep(RETARDO_MEMORIA());
 					st = 2;
 				}
@@ -264,10 +276,10 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 					resp = argv_message(MEM_OK, 1 ,0);
 					if(!flag_reemplazo)
 						log_info(logger, "Escritura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d",
-								nro_pagina,pid, b_marco->TLB_HIT, b_marco->marco);
+								nro_pagina,pid, b_marco.TLB_HIT, b_marco.marco);
 					else
 						log_info(logger, "Escritura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d - Algoritmo: %s",
-								nro_pagina,pid, b_marco->TLB_HIT, b_marco->marco, ALGORITMO_REEMPLAZO());
+								nro_pagina,pid, b_marco.TLB_HIT, b_marco.marco, ALGORITMO_REEMPLAZO());
 					break;
 				case 3:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
@@ -423,6 +435,15 @@ int reemplazar_pagina_en_memoria_segun_algoritmo(t_proceso* proceso, int pagina,
 
 		pag = list_remove(proceso->paginas,0);
 		list_add(proceso->paginas,pag);
+	} else {
+		if(string_equals_ignore_case(ALGORITMO_REEMPLAZO(),"LRU")){
+
+				pag = list_remove(proceso->paginas,0);
+				list_add(proceso->paginas,pag);
+			}
+		else {
+
+		}
 	}
 
 	// ME FIJO SI ESTA MODIFICADA Y LA GUARDO EN SWAP
