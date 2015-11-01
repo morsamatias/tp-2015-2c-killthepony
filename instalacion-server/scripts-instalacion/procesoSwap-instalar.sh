@@ -1,12 +1,10 @@
 #!/bin/bash
 
-cp -a /home/utnso/Escritorio/git/tp-2015-2c-killthepony/instalacion-server/procesoSwap/.  /home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoNodo/
+cp -a /home/utnso/Escritorio/git/tp-2015-2c-killthepony/instalacion-server/procesoSwap/.  /home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoSwap/
 
-cd /home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoNodo/Debug
+cd /home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoSwap/Debug
 
 make clean
 make
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH=/home/utnso/Escritorio/git/tp-2015-2c-killthepony/utiles/Debug
-
-echo "*******************************Fin"
+echo "*******************************Fin ok"
