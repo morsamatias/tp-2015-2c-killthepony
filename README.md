@@ -9,3 +9,9 @@ al final pegar export LD_LIBRARY_PATH=/home/utnso/Escritorio/git/tp-2015-2c-kill
 
 debug postmortem: 
 ulimit -c unlimited
+
+------------------------------
+AL INSTALAR EN LA VM SERVER EJECUTAR LOS SCRIPT DE instalacion-server/script-instalacion
+usando source
+ejemplo: source utiles-instalar.sh
+-----------------------------------------
