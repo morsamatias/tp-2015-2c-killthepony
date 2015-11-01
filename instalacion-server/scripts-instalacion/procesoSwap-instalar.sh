@@ -7,4 +7,4 @@ cd /home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoSwap/Debug
 make clean
 make
 
-echo "*******************************Fin ok"
+echo "*******************************Fin ok SWAP SWAP SWAP SWAP SWAP SWAP "

@@ -9,3 +9,5 @@ make
 
 export LD_LIBRARY_PATH=/home/utnso/Escritorio/git/tp-2015-2c-killthepony/utiles/Debug
 echo $LD_LIBRARY_PATH
+
+echo "fin instalacion utilesutilesutilesutilesutilesutiles"
