@@ -66,6 +66,16 @@ void swfinalizar(int pid){
 	destroy_message(msg);
 
 }
+
+void swsalir(){
+	msg = string_message(-10, "", 0);
+	enviar_y_destroy_mensaje(s, msg);
+	msg = recibir_mensaje(s);
+	print_msg(msg);
+	destroy_message(msg);
+
+}
+
 int main(void) {
 	puts("!!!Hello World!!!"); /* prints !!!Hello World!!! */
 
@@ -76,6 +86,7 @@ int main(void) {
 	char comando_usuario[1000];
 
 	s = client_socket("127.0.0.1", 6000);
+
 
 	while(true){
 		memset(comando_usuario, '\0', 1000);
@@ -103,6 +114,9 @@ int main(void) {
 			printf("FINALIZAR\n");
 			pid = atoi(input_user[1]);
 			swfinalizar(pid);
+		}else if(string_starts_with(input_user[0], "s")){
+			printf("salir\n");
+			swsalir(pid);
 		} else {
 			printf("error\n");
 		}
