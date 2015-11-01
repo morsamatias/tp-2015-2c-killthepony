@@ -43,6 +43,10 @@ int inicializar(){ ///////////////////
 	TLB 	= list_create();
 	paginas = list_create();
 
+	// INICIALIZAR SEMAFOROS
+	sem_init(&mutex_TLB, 0, 1);
+	sem_init(&mutex_PAGINAS, 0, 1);
+
 	return 0;
 }
 
@@ -126,6 +130,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			gl_nro_pagina=nro_pagina;
 			proceso = list_find(paginas,(void*)es_el_proceso_segun_PID);
 
+			sem_wait(&mutex_PAGINAS);
 			// BUSCO EL MARCO EN LA TLB Y EN LA TABLA DE PAGINAS
 			b_marco = buscar_marco_de_pagina_en_TLB_y_tabla_paginas(pid,nro_pagina);
 
@@ -166,6 +171,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 				}
 			}
 
+			sem_post(&mutex_PAGINAS);
 
 			switch(st){
 				case 0:
@@ -211,6 +217,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			flag_reemplazo=0;
 
 			// BUSCO EL PROCESO y la PAGINA
+			sem_wait(&mutex_PAGINAS);
 			gl_PID=pid;
 			gl_nro_pagina=nro_pagina;
 			proceso = list_find(paginas,(void*)es_el_proceso_segun_PID);
@@ -261,6 +268,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 					st = 2;
 				}
 			}
+			sem_post(&mutex_PAGINAS);
 
 			// BORRADO DE CODIGO EN BKP
 
@@ -312,7 +320,9 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			}
 
 			// ELIMINO LAS ESTRUCTURAS
+			sem_wait(&mutex_PAGINAS);
 			list_remove_and_destroy_by_condition(paginas,(void*)es_el_proceso_segun_PID,(void*)destruir_proceso);
+			sem_post(&mutex_PAGINAS);
 
 			// LE AVISOA LA CPU COMO TERMINO
 			resp = argv_message(MEM_OK, 1, 0);
@@ -419,6 +429,7 @@ void agregar_pagina_en_memoria(t_proceso* proceso, int nro_pagina, char* conteni
 	pagina->usado=1;
 
 	// AGREGO LA PAGINA EN LA TLB, SIEMPRE Y CUANDO ESTE HABILITADA Y YA NO EXISTA LA PAGINA
+	sem_wait(&mutex_TLB);
 	if(TLB_HABILITADA() && !list_any_satisfy(TLB,(void*)es_la_pagina_segun_PID_y_nro_pagina)){
 		// SI ESTA LLENA SACO EL ULTIMO AGREGADO
 		if(TLB->elements_count==ENTRADAS_TLB()){
@@ -426,40 +437,23 @@ void agregar_pagina_en_memoria(t_proceso* proceso, int nro_pagina, char* conteni
 		}
 		list_add(TLB,pagina);
 	}
+	sem_post(&mutex_TLB);
 }
 
-
-int reemplazar_pagina_en_memoria_segun_algoritmo(t_proceso* proceso, int pagina, char* contenido){
-	gl_PID		  = proceso->PID;
+int quitar_pagina_de_la_memoria(t_pagina* pag){
 	int st;
-	t_pagina* pag;
-
-	// BUSCO LA PAGINA "VICTIMA" PARA QUITAR DE MEMORIA
-	if(string_equals_ignore_case(ALGORITMO_REEMPLAZO(),"FIFO")){
-
-		pag = list_remove(proceso->paginas,0);
-		list_add(proceso->paginas,pag);
-	} else {
-		if(string_equals_ignore_case(ALGORITMO_REEMPLAZO(),"LRU")){
-
-				pag = list_remove(proceso->paginas,0);
-				list_add(proceso->paginas,pag);
-			}
-		else {
-
-		}
-	}
-
-	// ME FIJO SI ESTA MODIFICADA Y LA GUARDO EN SWAP
+	// CHEQUEO SI ESTA MODIFICADA
 	if(pag->modificado)
-		st = swap_escribir_pagina(proceso->PID, pag->pagina, memoria[pag->marco]->contenido);
-	if(st==-1) return 4;
+		st = swap_escribir_pagina(pag->PID, pag->pagina, memoria[pag->marco]->contenido);
+	if(st==-1) return 0;
 
 	// ME FIJO SI ESTA EN LA TLB y LA SACO
 	gl_nro_pagina = pag->pagina;
 
+	sem_wait(&mutex_TLB);
 	if(list_any_satisfy(TLB,(void*)es_la_pagina_segun_PID_y_nro_pagina))
 		list_remove_by_condition(TLB,(void*)es_la_pagina_segun_PID_y_nro_pagina);
+	sem_post(&mutex_TLB);
 
 	// ACTUALIZO LA MEMORIA Y LA TABLA DE PAGINAS
 	memoria[pag->marco]->libre = 1;
@@ -467,32 +461,43 @@ int reemplazar_pagina_en_memoria_segun_algoritmo(t_proceso* proceso, int pagina,
 	pag->modificado = 0;
 	pag->presencia = 0;
 	pag->usado = 0;
+	return 1;
 
+}
+
+int reemplazar_pagina_en_memoria_segun_algoritmo(t_proceso* proceso, int pagina, char* contenido){
+	gl_PID		  = proceso->PID;
+	int st;
+	t_pagina* pag;
+
+	// BUSCO LA PAGINA "VICTIMA" PARA QUITAR DE MEMORIA
+	if(string_equals_ignore_case(ALGORITMO_REEMPLAZO(),"FIFO")||string_equals_ignore_case(ALGORITMO_REEMPLAZO(),"LRU")){
+		pag = list_remove(proceso->paginas,0);
+		list_add(proceso->paginas,pag);
+	} else {
+	}
+
+	// SACO LA PAGINA DE MEMORIA
+	st = quitar_pagina_de_la_memoria(pag);
+
+	// AGREGO LA NUEVA PAGINA
 	agregar_pagina_en_memoria(proceso, pagina, contenido);
 
 	return 2;
 }
 
 
-
-void agregar_pagina_en_TLB(int PID, int pagina, int entrada){
-	t_pagina* new_pagina;
-	new_pagina = crear_pagina(PID,pagina,entrada);
-	if(TLB->elements_count==ENTRADAS_TLB())
-		list_remove_and_destroy_element(TLB,0,(void*)destruir_pagina);
-	list_add(TLB,new_pagina);
-}
-
-
-
 int buscar_marco_en_TLB(int PID,int nro_pagina){
 	t_pagina* pagina;
 	gl_PID=PID;
 	gl_nro_pagina=nro_pagina;
+	sem_wait(&mutex_TLB);
 	if(list_any_satisfy(TLB,(void*)es_la_pagina_segun_PID_y_nro_pagina)){
 		pagina = list_find(TLB,(void*)es_la_pagina_segun_PID_y_nro_pagina);
+		sem_post(&mutex_TLB);
 		return pagina->marco;
 	} else {
+		sem_post(&mutex_TLB);
 		return -1;
 	}
 }
@@ -586,7 +591,9 @@ void destruir_proceso(t_proceso* proceso){
 	gl_PID = proceso->PID;
 
 	// SACO LAS POSIBLES PAGINAS DE LA TLB
+	sem_wait(&mutex_TLB);
 	list_remove_by_condition(TLB,(void*)es_la_pagina_segun_PID);
+	sem_post(&mutex_TLB);
 
 	// IMPRIMO LAS ESTADISTICAS DE ACIERTO DE TLB DEL PROCESO
 	tasa_aciertos_TLB(proceso);
@@ -594,202 +601,5 @@ void destruir_proceso(t_proceso* proceso){
 	// ELIMINO LAS PAGINAS EN LA TABLA DE PAGINAS
 	list_destroy_and_destroy_elements(proceso->paginas,(void*)destruir_pagina);
 	free(proceso);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-int conectar_con_swap(){
-	int sock ;
-	sock = client_socket(IP_SWAP(), PUERTO_SWAP());
-
-	if(sock<0){
-		log_trace(logger, "Error al conectar con el swap. %s:%d", IP_SWAP(), PUERTO_SWAP());
-	}else{
-		log_trace(logger, "Conectado con swap. %s:%d", IP_SWAP(), PUERTO_SWAP());
-	}
-
-	//envio handshake
-
-	t_msg* msg = string_message(0, "Hola soy el proceso admin de memoria", 0);
-	if (enviar_mensaje(sock, msg)>0){
-		log_trace(logger, "Mensaje enviado OK");
-	}
-
-	destroy_message(msg);
-
-	return sock;
-}
-
-
-int swap_nuevo_proceso(int pid, int paginas){
-	t_msg* msg = NULL;
-	msg = argv_message(SWAP_INICIAR, 2, pid, paginas);
-	enviar_y_destroy_mensaje(socket_swap, msg);
-
-	msg = recibir_mensaje(socket_swap);
-	if(msg!=NULL){
-		if(msg->header.id == SWAP_OK){
-			log_trace(logger, "SWAP_INICIAR OKOK OK");
-			destroy_message(msg);
-			return 0;
-		}
-		log_trace(logger, "SWAP_INICIAR NO OK");
-		destroy_message(msg);
-
-	}else{
-		log_trace(logger, "SWAP_INICIAR > Erro al recibir msg");
-	}
-	return -1;
-}
-
-
-
-char* swap_leer_pagina(int pid, int pagina){
-	t_msg* msg = NULL;
-
-	msg = argv_message(SWAP_LEER, 2, pid, pagina);
-	enviar_y_destroy_mensaje(socket_swap, msg);
-
-	msg = recibir_mensaje(socket_swap);
-
-	if(msg!=NULL){
-		if(msg->header.id == SWAP_OK){
-			char* contenido;
-			contenido = string_duplicate(msg->stream);
-			log_trace(logger, "SWAP_LEER pid: %d, pag: %d, Contenido: %s", pid, pagina, contenido);
-			destroy_message(msg);
-			return contenido;
-		}else{
-			log_trace(logger, "SWAP_LEER pid: %d, pag: %d, NOOOOO", pid, pagina);
-		}
-		destroy_message(msg);
-	}else
-		log_trace(logger, "SWAP_LEER Erro al recibir mensaje");
-	return NULL;
-}
-
-int swap_escribir_pagina(int pid, int pagina, char* contenido){
-	t_msg* msg = NULL;
-
-	msg = string_message(SWAP_ESCRIBIR,contenido, 2, pid, pagina);
-	enviar_y_destroy_mensaje(socket_swap, msg);
-
-	msg = recibir_mensaje(socket_swap);
-
-	if(msg!=NULL){
-		if(msg->header.id == SWAP_OK){
-			log_trace(logger, "SWAP_ESCRIBIR pid: %d, pag: %d, Contenido: %s", pid, pagina, contenido);
-			destroy_message(msg);
-			return 0;
-		}else{
-			log_trace(logger, "SWAP_ESCRIBIR pid: %d, pag: %d, NOOOOO", pid, pagina);
-		}
-		destroy_message(msg);
-	}else
-		log_trace(logger, "SWAP_ESCRIBIR Erro al recibir mensaje");
-
-	return -1;
-}
-
-int swap_finalizar(int pid){
-	t_msg* msg = NULL;
-
-	msg = argv_message(SWAP_FINALIZAR, 1, pid);
-	enviar_y_destroy_mensaje(socket_swap, msg);
-
-	msg = recibir_mensaje(socket_swap);
-
-	if(msg!=NULL){
-		if(msg->header.id == SWAP_OK){
-			log_trace(logger, "SWAP_FINALIZAR pid: %d", pid);
-		}else{
-			log_trace(logger, "SWAP_FINALIZAR pid: %d NOOOOO", pid);
-		}
-		destroy_message(msg);
-	}else
-		log_trace(logger, "SWAP_FINALIZAR Erro al recibir mensaje");
-
-	return 0;
 }
 
