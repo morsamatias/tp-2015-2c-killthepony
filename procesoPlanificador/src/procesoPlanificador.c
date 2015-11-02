@@ -114,16 +114,14 @@ int main(void) {
 							cpu = cpu_buscar_por_socket(socket);
 							//si el cpu se desconecto habria que sacarlo de la lista de cpus, o marcarlo como desconectado
 							//todo: hay que buscar los pcbs que esta procesando este socket, para replanificarlos en otra cpu
-							log_trace(logger,
-									"El cpu %d, socket: %d se desconecto",
-									cpu->id, cpu->socket);
+							log_trace(logger, "El cpu %d, socket: %d se desconecto",cpu->id, cpu->socket);
+
 							pcb = pcb_buscar_por_cpu(cpu->id);
+
 							if (pcb != NULL) {
-								log_trace(logger,
-										"Hay que replanificar el pcb %d",
-										pcb->pid);
+								log_trace(logger," La CPU tenia a cargo los siguentes procesos  %d",pcb->pid);
 							} else {
-								log_trace(logger, "Ningun pcb a replanificar?");
+								log_trace(logger, "Ningun pcb a replanificar");
 							}
 
 						} else {
@@ -1287,43 +1285,81 @@ void Hilo_IO(int pid){
 while(1){
 
 	if ((list_size(list_block))!=0) {
-
+ //hay bloqueados
 		if((list_any_satisfy(list_block, (void*) _estado_bloqueado))){
 
+//entrada salida ocupada
+			log_info(logger,"Entrada salida ocupada");
 
-
-		}else
+		}
+		else
 		{
-			t_block* block;
-			 block=list_get(list_block,0);
-			 block->estado=1;
 
+			//Entrada salida libre
+			 t_block* block;
+
+			 block=list_get(list_block,0);
+
+			 block->estado=1; //i/o ocupado
 
 			 sleep(block->tiempoIO);
 
-				t_ready* ready=malloc(sizeof(t_ready));
+			 log_info(logger," El proceso %i termina su I/O de %i y vuelve a la cola de listos",block->pid,block->tiempoIO);
 
-				ready->pid = block->pid;
+			 t_ready* ready=malloc(sizeof(t_ready));
 
-				PID_GLOBAL=block->pid;
-				list_add(list_ready, ready);
+			 ready->pid = block->pid;
 
-				t_pcb* pcb;
+			 PID_GLOBAL=block->pid;
+
+			 list_add(list_ready, ready);
+
+			 t_pcb* pcb;
+
+			 pcb=es_el_pcb_buscado_por_id(block->pid);
+
+			 pcb->estado= READY;
+
+			 pcb->tiempo_inicio_ready=clock();
+
+			 if (list_any_satisfy(list_block, (void*) es_el_pcb_buscado_por_id)) {
+
+				list_remove_by_condition(list_block,(void*) es_el_pcb_buscado_en_block);
+
+			 }
 
 
-				pcb=es_el_pcb_buscado_por_id(block->pid);
 
-				pcb->estado= READY;
+								}
 
-				pcb->tiempo_inicio_ready=clock();
+		}
+	if(list_size(list_ready)>0){
+			if (cpu_disponible()) {
+				cpu = cpu_seleccionar();
+					if(cpu!=NULL){
+						t_ready* ready=malloc(sizeof(ready));
 
-				if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_por_id)) {
-					list_remove_by_condition(list_exec,
-							(void*) es_el_pcb_buscado_en_exec);
+						ready=list_get(list_ready,0);
+
+						t_pcb* pcb2;
+
+						pcb2=es_el_pcb_buscado_por_id(ready->pid);
+
+						pcb2->cpu_asignado = cpu->id;
+
+						cpu_ejecutar(cpu, pcb2);
+
+						cpu->estado=0;}
+
+			}else
+				{
+
+				printf("No existe CPU activa para asignarle un nuevo proceso");
+
 				}
 
 
-		}
+					}
 
 
 
@@ -1332,7 +1368,7 @@ while(1){
 
 }
 
-}
+
 
 void controlar_IO(char* pid_string) {
 
