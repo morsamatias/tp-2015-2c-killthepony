@@ -193,23 +193,23 @@ void procesar_msg_consola(char* msg) {
 	//	memset(path_completo, 0, 1000);
 		strcpy(path_completo, "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/tests/");
 		strcat(path_completo, path);
-		printf("Correr path completo: %s\n", path_completo);
+		log_trace(logger,"Correr path completo: %s\n", path_completo);
 		if(file_exists(path_completo)){
 			correr_proceso(path_completo); }
 		else{
-			printf("mcod no existente\n");
+			log_trace(logger,"Mcod no existente\n");
 		}
 		break;
 	case FINALIZAR:
 		pid = atoi(input_user[1]);
-		printf("finalizar pid: %d\n", pid);
+		log_trace(logger,"finalizar pid: %d\n", pid);
 		t_pcb* pcb;
 		PID_GLOBAL = pid;
 		pcb = list_get(pcbs, pos_del_pcb(pid));
 		pcb->pc = pcb->cant_sentencias;
 		break;
 	case PS:
-		printf("PS listar procesos\n");
+		log_trace(logger,"PS listar procesos\n");
 		int i = 0;
 		t_pcb* pcb2;
 		while ((i + 1) <= list_size(pcbs)) {
@@ -218,15 +218,58 @@ void procesar_msg_consola(char* msg) {
 
 			//log_info(log_pantalla,"mProc	%d PID:	%s nombre	->	%d estado /n",pcb->pid,pcb->path,pcb->estado);
 
-			printf("mProc	 PID: %d	 nombre %s	->	 estado %d\n", pcb2->pid,
-					pcb2->path, pcb2->estado);
+			switch (pcb2->estado){
+
+			case 0:
+
+			log_trace(logger,"mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid,
+					pcb2->path, "NEW");
+
+			break;
+
+			case 1:
+
+				log_trace(logger,"mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid,
+					pcb2->path, "READY");
+
+			break;
+
+			case 2:
+
+				log_trace(logger,"mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid,
+					pcb2->path, "BLOCK");
+
+			break;
+
+			case 3:
+
+				log_trace(logger,"mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid,
+					pcb2->path, "EXEC");
+
+			break;
+
+			case 4:
+
+				log_trace(logger,"mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid,
+					pcb2->path, "FINISH");
+
+			break;
+
+			default:
+
+				log_trace(logger,"No se puede determinar el estado del proceso %d", pcb->pid);
+
+				break;
+
+
+			}
 
 			i++;
 		}
 		break;
 	case CPU:
 		i = 0;
-		printf("Uso CPU en el ultimo min \n");
+		log_trace(logger, "Uso CPU en el ultimo min \n");
 
 	//	int uso;
 	//	int uso_rodondeado;
@@ -275,7 +318,7 @@ void procesar_msg_consola(char* msg) {
 		 fin = true;
 		 break;*/
 	default:
-		printf("Comando desconocido\n");
+		log_trace(logger,"Comando desconocido\n");
 		break;
 	}
 	free_split(input_user);
