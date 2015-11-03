@@ -164,9 +164,14 @@ int cpu_ejecutar(t_cpu* cpu, t_pcb* pcb){
 	t_msg* msg = argv_message(PCB_A_EJECUTAR, 0);
 	enviar_y_destroy_mensaje(cpu->socket, msg);
 
-	enviar_mensaje_pcb(cpu->socket, pcb);
+	if(enviar_mensaje_pcb(cpu->socket, pcb)!=-1){
 
 	cambiar_a_exec(pcb->pid);
+
+	}else{
+		printf("La CPU ya no se encuentra activa");
+		pcb->cpu=100; // un número alto y lo dejo en Ready.
+	}
 
 	return 0;
 }

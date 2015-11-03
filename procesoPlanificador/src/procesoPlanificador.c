@@ -876,7 +876,11 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 								log_trace(logger,"El proceso %d se encuentra en la cola de Listos",pcb->pid);
 
+								if(pcb->pc!=pcb->cantidad_sentencias){
+
 								pcb->pc=pcb->pc+QUANTUM();
+
+								}
 
 								pcb->cpu_asignado=100; //Hay que poner un número alto
 
@@ -1507,7 +1511,7 @@ void cambiar_a_exec(int pid) {
 
 	pcb->estado=EXEC;
 
-	log_trace(logger,"El proceso %d se encuentra en la cola de procesos en Ejecución", pcb->pid);
+	log_trace(logger,"El proceso %d se encuentra en la cola de procesos en Ejecución y se está ejecutando en la CPU %d \n", pcb->pid, pcb->cpu_asignado);
 
 	return;
 
