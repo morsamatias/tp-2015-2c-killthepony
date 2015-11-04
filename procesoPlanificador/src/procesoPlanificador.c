@@ -1194,10 +1194,32 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		case CPU_PORCENTAJE_UTILIZACION:
 
-			cpu = cpu_buscar_por_socket(socket);
+			cpu = cpu_buscar_por_socket(msg->argv[0]);
+			uso_cpu=msg->argv[1];
 			cpu->usoUltimoMinuto = uso_cpu;
+			int i;
 
-			log_trace(logger, "Cpu %d: %d", cpu->id, cpu->usoUltimoMinuto);
+			if((list_count_satisfying(cpus,(void*) cpus_sin_dato_uso))<1){
+					i=0;
+
+					while((i+1)<=list_size(cpus)){
+
+
+									cpu = cpu_buscar(i);
+
+									if(cpu!=NULL){
+
+									log_trace(logger, "Porcentaje de Uso de la Cpu %d: %d", cpu->id, cpu->usoUltimoMinuto);
+
+									}
+
+									i++;
+				}
+
+			}else{
+
+				log_trace(logger,"Aún no está la información del Porcentaje de Uso de todas las CPUs");
+			}
 
 			break;
 
