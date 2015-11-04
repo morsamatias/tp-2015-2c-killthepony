@@ -57,8 +57,8 @@ typedef struct {
 pthread_t 	th_server_cpu;
 int 		socket_swap;
 t_log* 		logger;
-char* 		CONFIG_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoAdminDeMemoria/Debug/config.txt";
-char* 		LOGGER_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoAdminDeMemoria/Debug/log.txt";
+char* 		CONFIG_PATH ;
+char* 		LOGGER_PATH ;
 t_list* 	TLB;
 t_list*		paginas;
 t_marco**	memoria;

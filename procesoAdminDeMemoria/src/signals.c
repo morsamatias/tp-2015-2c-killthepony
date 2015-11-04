@@ -109,46 +109,6 @@ void handler_SIGPOLL(){
 	}
 }
 
-void sig_handler_SIGUSR1(int signo) {
-
-	pthread_t signal10;
-
-	if (signo == SIGUSR1){
-
-
-		pthread_create(&signal10, NULL, (void*) manejar_SIGUSR1(),NULL);
-
-	}
-}
-
-void sig_handler_SIGUSR2(int signo) {
-
-	pthread_t signal12;
-
-	if (signo == SIGUSR2){
-
-		pthread_create(&signal12, NULL, (void*) manejar_SIGUSR2(),NULL);
-
-	}
-}
-
-
-
-void sig_handler_SIGPOLL(int signo) {
-
-	pthread_t signal29;
-
-	if (signo == SIGPOLL){
-
-		pthread_create(&signal29, NULL, (void*) manejar_SIGPOLL(),NULL);
-
-
-	}
-}
-
-
-
-
 
 #endif /* SIGNALS_C_ */
 

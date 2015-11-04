@@ -23,6 +23,8 @@ int main(void) {
 int inicializar(){ ///////////////////
 	int i;
 
+	CONFIG_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoAdminDeMemoria/Debug/config.txt";
+	LOGGER_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoAdminDeMemoria/Debug/log.txt";
 	// ARCHIVO DE CONFIGURACION
 	cfg = config_create(CONFIG_PATH);
 
