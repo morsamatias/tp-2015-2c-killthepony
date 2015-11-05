@@ -170,7 +170,7 @@ int cpu_ejecutar(t_cpu* cpu, t_pcb* pcb){
 
 	}else{
 		printf("La CPU ya no se encuentra activa");
-		pcb->cpu=100; // un número alto y lo dejo en Ready.
+		pcb->cpu_asignado=100; // un número alto y lo dejo en Ready.
 	}
 
 	return 0;

@@ -351,7 +351,7 @@ int correr_proceso(char* path) {
 
 	pcb->estado = NEW;
 
-	pcb->tiempo_inicio_proceso=clock();
+	pcb->tiempo_inicio_proceso=(double)clock()/CLOCKS_PER_SEC;
 
 	log_trace(logger,"Tiempo de inicio del proceso %d es %ld", pcb->pid, pcb->tiempo_inicio_proceso);
 
@@ -371,7 +371,7 @@ int correr_proceso(char* path) {
 
 	pcb->estado=READY;
 
-	pcb->tiempo_inicio_ready=clock();
+	pcb->tiempo_inicio_ready=(double)clock()/CLOCKS_PER_SEC;
 
 	log_trace(logger,"El proceso %d se encuentra en la cola de procesos Listos", pcb->pid);
 
@@ -529,11 +529,11 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 						if (pcb->cantidad_IO == 1){
 
-							pcb->tiempo_entrada_salida=clock();
+							pcb->tiempo_entrada_salida=(double)clock()/CLOCKS_PER_SEC;
 
 							log_trace(logger,"Tiempo en el que el proceso %d inicia la Entrada-Salida es %ld", pcb->pid, pcb->tiempo_entrada_salida);
 
-							pcb->tiempo_respuesta=difftime(pcb->tiempo_entrada_salida,pcb->tiempo_inicio_proceso);
+							pcb->tiempo_respuesta=(pcb->tiempo_entrada_salida - pcb->tiempo_inicio_proceso);
 
 						}
 
@@ -562,7 +562,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 									log_trace(logger,"El proceso %d se encuentra en la cola de procesos en Bloqueados", pcb->pid);
 
-									log_trace(logger,"Operaciones realizadas por el proceso %d hasta el momento son:", pcb->pid);
+									//log_trace(logger,"Operaciones realizadas por el proceso %d hasta el momento son:", pcb->pid);
 
 									/*
 
@@ -647,6 +647,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 					log_trace(logger,"EMPEZO A FINALIZAR");
 						pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
+						printf("pcb->pid %d\n",msg->argv[0]);
+
 						PID_GLOBAL_FINISH = pcb->pid;
 
 						PID_GLOBAL_EXEC = pcb->pid;
@@ -676,17 +678,19 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 						//pcb2->tiempo_total = difftime(time(NULL), time1);
 						pcb->estado=FINISH;
 
-						pcb->tiempo_fin_proceso=clock();
+						pcb->tiempo_fin_proceso=(double)clock()/CLOCKS_PER_SEC;
 
 						log_trace(logger,"Tiempo en el que el proceso %d finaliza operatoria es %ld", pcb->pid, pcb->tiempo_fin_proceso);
 
-						pcb->tiempo_retorno=difftime(pcb->tiempo_inicio_proceso,pcb->tiempo_fin_proceso);
+						pcb->tiempo_retorno=(pcb->tiempo_fin_proceso - pcb->tiempo_inicio_proceso);
+
+
 
 						if (pcb->cantidad_IO == 0){
 
-							pcb->tiempo_entrada_salida=clock();
+							pcb->tiempo_entrada_salida=(double)clock()/CLOCKS_PER_SEC;
 
-							pcb->tiempo_respuesta=difftime(pcb->tiempo_fin_proceso,pcb->tiempo_inicio_proceso);
+							pcb->tiempo_respuesta=(pcb->tiempo_fin_proceso - pcb->tiempo_inicio_proceso);
 
 						}
 
@@ -726,7 +730,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 						}
 
-						log_trace(logger,"Operaciones realizadas por el proceso %d hasta el momento son:", pcb->pid);
+						//log_trace(logger,"Operaciones realizadas por el proceso %d hasta el momento son:", pcb->pid);
 
 						break;
 
@@ -810,6 +814,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 						case PCB_LOGUEO:
 
 							pcb->pid=msg->argv[0];
+
+							log_trace(logger,"Operaciones realizadas por el proceso %d hasta el momento son:", pcb->pid);
 
 							m=1;
 
@@ -915,11 +921,11 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 								pcb->estado=READY;
 
-								pcb->tiempo_inicio_ready=clock();
+								pcb->tiempo_inicio_ready=(double)clock()/CLOCKS_PER_SEC;
 
 								log_trace(logger,"El proceso %d se encuentra en la cola de Listos",pcb->pid);
 
-								if(pcb->pc!=pcb->cantidad_sentencias){
+								if(pcb->pc!=pcb->cant_sentencias){
 
 								pcb->pc=pcb->pc+QUANTUM();
 
@@ -954,7 +960,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 												}
 
-								log_trace(logger,"Operaciones realizadas por el proceso %d hasta el momento son:", pcb->pid);
+								//log_trace(logger,"Operaciones realizadas por el proceso %d hasta el momento son:", pcb->pid);
 
 								/*
 
@@ -1389,7 +1395,7 @@ while(1){
 
 			 pcb->estado= READY;
 
-			 pcb->tiempo_inicio_ready=clock();
+			 pcb->tiempo_inicio_ready=(double)clock()/CLOCKS_PER_SEC;
 
 			 if (list_any_satisfy(list_block, (void*) es_el_pcb_buscado_por_id)) {
 
@@ -1472,9 +1478,12 @@ t_pcb* es_el_pcb_buscado_por_id(int pid) {
 	int i = 0;
 	t_pcb* pcb;
 
-	pcb = list_get(pcbs, i);
+	//pcb = list_get(pcbs, i);
 
 	while ((i + 1) <= list_size(pcbs)) {
+
+		pcb = list_get(pcbs, i);
+
 		if (pcb->pid == pid) {
 			break;
 		} else {
@@ -1568,11 +1577,11 @@ void cambiar_a_exec(int pid) {
 	t_exec* exec = malloc(sizeof(t_exec));
 	exec->pid = pid;
 	list_add(list_exec, exec);
-	pcb->tiempo_fin_ready=clock();
+	pcb->tiempo_fin_ready=(double)clock()/CLOCKS_PER_SEC;
 
 	log_trace(logger,"Tiempo de fin del proceso en ready %d es %ld", pcb->pid, pcb->tiempo_fin_ready);
 
-	pcb->tiempo_espera=pcb->tiempo_espera + difftime(pcb->tiempo_fin_ready,pcb->tiempo_inicio_ready);
+	pcb->tiempo_espera=pcb->tiempo_espera + (pcb->tiempo_fin_ready - pcb->tiempo_inicio_ready);
 
 	pcb->estado=EXEC;
 
