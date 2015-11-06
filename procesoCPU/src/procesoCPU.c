@@ -16,10 +16,12 @@ int main(void) {
 
 	int vector[contador];
 
+	pthread_t hilo_porcentaje;
+	pthread_create(&hilo_porcentaje, NULL,(void*)&hilo_responder_porcentaje,NULL );
+	pthread_detach(hilo_porcentaje);
 
+	pthread_t *hilo=(pthread_t*)malloc((contador)*sizeof(pthread_t));
 
-	pthread_t *hilo=(pthread_t*)malloc((contador+2)*sizeof(pthread_t));
-	pthread_create(&(hilo[contador+1]), NULL,(void*)&hilo_responder_porcentaje,NULL );
 
 	for( ;contador>0;contador=contador-1){
 		vector[contador]=contador;

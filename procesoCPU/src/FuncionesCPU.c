@@ -12,22 +12,23 @@ void* hilo_responder_porcentaje() {
 	t_msg* msg ;
 	socket_planificador_especial = conectar_con_planificador_especial();
 
-	if (socket_planificador_especial) {
+	if (socket_planificador_especial>0) {
 		while (true) {
-			log_trace(logger, "Esperando peticiones para responder el CPU_PORCENTAJE_UTILIZACION del planificador");
+			log_trace(logger, "[PORCENTAJE] Esperando peticiones para responder el CPU_PORCENTAJE_UTILIZACION del planificador");
 			msg = recibir_mensaje(socket_planificador_especial);
 
 			if(msg!=NULL){
 				if(msg->header.id ==CPU_PORCENTAJE_UTILIZACION){
-					log_trace(logger, "Nuevo mensaje del planificador pidiendo CPU_PORCENTAJE_UTILIZACION");
+					log_trace(logger, "[PORCENTAJE] Nuevo mensaje del planificador pidiendo CPU_PORCENTAJE_UTILIZACION");
 					enviar_porcentaje_a_planificador();
 
 					destroy_message(msg);
 				}else{
-					log_error(logger, "SocketEspecial mensaje desconocido");
+					log_error(logger, "[PORCENTAJE] mensaje desconocido");
+					break;
 				}
 			}else{
-				log_error(logger, "SocketEspecial: El planificador se desconecto");
+				log_error(logger, "[PORCENTAJE]: El planificador se desconecto");
 				break;
 			}
 
@@ -35,7 +36,7 @@ void* hilo_responder_porcentaje() {
 		}
 	} else
 		log_trace(logger,
-				"Error del socket especial al conectarse con la memoria y el planificador. \n");
+				"[PORCENTAJE] Error del socket especial al conectarse con la memoria y el planificador. \n");
 
 	return NULL;
 }
@@ -83,6 +84,7 @@ void* hilo_cpu(int *numero_hilo) {
 				procesar_mensaje_planif(mensaje_planificador, numero); //pasarle socket_planificador y de memoria
 			}else{
 				log_error(logger, "[HILO #%d] Error al recibir mensaje del planif", numero);
+				break;
 			}
 
 		}
@@ -196,6 +198,8 @@ t_sentencia* sentencia_crear(char* sentencia, int pid, int hilo) {
 	t_sentencia* sent = malloc(sizeof(*sent));
 	sent->hilo = hilo;
 	sent->pid = pid;
+	sent->tiempo = 0;
+
 
 	char** split = splitear_sentencia(sentencia);
 
@@ -417,7 +421,7 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem, int hilo) {
 		porcentaje = porcentaje + 1;
 		sent_ejecutar(sent, socket_mem);
 		ultima_sentencia_ejecutada = sent->sentencia;
-		sent_free(sent);
+
 
 	}
 
@@ -501,18 +505,18 @@ int conectar_con_memoria(int numero) {
 	sock = client_socket(IP_MEMORIA(), PUERTO_MEMORIA());
 
 	if (sock < 0) {
-		log_trace(logger, "Error al conectar con  admin Mem. %s:%d",
+		log_trace(logger, "[HILO #%d] Error al conectar con  admin Mem. %s:%d",numero,
 				IP_MEMORIA(), PUERTO_MEMORIA());
 	} else {
-		log_trace(logger, "Conectado con admin Mem. %s:%d", IP_MEMORIA(),
+		log_trace(logger, "[HILO #%d] Conectado con admin Mem. %s:%d", numero, IP_MEMORIA(),
 				PUERTO_MEMORIA());
 	}
 
 	//envio handshake
 	//envio un msj con el id del proceso
-	t_msg* msg = string_message(CPU_NUEVO, "Hola soy un CPU", 1, numero);
+	t_msg* msg = string_message(CPU_NUEVO, "[HILO #%d] Hola soy un CPU ", 1, numero);
 	if (enviar_mensaje(sock, msg) > 0) {
-		log_trace(logger, "Mensaje enviado OK");
+		log_trace(logger, "[HILO #%d] Mensaje enviado OK", numero                                                           );
 	}
 	destroy_message(msg);
 
@@ -526,18 +530,18 @@ int conectar_con_planificador(int numero) {
 	sock = client_socket(IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
 
 	if (sock < 0) {
-		log_trace(logger, "Error al conectar con el planificador. %s:%d",
+		log_trace(logger, "[HILO #%d] Error al conectar con el planificador. %s:%d",numero,
 				IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
 	} else {
-		log_trace(logger, "Conectado con planificador. %s:%d",
+		log_trace(logger, "[HILO #%d] Conectado con planificador. %s:%d",numero,
 				IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
 	}
 
 	//envio handshake
 	//envio un msj con el id del proceso
-	t_msg* msg = string_message(CPU_NUEVO, "Hola soy un CPU", 1, numero);
+	t_msg* msg = string_message(CPU_NUEVO, "[HILO #%d] Hola soy un CPU", 1, numero);
 	if (enviar_mensaje(sock, msg) > 0) {
-		log_trace(logger, "Mensaje enviado OK");
+		log_trace(logger, "[HILO #%d] Mensaje enviado OK", numero);
 	}
 	destroy_message(msg);
 
@@ -551,18 +555,18 @@ int conectar_con_planificador_especial() {
 	sock = client_socket(IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
 
 	if (sock < 0) {
-		log_trace(logger, "Error al conectar con el planificador especial. %s:%d",
+		log_trace(logger, "[PORCENTAJE] Error al conectar con el planificador especial. %s:%d",
 				IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
 	} else {
-		log_trace(logger, "Conectado con planificador especial. %s:%d",
+		log_trace(logger, "[PORCENTAJE] Conectado con planificador especial. %s:%d",
 				IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
 	}
 
 	//envio handshake
 	//envio un msj con el id del proceso
-	t_msg* msg = string_message(CPU_ESPECIAL, "Hola soy un CPU", 1, -1);
+	t_msg* msg = string_message(CPU_ESPECIAL, "[PORCENTAJE] Hola soy un CPU", 1, -1);
 	if (enviar_mensaje(sock, msg) > 0) {
-		log_trace(logger, "Mensaje enviado OK");
+		log_trace(logger, "[PORCENTAJE] Mensaje enviado OK");
 	}
 	destroy_message(msg);
 

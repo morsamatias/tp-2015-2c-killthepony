@@ -43,7 +43,7 @@ int main(void) {
 	time1 = time(NULL);
 	//pthread_create(&th_server_cpu, NULL, (void*)iniciar_server_select, NULL);
 
-	pthread_create(&contador_IO_PCB, NULL, (void*) Hilo_IO, (void*) PID_GLOBAL);
+	//pthread_create(&contador_IO_PCB, NULL, (void*) Hilo_IO, (void*) PID_GLOBAL);
 	t_cpu* cpu = NULL;
 	t_pcb* pcb = NULL;
 	int port = PUERTO_ESCUCHA();
@@ -720,8 +720,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				pcb->pid);
 
 		log_trace(logger,
-				"Métricas del Proceso %d \n El Tiempo de Retorno fue de %d \n El Tiempo de Respuesta fue de %d \n El Tiempo de Espera fue de \n",
-				pcb->pid, pcb->tiempo_retorno, pcb->tiempo_respuesta);
+				"Métricas del Proceso %d \n El Tiempo de Retorno fue de %d \n El Tiempo de Respuesta fue de %d \n El Tiempo de Espera fue de %d\n",
+				pcb->pid, pcb->tiempo_retorno, pcb->tiempo_respuesta, pcb->tiempo_espera);
 
 		//printf("Hay que finalizar el proceso");
 
@@ -1603,7 +1603,7 @@ void cambiar_a_exec(int pid) {
 	list_add(list_exec, exec);
 	pcb->tiempo_fin_ready = (double) clock() / CLOCKS_PER_SEC;
 
-	log_trace(logger, "Tiempo de fin del proceso %d en la cola de Ready es %ld",
+	log_trace(logger, "Tiempo de fin del proceso %d en la cola de Ready es %d",
 			pcb->pid, pcb->tiempo_fin_ready);
 
 	pcb->tiempo_espera = pcb->tiempo_espera
