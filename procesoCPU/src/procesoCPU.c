@@ -2,7 +2,6 @@
 #include "procesoCPU.h"
 
 
-
 int main(void) {
 	inicializar();
 	int contador=CANTIDAD_HILOS();
@@ -13,12 +12,19 @@ int main(void) {
 	
 	porcentaje = malloc(contador*sizeof(int));
 	porcentaje_a_planificador = malloc (contador*sizeof(int));
+	inicializar_porcentajes();
 
 	int vector[contador];
 
-	pthread_t hilo_porcentaje;
-	pthread_create(&hilo_porcentaje, NULL,(void*)&hilo_responder_porcentaje,NULL );
-	pthread_detach(hilo_porcentaje);
+	//hilo que escucha las peticiones del planificador
+	pthread_t th_responder_porcentaje;
+	pthread_create(&th_responder_porcentaje, NULL,(void*)&hilo_responder_porcentaje,NULL );
+	pthread_detach(th_responder_porcentaje);
+
+	//hilo que va calculando el % de cpu cada minuto
+	pthread_t th_calcular_porcentaje;
+	pthread_create(&th_calcular_porcentaje, NULL,(void*)&hilo_porcentaje,NULL );
+	pthread_detach(th_calcular_porcentaje);
 
 	pthread_t *hilo=(pthread_t*)malloc((contador)*sizeof(pthread_t));
 

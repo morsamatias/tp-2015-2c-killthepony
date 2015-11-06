@@ -45,17 +45,31 @@ void* hilo_responder_porcentaje() {
 
 ///////////////////////////////////////PORCENTAJE////////////////////////////////////////
 
-void* hilo_porcentaje( numero) {
-
-	porcentaje_a_planificador[numero] = 0;
-	sleep(60);
-	if (RETARDO() != 0) {
-		porcentaje_a_planificador[numero] = (porcentaje[numero] * 100)
-				/ (60 / RETARDO());
-	} else {
-		porcentaje_a_planificador[numero] = (porcentaje[numero] * 100)
-				/ (60 / RETARDO_MINIMO());
+void inicializar_porcentajes(){
+	int i;
+	for (i = 0; i < CANTIDAD_HILOS(); ++i) {
+		porcentaje[i] = 0;
+		porcentaje_a_planificador[i] = 0;
 	}
+}
+void* hilo_porcentaje() {
+	int numero;
+	while(true){
+
+		pthread_mutex_lock(&mutex);
+		for (numero = 0; numero < CANTIDAD_HILOS(); numero++) {
+			//porcentaje_a_planificador[numero] = 0;
+			if (RETARDO() != 0) {
+				porcentaje_a_planificador[numero] = (porcentaje[numero] * 100)	/ (60 / RETARDO());
+			} else {
+				porcentaje_a_planificador[numero] = (porcentaje[numero] * 100)	/ (60 / RETARDO_MINIMO());
+			}
+			log_trace(logger, "HILO #%d: CALCULO CPU_PORCENTAJE_UTILIZACION: %d", numero+1,porcentaje_a_planificador[numero]);
+		}
+		pthread_mutex_unlock(&mutex);
+		sleep(60);
+	}
+
 
 	porcentaje = 0;
 
@@ -339,7 +353,9 @@ char* sent_ejecutar_leer(t_sentencia* sent, int socket_mem) {
 }
 
 int sent_ejecutar(t_sentencia* sent, int socket_mem) {
-	porcentaje[sent->hilo] = porcentaje[sent->hilo] + 1;
+	pthread_mutex_lock(&mutex);
+	porcentaje[sent->hilo-1] ++;
+	pthread_mutex_unlock(&mutex);
 	char* pagina = NULL;
 	int st = 0;
 	switch (sent->sentencia) {
@@ -489,7 +505,7 @@ int enviar_porcentaje_a_planificador() {
 
 
 	for (l=0;l<CANTIDAD_HILOS();l++){
-		log_trace(logger, "HILO #%d: CPU_PORCENTAJE_UTILIZACION: %d", l,
+		log_trace(logger, "HILO #%d: CPU_PORCENTAJE_UTILIZACION: %d", l+1,
 				porcentaje_a_planificador[l]);
 		mensaje_a_planificador = argv_message(CPU_PORCENTAJE_UTILIZACION, 2, l,
 				porcentaje_a_planificador[l]);

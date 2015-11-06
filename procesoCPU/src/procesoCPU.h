@@ -70,6 +70,8 @@ int conectar_con_planificador(int numero);
 int conectar_con_planificador_especial();
 int enviar_porcentaje_a_planificador();
 void* hilo_responder_porcentaje();
+void inicializar_porcentajes();
+void* hilo_porcentaje() ;
 int procesar_mensaje_planif(t_msg* msg,int numero);
 t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem, int hilo);
 int procesar_mensaje_planif(t_msg* msg,int numero);
