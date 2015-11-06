@@ -1,0 +1,9 @@
+iniciar 10
+escribir 0 "Hola Martín"
+leer 0
+escribir 3 "Hola Paulo"
+leer 3
+escribir 3 "Hola Matías"
+leer 3
+leer 4
+finalizar
