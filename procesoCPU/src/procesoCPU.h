@@ -53,6 +53,7 @@ typedef struct{
 	int cant_paginas;
 	unsigned int tiempo;
 	int pid;
+	int hilo;
 }t_sentencia;
 
 typedef struct{
@@ -70,9 +71,9 @@ int conectar_con_planificador_especial();
 int enviar_porcentaje_a_planificador();
 void* hilo_responder_porcentaje();
 int procesar_mensaje_planif(t_msg* msg,int numero);
-t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem);
+t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem, int hilo);
 int procesar_mensaje_planif(t_msg* msg,int numero);
-t_resultado_pcb ejecutar(t_pcb* pcb,int numero);
+//t_resultado_pcb ejecutar(t_pcb* pcb,int numero);
 int pcb_tiene_que_seguir_ejecutando(t_pcb* pcb);
 int sent_ejecutar_iniciar(t_sentencia* sent,int socket_mem);
 char* sent_ejecutar_leer(t_sentencia* sent,int socket_mem);
@@ -87,7 +88,7 @@ int CANTIDAD_HILOS();
 int RETARDO();
 int RETARDO_MINIMO();
 
-int avisar_a_planificador(t_resultado_pcb respuesta,int socket_planif);
+int avisar_a_planificador(t_resultado_pcb respuesta,int socket_planif, int hilo);
 
 
 

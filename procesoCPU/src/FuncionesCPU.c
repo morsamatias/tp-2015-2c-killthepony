@@ -9,23 +9,33 @@ char* LOGGER_PATH = "log.txt";
 void* hilo_responder_porcentaje() {
 
 	//int numero = *cantidad_cpu;
-
+	t_msg* msg ;
 	socket_planificador_especial = conectar_con_planificador_especial();
 
 	if (socket_planificador_especial) {
-
 		while (true) {
+			log_trace(logger, "Esperando peticiones para responder el CPU_PORCENTAJE_UTILIZACION del planificador");
+			msg = recibir_mensaje(socket_planificador_especial);
 
-			log_trace(logger, "Esperando peticiones del planificador");
-			recibir_mensaje(socket_planificador_especial);
+			if(msg!=NULL){
+				if(msg->header.id ==CPU_PORCENTAJE_UTILIZACION){
+					log_trace(logger, "Nuevo mensaje del planificador pidiendo CPU_PORCENTAJE_UTILIZACION");
+					enviar_porcentaje_a_planificador();
 
-			log_trace(logger, "Nuevo mensaje del planificador");
-			enviar_porcentaje_a_planificador();
+					destroy_message(msg);
+				}else{
+					log_error(logger, "SocketEspecial mensaje desconocido");
+				}
+			}else{
+				log_error(logger, "SocketEspecial: El planificador se desconecto");
+				break;
+			}
+
 
 		}
 	} else
 		log_trace(logger,
-				"Error al conectarse con la memoria y el planificador. \n");
+				"Error del socket especial al conectarse con la memoria y el planificador. \n");
 
 	return NULL;
 }
@@ -62,18 +72,22 @@ void* hilo_cpu(int *numero_hilo) {
 	socket_memoria[numero] = conectar_con_memoria(numero);
 	socket_planificador[numero] = conectar_con_planificador(numero);
 
-	if (socket_memoria && socket_planificador) {
+	if (socket_memoria[numero]>0 && socket_planificador[numero]>0) {
 
 		while (true) {
 
-			log_trace(logger, "Esperando peticiones del planificador");
+			log_trace(logger, "[HILO #%d] Esperando peticiones del planificador", numero);
 			mensaje_planificador = recibir_mensaje(socket_planificador[numero]);
-			log_trace(logger, "Nuevo mensaje del planificador");
-			procesar_mensaje_planif(mensaje_planificador, numero); //pasarle socket_planificador y de memoria
+			if(mensaje_planificador!=NULL){
+				log_trace(logger, "[HILO #%d] Nuevo mensaje del planificador", numero);
+				procesar_mensaje_planif(mensaje_planificador, numero); //pasarle socket_planificador y de memoria
+			}else{
+				log_error(logger, "[HILO #%d] Error al recibir mensaje del planif", numero);
+			}
+
 		}
 	} else
-		log_trace(logger,
-				"Error al conectarse con la memoria y el planificador. \n");
+		log_trace(logger,"[HILO #%d] Error al conectarse con la memoria y el planificador.", numero);
 
 	return NULL;
 }
@@ -91,13 +105,14 @@ int procesar_mensaje_planif(t_msg* msg, int numero) {
 		pcb = recibir_mensaje_pcb(socket_planificador[numero]);
 		//pcb_print(pcb);
 
-		log_trace(logger, "Ejecutando %s, PC: %d, cant: %d, cant_sent: %d",
+		log_trace(logger, "[HILO #%d] Ejecutando %s, PC: %d, cantSentAEjec: %d, cant_sent: %d",numero,
 				pcb->path, pcb->pc, pcb->cant_a_ejectuar, pcb->cant_sentencias);
-		mensaje_planificador = ejecutar(pcb, socket_memoria[numero]);
-		log_trace(logger, "Fin ejecucion %s, PC: %d, cant: %d, cant_sent: %d",
+
+		mensaje_planificador = ejecutar(pcb, socket_memoria[numero], numero);
+
+		log_trace(logger, "[HILO #%d] Fin ejecucion %s, PC: %d, cantSentAEjec: %d, cant_sent: %d",numero,
 				pcb->path, pcb->pc, pcb->cant_a_ejectuar, pcb->cant_sentencias);
-		avisar_a_planificador(mensaje_planificador,
-				socket_planificador[numero]);
+		avisar_a_planificador(mensaje_planificador, socket_planificador[numero], numero);
 
 		free(pcb);
 		break;
@@ -126,15 +141,63 @@ char* get_texto_solo(char* texto) {
 	txt[len] = '\0';
 	return txt;
 }
+
+char* leer_hasta_el_final(char* texto){
+	int i=0;
+	while(texto[i]!='\n' && texto[i]!='\0' ){
+		i++;
+	}
+
+	char* rs = string_substring_until(texto, i);
+	return rs;
+}
+
+char* leer_hasta_espacio(char* texto){
+	int i=0;
+	while(texto[i]!='\n' && texto[i]!='\0' && texto[i]!=' ' ){
+		i++;
+	}
+
+	char* rs = string_substring_until(texto, i);
+	return rs;
+}
+
+char** splitear_sentencia(char* sent){
+	//char** rs = string_n_split(sent, 2, " ");
+	char**rs = malloc(4*(sizeof(char*)));
+	rs[0] = NULL;rs[1] = NULL;rs[2] = NULL;
+	rs[3] = NULL;//este ultimo es necesario para que sepa cuando cortar al hacer el free_split
+
+	rs[0] = leer_hasta_espacio(sent);//nombre ej: iniciar, leer, escribir, entrada-salida, finalizar
+
+	//si no es el finalizar, el segundo param si o si es un nro
+	if(!string_starts_with(sent, "finalizar")){
+		rs[1] = leer_hasta_espacio(sent+strlen(rs[0])+1);
+
+		//si comienza con escribir leo el siguiente param que es el contenido de la pagina
+		//ej: escribir 1 "hola que talco!"
+		if(string_starts_with(sent, "escribir")){
+
+			char* texto_con_commillas = leer_hasta_el_final(sent + strlen(rs[0]) + strlen(rs[1]) + 2);
+			rs[2] = get_texto_solo(texto_con_commillas);
+			free(texto_con_commillas);
+		}
+	}
+
+
+
+
+	return rs;
+}
 /*
  * el param seria p.e: escribir 3 "hola"
  */
-t_sentencia* sentencia_crear(char* sentencia, int pid) {
+t_sentencia* sentencia_crear(char* sentencia, int pid, int hilo) {
 	t_sentencia* sent = malloc(sizeof(*sent));
-
+	sent->hilo = hilo;
 	sent->pid = pid;
 
-	char** split = string_split(sentencia, " ");
+	char** split = splitear_sentencia(sentencia);
 
 	if (string_starts_with(sentencia, "iniciar ")) {
 		sent->sentencia = iniciar;
@@ -146,7 +209,7 @@ t_sentencia* sentencia_crear(char* sentencia, int pid) {
 		sent->sentencia = escribir;
 		sent->pagina = atoi(split[1]);
 
-		sent->texto = get_texto_solo(split[2]);
+		sent->texto = string_duplicate(split[2]);
 	} else if (string_starts_with(sentencia, "entrada-salida ")) {
 		sent->sentencia = io;
 		sent->tiempo = atoi(split[1]);
@@ -156,6 +219,8 @@ t_sentencia* sentencia_crear(char* sentencia, int pid) {
 		printf("Error para desconocidoooooooooooooooooooooooooooooooooo\n");
 		sent->sentencia = error;
 	}
+
+	free_split(split);
 	return sent;
 }
 
@@ -164,16 +229,16 @@ int sent_ejecutar_iniciar(t_sentencia* sent, int socket_mem) {
 	int rs = 0;
 	t_msg* msg = NULL;
 	msg = argv_message(MEM_INICIAR, 2, sent->pid, sent->cant_paginas);
-	log_trace(logger, "Enviando mensaje MemIniciar %d", sent->cant_paginas);
+	log_trace(logger, "[HILO #%d] Enviando mensaje MemIniciar %d", sent->hilo, sent->cant_paginas);
 	enviar_y_destroy_mensaje(socket_mem, msg);
 
-	log_trace(logger, "Esperando Rta MemIniciar %d", sent->cant_paginas);
+	log_trace(logger, "[HILO #%d] Esperando Rta MemIniciar %d", sent->hilo, sent->cant_paginas);
 	msg = recibir_mensaje(socket_mem);
 	if (msg != NULL) {
 
 		if (msg->header.id == MEM_OK) {
 			//el argv[0] es el estado
-			log_trace(logger, "Rta mensaje MemIniciar %d", msg->argv[0]);
+			log_trace(logger, "[HILO #%d] Rta mensaje MemIniciar %d OK", sent->hilo,  msg->argv[0]);
 			rs = 0; // OK
 		} else {
 			rs = -1; // NO OK
@@ -181,7 +246,7 @@ int sent_ejecutar_iniciar(t_sentencia* sent, int socket_mem) {
 		destroy_message(msg);
 		return rs;
 	} else {
-		log_trace(logger, "RTA MemIniciar NULL");
+		log_trace(logger, "[HILO #%d] RTA MemIniciar NULL", sent->hilo);
 		return -2;
 	}
 }
@@ -190,16 +255,16 @@ int sent_ejecutar_finalizar(t_sentencia* sent, int socket_mem) {
 	int rs = 0;
 	t_msg* msg = NULL;
 	msg = argv_message(MEM_FINALIZAR, 1, sent->pid);
-	log_trace(logger, "Enviando mensaje MEM_FINALIZAR ");
+	log_trace(logger, "[HILO #%d] Enviando mensaje MEM_FINALIZAR ", sent->hilo);
 	enviar_y_destroy_mensaje(socket_mem, msg);
 
-	log_trace(logger, "Esperando Rta MEM_FINALIZAR");
+	log_trace(logger, "[HILO #%d] Esperando Rta MEM_FINALIZAR", sent->hilo);
 	msg = recibir_mensaje(socket_mem);
 	if (msg != NULL) {
 
 		if (msg->header.id == MEM_OK) {
 			//el argv[0] es el estado
-			log_trace(logger, "Rta mensaje MEM_FINALIZAR");
+			log_trace(logger, "[HILO #%d] Rta mensaje MEM_FINALIZAR OK", sent->hilo);
 			rs = 0; // OK
 		} else {
 			rs = -1; // NO OK
@@ -207,7 +272,7 @@ int sent_ejecutar_finalizar(t_sentencia* sent, int socket_mem) {
 		destroy_message(msg);
 		return rs;
 	} else {
-		log_trace(logger, "RTA MEM_FINALIZAR NULL");
+		log_trace(logger, "[HILO #%d] RTA MEM_FINALIZAR NULL", sent->hilo);
 		return -2;
 	}
 }
@@ -217,17 +282,17 @@ int sent_ejecutar_escribir(t_sentencia* sent, int socket_mem) {
 
 	t_msg* msg = NULL;
 	msg = string_message(MEM_ESCRIBIR, sent->texto, 2, sent->pid, sent->pagina);
-	log_trace(logger, "Enviando mensaje MEM_ESCRIBIR %d %s", sent->pagina,
+	log_trace(logger, "[HILO #%d] Enviando mensaje MEM_ESCRIBIR %d %s", sent->hilo, sent->pagina,
 			sent->texto);
 	enviar_y_destroy_mensaje(socket_mem, msg);
 
-	log_trace(logger, "Esperando rta mensaje MEM_ESCRIBIR %d", sent->pagina,
+	log_trace(logger, "[HILO #%d] Esperando rta mensaje MEM_ESCRIBIR %d",sent->hilo, sent->pagina,
 			sent->texto);
 	msg = recibir_mensaje(socket_mem);
 	if (msg != NULL) {
 		if (msg->header.id == MEM_OK) {
 			//en el stream esta el contenido de la pagina
-			log_trace(logger, "Rta mensaje MEM_ESCRIBIR %d", msg->argv[0]);
+			log_trace(logger, "[HILO #%d] Rta mensaje MEM_ESCRIBIR %d", sent->hilo, msg->argv[0]);
 			rs = 0; // OK
 		} else {
 			rs = -1;
@@ -236,7 +301,7 @@ int sent_ejecutar_escribir(t_sentencia* sent, int socket_mem) {
 
 		return rs;
 	} else {
-		log_trace(logger, "RTA MEM_ESCRIBIR NULL");
+		log_trace(logger, "[HILO #%d] RTA MEM_ESCRIBIR NULL", sent->hilo);
 		return -2;
 	}
 }
@@ -246,15 +311,15 @@ char* sent_ejecutar_leer(t_sentencia* sent, int socket_mem) {
 
 	t_msg* msg = NULL;
 	msg = argv_message(MEM_LEER, 2, sent->pid, sent->pagina);
-	log_trace(logger, "Enviando mensaje MEM_LEER %d", sent->pagina);
+	log_trace(logger, "[HILO #%d] Enviando mensaje MEM_LEER %d", sent->hilo,  sent->pagina);
 	enviar_y_destroy_mensaje(socket_mem, msg);
 
-	log_trace(logger, "Esperando rta mensaje MEM_LEER %d", sent->pagina);
+	log_trace(logger, "[HILO #%d] Esperando rta mensaje MEM_LEER %d",sent->hilo, sent->pagina);
 	msg = recibir_mensaje(socket_mem);
 	if (msg != NULL) {
 		if (msg->header.id == MEM_OK) {
 			//en el stream esta el contenido de la pagina
-			log_trace(logger, "Rta mensaje: MEM_LEER %s", msg->stream);
+			log_trace(logger, "[HILO #%d] Rta mensaje: MEM_LEER %s", sent->hilo, msg->stream);
 			pagina = string_duplicate(msg->stream);
 
 		} else {
@@ -264,7 +329,7 @@ char* sent_ejecutar_leer(t_sentencia* sent, int socket_mem) {
 
 		return pagina;
 	} else {
-		log_trace(logger, "RTA MEM_LEER NULL");
+		log_trace(logger, "[HILO #%d] RTA MEM_LEER NULL", sent->hilo);
 		return NULL;
 	}
 }
@@ -289,13 +354,13 @@ int sent_ejecutar(t_sentencia* sent, int socket_mem) {
 
 		break;
 	case error:
-		log_trace(logger, "Error de sentencia en archivo");
+		log_trace(logger, "[HILO #%d] Error de sentencia en archivo", sent->hilo);
 		break;
 	case final:
 		sent_ejecutar_finalizar(sent, socket_mem);
 		break;
 	default:
-		log_trace(logger, "case default");
+		log_trace(logger, "[HILO #%d] case default", sent->hilo);
 		break;
 	}
 
@@ -306,11 +371,11 @@ int sent_ejecutar(t_sentencia* sent, int socket_mem) {
 
 void sent_free(t_sentencia* sent) {
 	if (sent->sentencia == escribir)
-		free(sent->texto);
-	free(sent);
+		FREE_NULL(sent->texto);
+	FREE_NULL(sent);
 }
 
-t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem) {
+t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem, int hilo) {
 
 	bool es_entrada_salida = false;
 	int st = 0;
@@ -323,8 +388,8 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem) {
 	char* mcod = file_get_mapped(pcb->path);
 	char** sents = string_split(mcod, "\n");
 	t_sentencia* sent = NULL;
-
-	sent = sentencia_crear(sents[pcb->pc], pcb->pid);
+	e_sentencia ultima_sentencia_ejecutada;
+	sent = sentencia_crear(sents[pcb->pc], pcb->pid, hilo);
 
 	while ((sent->sentencia != final) && (!es_entrada_salida)
 			&& (cantidad_a_ejecutar != contador) && (st == 0)) {
@@ -335,9 +400,11 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem) {
 
 			porcentaje = porcentaje + 1;
 			st = sent_ejecutar(sent, socket_mem);
+
+			ultima_sentencia_ejecutada = sent->sentencia;
 			sent_free(sent);
 			pcb->pc++;
-			sent = sentencia_crear(sents[pcb->pc], pcb->pid);
+			sent = sentencia_crear(sents[pcb->pc], pcb->pid, hilo);
 			contador = contador + 1;
 
 		} else {
@@ -349,6 +416,8 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem) {
 		sleep(RETARDO());
 		porcentaje = porcentaje + 1;
 		sent_ejecutar(sent, socket_mem);
+		ultima_sentencia_ejecutada = sent->sentencia;
+		sent_free(sent);
 
 	}
 
@@ -357,7 +426,7 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem) {
 	free_split(sents);
 	resultado.pcb = pcb;
 	if (st == 0)
-		resultado.sentencia = sent->sentencia;
+		resultado.sentencia = ultima_sentencia_ejecutada;
 	else
 		resultado.sentencia = error;
 	resultado.tiempo = sent->tiempo;
@@ -367,35 +436,38 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem) {
 
 }
 
-int avisar_a_planificador(t_resultado_pcb respuesta, int socket_planif) {
+int avisar_a_planificador(t_resultado_pcb respuesta, int socket_planif, int hilo) {
 	t_msg* mensaje_a_planificador;
 
-
 	int i = 0;
-	printf("Sentencia: %d - IO: %d - FINAL: %d - ERROR: %d ",respuesta.sentencia,io,final,error);
-	switch(respuesta.sentencia){
-		case io:
-			mensaje_a_planificador = argv_message(PCB_IO, 4, respuesta.pcb->pid,
-							respuesta.sentencia, respuesta.tiempo,
-							respuesta.cantidad_sentencias);
-			break;
-		case final:
-			mensaje_a_planificador = argv_message(PCB_FINALIZAR, 4, respuesta.pcb->pid,
-							respuesta.sentencia, respuesta.tiempo,
-							respuesta.cantidad_sentencias);
-			break;
-		case error:
-			mensaje_a_planificador = argv_message(PCB_ERROR, 4, respuesta.pcb->pid,
-					respuesta.sentencia, respuesta.tiempo,
-					respuesta.cantidad_sentencias);
-			break;
-		default:
-			mensaje_a_planificador = argv_message(PCB_FIN_QUANTUM, 4,
+	//printf("Sentencia: %d - IO: %d - FINAL: %d - ERROR: %d ",respuesta.sentencia,io,final,error);
+
+	switch (respuesta.sentencia) {
+	case io:
+		mensaje_a_planificador = argv_message(PCB_IO, 4, respuesta.pcb->pid,
+				respuesta.sentencia, respuesta.tiempo,
+				respuesta.cantidad_sentencias);
+				log_trace(logger, "[HILO #%d] EnviarAlPlanif PCB_IO, PID:%d, sent:%d, t: %d, cant_sent_ejec:%d",hilo, respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo, respuesta.cantidad_sentencias);
+		break;
+	case final:
+		mensaje_a_planificador = argv_message(PCB_FINALIZAR, 4,
 				respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo,
 				respuesta.cantidad_sentencias);
-			break;
+		log_trace(logger, "[HILO #%d] EnviarAlPlanif PCB_FINALIZAR, PID:%d, sent:%d, t: %d, cant_sent_ejec:%d",hilo, respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo, respuesta.cantidad_sentencias);
+		break;
+	case error:
+		mensaje_a_planificador = argv_message(PCB_ERROR, 4, respuesta.pcb->pid,
+				respuesta.sentencia, respuesta.tiempo,
+				respuesta.cantidad_sentencias);
+		log_trace(logger, "[HILO #%d] EnviarAlPlanif PCB_ERROR, PID:%d, sent:%d, t: %d, cant_sent_ejec:%d",hilo, respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo, respuesta.cantidad_sentencias);
+		break;
+	default: //si no entra a ninguno de los cases, significa que termino por fin de quantum
+		mensaje_a_planificador = argv_message(PCB_FIN_QUANTUM, 4,
+				respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo,
+				respuesta.cantidad_sentencias);
+		log_trace(logger, "[HILO #%d] EnviarAlPlanif PCB_FIN_QUANTUM, PID:%d, sent:%d, t: %d, cant_sent_ejec:%d",hilo, respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo, respuesta.cantidad_sentencias);
+		break;
 	}
-
 
 	i = enviar_y_destroy_mensaje(socket_planif, mensaje_a_planificador);
 
