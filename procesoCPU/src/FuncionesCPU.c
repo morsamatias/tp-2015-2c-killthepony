@@ -339,7 +339,7 @@ char* sent_ejecutar_leer(t_sentencia* sent, int socket_mem) {
 }
 
 int sent_ejecutar(t_sentencia* sent, int socket_mem) {
-	porcentaje = porcentaje + 1;
+	porcentaje[sent->hilo] = porcentaje[sent->hilo] + 1;
 	char* pagina = NULL;
 	int st = 0;
 	switch (sent->sentencia) {
@@ -402,7 +402,6 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem, int hilo) {
 
 		if (sent->sentencia != io) {
 
-			porcentaje = porcentaje + 1;
 			st = sent_ejecutar(sent, socket_mem);
 
 			ultima_sentencia_ejecutada = sent->sentencia;
@@ -418,7 +417,6 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem, int hilo) {
 
 	if ((sent->sentencia == final) && (cantidad_a_ejecutar != contador)) {
 		sleep(RETARDO());
-		porcentaje = porcentaje + 1;
 		sent_ejecutar(sent, socket_mem);
 		ultima_sentencia_ejecutada = sent->sentencia;
 
@@ -488,6 +486,8 @@ int enviar_porcentaje_a_planificador() {
 			porcentaje_a_planificador[1], porcentaje_a_planificador[2],
 			porcentaje_a_planificador[3], porcentaje_a_planificador[4],
 			porcentaje_a_planificador[5]);*/
+
+
 	for (l=0;l<CANTIDAD_HILOS();l++){
 		log_trace(logger, "HILO #%d: CPU_PORCENTAJE_UTILIZACION: %d", l,
 				porcentaje_a_planificador[l]);
