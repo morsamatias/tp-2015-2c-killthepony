@@ -10,11 +10,11 @@ int main(void) {
 	socket_planificador = malloc(contador*sizeof(int));
 	socket_memoria = malloc(contador*sizeof(int));
 	
-	porcentaje = malloc(contador*sizeof(int));
+	sentencias_ejecutadas_ultimo_min = malloc(contador*sizeof(int));
 	porcentaje_a_planificador = malloc (contador*sizeof(int));
 	inicializar_porcentajes();
 
-	int vector[contador];
+	int* vector= malloc (contador*sizeof(int));
 
 	//hilo que escucha las peticiones del planificador
 	pthread_t th_responder_porcentaje;
@@ -39,6 +39,7 @@ int main(void) {
 
 		pthread_join(hilo[contador-1],NULL);
 	}
+	free(vector);
 
 	finalizar();
 	return EXIT_SUCCESS;

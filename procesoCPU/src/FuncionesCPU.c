@@ -48,30 +48,42 @@ void* hilo_responder_porcentaje() {
 void inicializar_porcentajes(){
 	int i;
 	for (i = 0; i < CANTIDAD_HILOS(); ++i) {
-		porcentaje[i] = 0;
+		sentencias_ejecutadas_ultimo_min[i] = 0;
 		porcentaje_a_planificador[i] = 0;
 	}
 }
 void* hilo_porcentaje() {
 	int numero;
+	int CANT_SENT_EN_UN_MIN;
+	if (RETARDO() != 0) {
+		CANT_SENT_EN_UN_MIN = 60 / RETARDO();
+	}else{
+		CANT_SENT_EN_UN_MIN = 60 / RETARDO_MINIMO();
+	}
+
+	pthread_mutex_lock(&mutex);
+
+	pthread_mutex_unlock(&mutex);
 	while(true){
 
+		sleep(60);
 		pthread_mutex_lock(&mutex);
+		log_info(logger, "***************************************************");
+		log_info(logger, "[PORCENTAJE] CALCULO DE PORCENTAJE UTILIZACION DE CADA HILO EN EL ULTIMO MINUTO");
+		log_info(logger, "[PORCENTAJE] CANT_SENT_EN_UN_MIN: %d", CANT_SENT_EN_UN_MIN);
 		for (numero = 0; numero < CANTIDAD_HILOS(); numero++) {
 			//porcentaje_a_planificador[numero] = 0;
-			if (RETARDO() != 0) {
-				porcentaje_a_planificador[numero] = (porcentaje[numero] * 100)	/ (60 / RETARDO());
-			} else {
-				porcentaje_a_planificador[numero] = (porcentaje[numero] * 100)	/ (60 / RETARDO_MINIMO());
-			}
-			log_trace(logger, "HILO #%d: CALCULO CPU_PORCENTAJE_UTILIZACION: %d", numero+1,porcentaje_a_planificador[numero]);
+			porcentaje_a_planificador[numero] = (sentencias_ejecutadas_ultimo_min[numero] * 100)	/ CANT_SENT_EN_UN_MIN;
+
+			log_trace(logger, "[PORCENTAJE] HILO #%d:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d", numero+1,sentencias_ejecutadas_ultimo_min[numero], porcentaje_a_planificador[numero]);
 		}
+		sentencias_ejecutadas_ultimo_min[numero] = 0;
+		log_info(logger, "***************************************************");
 		pthread_mutex_unlock(&mutex);
-		sleep(60);
 	}
 
 
-	porcentaje = 0;
+	sentencias_ejecutadas_ultimo_min = 0;
 
 	return NULL;
 }
@@ -91,13 +103,21 @@ void* hilo_cpu(int *numero_hilo) {
 
 		while (true) {
 
+
+			pthread_mutex_lock(&mutex);
 			log_trace(logger, "[HILO #%d] Esperando peticiones del planificador", numero);
+			pthread_mutex_unlock(&mutex);
 			mensaje_planificador = recibir_mensaje(socket_planificador[numero]);
+
 			if(mensaje_planificador!=NULL){
+				pthread_mutex_lock(&mutex);
 				log_trace(logger, "[HILO #%d] Nuevo mensaje del planificador", numero);
+				pthread_mutex_unlock(&mutex);
 				procesar_mensaje_planif(mensaje_planificador, numero); //pasarle socket_planificador y de memoria
 			}else{
+				pthread_mutex_lock(&mutex);
 				log_error(logger, "[HILO #%d] Error al recibir mensaje del planif", numero);
+				pthread_mutex_unlock(&mutex);
 				break;
 			}
 
@@ -354,7 +374,7 @@ char* sent_ejecutar_leer(t_sentencia* sent, int socket_mem) {
 
 int sent_ejecutar(t_sentencia* sent, int socket_mem) {
 	pthread_mutex_lock(&mutex);
-	porcentaje[sent->hilo-1] ++;
+	sentencias_ejecutadas_ultimo_min[sent->hilo-1] ++;
 	pthread_mutex_unlock(&mutex);
 	char* pagina = NULL;
 	int st = 0;
@@ -505,10 +525,11 @@ int enviar_porcentaje_a_planificador() {
 
 
 	for (l=0;l<CANTIDAD_HILOS();l++){
-		log_trace(logger, "HILO #%d: CPU_PORCENTAJE_UTILIZACION: %d", l+1,
-				porcentaje_a_planificador[l]);
-		mensaje_a_planificador = argv_message(CPU_PORCENTAJE_UTILIZACION, 2, l,
-				porcentaje_a_planificador[l]);
+		pthread_mutex_lock(&mutex);
+		log_trace(logger, "HILO #%d: CPU_PORCENTAJE_UTILIZACION: %d", l+1, porcentaje_a_planificador[l]);
+		pthread_mutex_unlock(&mutex);
+
+		mensaje_a_planificador = argv_message(CPU_PORCENTAJE_UTILIZACION, 2, l, porcentaje_a_planificador[l]);
 		i = enviar_y_destroy_mensaje(socket_planificador_especial,
 				mensaje_a_planificador);
 
@@ -524,17 +545,21 @@ int conectar_con_memoria(int numero) {
 	sock = client_socket(IP_MEMORIA(), PUERTO_MEMORIA());
 
 
+	pthread_mutex_lock(&mutex);
 	if (sock < 0) {
 		log_trace(logger, "[HILO #%d] Error al conectar con  admin Mem. %s:%d",numero,IP_MEMORIA(), PUERTO_MEMORIA());
 	} else {
 		log_trace(logger, "[HILO #%d] Conectado con admin Mem. %s:%d", numero, IP_MEMORIA(), PUERTO_MEMORIA());
 	}
+	pthread_mutex_unlock(&mutex);
 
 	//envio handshake
 	//envio un msj con el id del proceso
 	t_msg* msg = string_message(CPU_NUEVO, "[HILO #%d] Hola soy un CPU ", 1, numero);
 	if (enviar_mensaje(sock, msg) > 0) {
+		pthread_mutex_lock(&mutex);
 		log_trace(logger, "[HILO #%d] Mensaje enviado OK", numero                                                           );
+		pthread_mutex_unlock(&mutex);
 	}
 	destroy_message(msg);
 
@@ -571,20 +596,21 @@ int conectar_con_planificador(int numero) {
 int conectar_con_planificador_especial() {
 	int sock;
 	sock = client_socket(IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
-
+	pthread_mutex_lock(&mutex);
 	if (sock < 0) {
-		log_trace(logger, "[PORCENTAJE] Error al conectar con el planificador especial. %s:%d",
-				IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
+		log_trace(logger, "[PORCENTAJE] Error al conectar con el planificador especial. %s:%d",	IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
 	} else {
-		log_trace(logger, "[PORCENTAJE] Conectado con planificador especial. %s:%d",
-				IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
+		log_trace(logger, "[PORCENTAJE] Conectado con planificador especial. %s:%d",IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
 	}
+	pthread_mutex_unlock(&mutex);
 
 	//envio handshake
 	//envio un msj con el id del proceso
 	t_msg* msg = string_message(CPU_ESPECIAL, "[PORCENTAJE] Hola soy un CPU", 1, -1);
 	if (enviar_mensaje(sock, msg) > 0) {
+		pthread_mutex_lock(&mutex);
 		log_trace(logger, "[PORCENTAJE] Mensaje enviado OK");
+		pthread_mutex_unlock(&mutex);
 	}
 	destroy_message(msg);
 

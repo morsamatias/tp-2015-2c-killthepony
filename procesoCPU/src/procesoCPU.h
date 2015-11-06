@@ -41,7 +41,7 @@ int* socket_planificador;
 int socket_planificador_especial;
 int* socket_memoria;
 
-int* porcentaje;
+int* sentencias_ejecutadas_ultimo_min;
 int* porcentaje_a_planificador;
 
 /////////////////////////////////////////////////ESTRUCTURAS/////////////////////////////////////////
