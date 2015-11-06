@@ -14,7 +14,6 @@ int main(void) {
 	porcentaje_a_planificador = malloc (contador*sizeof(int));
 	inicializar_porcentajes();
 
-	int* vector= malloc (contador*sizeof(int));
 
 	//hilo que escucha las peticiones del planificador
 	pthread_t th_responder_porcentaje;
@@ -29,10 +28,14 @@ int main(void) {
 	pthread_t *hilo=(pthread_t*)malloc((contador)*sizeof(pthread_t));
 
 
+	int* vector= malloc (contador*sizeof(int));
+	int* numero ;
 	for( ;contador>0;contador=contador-1){
-		vector[contador-1]=contador;
-
-		pthread_create(&(hilo[contador-1]), NULL,(void*)&hilo_cpu,(void*)&(vector[contador-1]) );
+		//vector[contador-1]=contador;
+		//pthread_create(&(hilo[contador-1]), NULL,(void*)&hilo_cpu,(void*)&(vector[contador-1]) );
+		numero = malloc(sizeof(int));
+		*numero = contador;
+		pthread_create(&(hilo[contador - 1]), NULL, (void*) &hilo_cpu, (void*) numero);
 	}
 
 	for(contador=CANTIDAD_HILOS();contador>0;contador=contador-1){
