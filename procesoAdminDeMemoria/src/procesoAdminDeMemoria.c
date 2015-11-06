@@ -585,7 +585,8 @@ t_pagina* crear_pagina(int PID, int pagina, int marco){
 
 
 void destruir_pagina(t_pagina* pagina){
-	memoria[pagina->marco]->libre=1;
+	if(pagina->marco!=-1)
+		memoria[pagina->marco]->libre=1;
 	free(pagina);
 }
 

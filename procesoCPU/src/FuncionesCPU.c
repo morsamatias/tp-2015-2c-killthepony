@@ -19,10 +19,10 @@ void* hilo_responder_porcentaje() {
 
 			if(msg!=NULL){
 				if(msg->header.id ==CPU_PORCENTAJE_UTILIZACION){
+					destroy_message(msg);
 					log_trace(logger, "[PORCENTAJE] Nuevo mensaje del planificador pidiendo CPU_PORCENTAJE_UTILIZACION");
 					enviar_porcentaje_a_planificador();
 
-					destroy_message(msg);
 				}else{
 					log_error(logger, "[PORCENTAJE] mensaje desconocido");
 					break;
@@ -457,6 +457,7 @@ int avisar_a_planificador(t_resultado_pcb respuesta, int socket_planif, int hilo
 		mensaje_a_planificador = argv_message(PCB_FINALIZAR, 4,
 				respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo,
 				respuesta.cantidad_sentencias);
+		log_trace(logger, "[HILO #%d] ************** PCB_FINALIZAR, PID:%d *****************", hilo, respuesta.pcb->pid);
 		log_trace(logger, "[HILO #%d] EnviarAlPlanif PCB_FINALIZAR, PID:%d, sent:%d, t: %d, cant_sent_ejec:%d",hilo, respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo, respuesta.cantidad_sentencias);
 		break;
 	case error:
@@ -488,10 +489,12 @@ int enviar_porcentaje_a_planificador() {
 			porcentaje_a_planificador[3], porcentaje_a_planificador[4],
 			porcentaje_a_planificador[5]);*/
 	for (l=0;l<CANTIDAD_HILOS();l++){
-
-		mensaje_a_planificador = argv_message(CPU_PORCENTAJE_UTILIZACION,1,porcentaje_a_planificador[l]);
+		log_trace(logger, "HILO #%d: CPU_PORCENTAJE_UTILIZACION: %d", l,
+				porcentaje_a_planificador[l]);
+		mensaje_a_planificador = argv_message(CPU_PORCENTAJE_UTILIZACION, 2, l,
+				porcentaje_a_planificador[l]);
 		i = enviar_y_destroy_mensaje(socket_planificador_especial,
-			mensaje_a_planificador);
+				mensaje_a_planificador);
 
 	}
 
@@ -504,12 +507,11 @@ int conectar_con_memoria(int numero) {
 	int sock;
 	sock = client_socket(IP_MEMORIA(), PUERTO_MEMORIA());
 
+
 	if (sock < 0) {
-		log_trace(logger, "[HILO #%d] Error al conectar con  admin Mem. %s:%d",numero,
-				IP_MEMORIA(), PUERTO_MEMORIA());
+		log_trace(logger, "[HILO #%d] Error al conectar con  admin Mem. %s:%d",numero,IP_MEMORIA(), PUERTO_MEMORIA());
 	} else {
-		log_trace(logger, "[HILO #%d] Conectado con admin Mem. %s:%d", numero, IP_MEMORIA(),
-				PUERTO_MEMORIA());
+		log_trace(logger, "[HILO #%d] Conectado con admin Mem. %s:%d", numero, IP_MEMORIA(), PUERTO_MEMORIA());
 	}
 
 	//envio handshake
@@ -575,10 +577,25 @@ int conectar_con_planificador_especial() {
 	return sock;
 }
 
+char ipmem[15];
+char ipplanif[15];
+int puertomem;
+int puertoplanif;
+void config_inicializar(){
+	memset(ipmem, 0, 15);
+	strcpy(ipmem, config_get_string_value(cfg, "IP_MEMORIA"));
+	puertomem = config_get_int_value(cfg, "PUERTO_MEMORIA");
+
+	memset(ipplanif, 0, 15);
+	strcpy(ipplanif, config_get_string_value(cfg, "IP_PLANIFICADOR"));
+	puertoplanif = config_get_int_value(cfg, "PUERTO_PLANIFICADOR");
+}
+
 int inicializar() {
 
 	cfg = config_create(CONFIG_PATH);
 	printf("IP planif: %s:%d\n", IP_PLANIFICADOR(), PUERTO_PLANIFICADOR());
+	config_inicializar();
 
 	clean_file(LOGGER_PATH);
 	logger = log_create(LOGGER_PATH, "procesoCPU", true, LOG_LEVEL_TRACE);
@@ -600,17 +617,17 @@ int finalizar() {
 
 
 char* IP_MEMORIA() {
-	return config_get_string_value(cfg, "IP_MEMORIA");
+	return ipmem;
 }
 int PUERTO_MEMORIA() {
-	return config_get_int_value(cfg, "PUERTO_MEMORIA");
+	return puertomem;
 }
 
 char* IP_PLANIFICADOR() {
-	return config_get_string_value(cfg, "IP_PLANIFICADOR");
+	return ipplanif;
 }
 int PUERTO_PLANIFICADOR() {
-	return config_get_int_value(cfg, "PUERTO_PLANIFICADOR");
+	return puertoplanif;
 }
 
 int CANTIDAD_HILOS() {

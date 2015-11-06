@@ -313,6 +313,17 @@ void procesar_msg_consola(char* msg) {
 		enviar_mensaje(cpu_especial, pedido_uso);
 
 		destroy_message(pedido_uso);
+		t_msg* msg_porcent;
+		int cpu;
+		int porcentaje;
+		//leo los X mensajes que me envia
+		for (i = 0; i < list_size(cpus); i++) {
+			msg_porcent = recibir_mensaje(cpu_especial);
+			cpu = msg_porcent->argv[0];
+			porcentaje = msg_porcent->argv[1];
+			destroy_message(msg_porcent);
+			mostrar_porcentaje(cpu, porcentaje);
+		}
 
 		break;
 
@@ -324,6 +335,12 @@ void procesar_msg_consola(char* msg) {
 		break;
 	}
 	free_split(input_user);
+}
+
+void mostrar_porcentaje(int cpu_id, int porcentaje){
+	//t_cpu* cpu = cpu_buscar(cpu_id);
+	//cpu->usoUltimoMinuto = porcentaje;
+	log_trace(logger, "Porcentaje de Uso de la Cpu %d: %d", cpu_id, porcentaje);
 }
 
 int correr_proceso(char* path) {

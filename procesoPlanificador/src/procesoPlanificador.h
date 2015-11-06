@@ -120,7 +120,7 @@ t_list* procesosFinalizados;
 
 /*cpu*/
 t_list* cpus;
-
+void mostrar_porcentaje(int cpu, int porcentaje);
 t_cpu* cpu_buscar(int id);
 t_cpu* cpu_buscar_por_socket(int socket);
 

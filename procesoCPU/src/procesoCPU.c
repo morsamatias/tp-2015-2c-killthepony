@@ -24,9 +24,9 @@ int main(void) {
 
 
 	for( ;contador>0;contador=contador-1){
-		vector[contador]=contador;
+		vector[contador-1]=contador;
 
-		pthread_create(&(hilo[contador-1]), NULL,(void*)&hilo_cpu,(void*)&vector[contador] );
+		pthread_create(&(hilo[contador-1]), NULL,(void*)&hilo_cpu,(void*)&(vector[contador-1]) );
 	}
 
 	for(contador=CANTIDAD_HILOS();contador>0;contador=contador-1){
