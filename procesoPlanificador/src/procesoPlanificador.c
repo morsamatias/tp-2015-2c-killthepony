@@ -115,8 +115,7 @@ int main(void) {
 							//si el cpu se desconecto habria que sacarlo de la lista de cpus, o marcarlo como desconectado
 							//todo: hay que buscar los pcbs que esta procesando este socket, para replanificarlos en otra cpu
 							log_trace(logger,
-									"El cpu %d, socket: %d se desconecto",
-									cpu->id, cpu->socket);
+									"El cpu %d, socket: %d se desconecto",cpu->id, cpu->socket);
 
 							pcb = pcb_buscar_por_cpu(cpu->id);
 
@@ -205,11 +204,17 @@ void procesar_msg_consola(char* msg) {
 		break;
 	case FINALIZAR:
 		pid = atoi(input_user[1]);
-		log_trace(logger, "finalizar pid: %d\n", pid);
+		log_trace(logger, "Finalizar proceso cuyo pid es: %d\n", pid);
 		t_pcb* pcb;
+		PID_GLOBAL=pid;
+		if(list_any_satisfy(pcbs,(void*) es_el_pcb_buscado)){
 		PID_GLOBAL = pid;
 		pcb = list_get(pcbs, pos_del_pcb(pid));
-		pcb->pc = pcb->cant_sentencias;
+		pcb->pc = pcb->cant_sentencias;}
+		else
+		{
+			log_trace(logger,"No existe un proceso con el PID ingresado");
+		}
 		break;
 	case PS:
 		log_trace(logger, "PS listar procesos\n");
@@ -673,8 +678,10 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		break;
 
 	case PCB_FINALIZAR:
-		log_trace(logger, "EMPEZO A FINALIZAR");
+
 		pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
+
+		log_trace(logger, "Se comienza a Finalizar el proceso %d \n",pcb->pid);
 
 		printf("pcb->pid %d\n", msg->argv[0]);
 
@@ -755,11 +762,11 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 					cpu->estado = 0;
 				} else {
 					printf(
-							"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",
+							"No existe CPU activa para asignar al proceso %d. El proceso queda en READY\n",
 							pcb->pid);
 				}
 			} else {
-				printf("No existe CPU activa para asignarle un nuevo proceso");
+				printf("No existe CPU activa para asignarle un nuevo proceso\n");
 			}
 
 		}
@@ -850,7 +857,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		pcb->pid = msg->argv[0];
 
 		log_trace(logger,
-				"Operaciones realizadas por el proceso %d hasta el momento son:",
+				"Operaciones realizadas por el proceso %d hasta el momento son:\n",
 				pcb->pid);
 
 		m = 1;
@@ -906,7 +913,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		default:
 
-			log_trace(logger, "No se comprende el mensaje enviado");
+			log_trace(logger, "No se comprende el mensaje enviado \n");
 
 			break;
 
@@ -943,7 +950,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		list_remove_by_condition(list_exec, (void*) es_el_pcb_buscado_en_exec);
 
 		log_trace(logger,
-				"El proceso de Pid %d finalizó su Quantum y pasa del estado en Ejecución al estado Listo",
+				"El proceso de Pid %d finalizó su Quantum y pasa del estado en Ejecución al estado Listo \n",
 				msg->argv[0]);
 
 		t_ready* ready = malloc(sizeof(ready));
@@ -959,7 +966,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		pcb->tiempo_inicio_ready = time(NULL);
 
-		log_trace(logger, "El proceso %d se encuentra en la cola de Listos",
+		log_trace(logger, "El proceso %d se encuentra en la cola de Listos \n",
 				pcb->pid);
 
 		if (pcb->pc != pcb->cant_sentencias) {
@@ -988,11 +995,11 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 					cpu->estado = 0;
 				} else {
 					printf(
-							"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",
+							"No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",
 							pcb->pid);
 				}
 			} else {
-				printf("No existe CPU activa para asignarle un proceso");
+				printf("No existe CPU activa para asignarle un proceso \n");
 			}
 
 		}
@@ -1253,7 +1260,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 				if (cpu != NULL) {
 
-					log_trace(logger, "Porcentaje de Uso de la Cpu %d: %d %",
+					log_trace(logger, "Porcentaje de Uso de la Cpu %d: %d % \n",
 							cpu->id, cpu->usoUltimoMinuto);
 
 				}
@@ -1264,7 +1271,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		} else {
 
 			log_trace(logger,
-					"Aún no está la información del Porcentaje de Uso de todas las CPUs");
+					"Aún no está la información del Porcentaje de Uso de todas las CPUs\n");
 		}
 
 		destroy_message(msg);
@@ -1348,13 +1355,13 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		cpu_especial = socket;
 
 		log_trace(logger,
-				"Se conecta con el Planificador el Hilo al que se pedirán las solicitudes de Uso de CPUs");
+				"Se conecta con el Planificador el Hilo al que se pedirán las solicitudes de Uso de CPUs \n");
 
 		break;
 
 	default:
 
-		printf("El código de mensaje enviado es incorrecto");
+		printf("El código de mensaje enviado es incorrecto \n");
 
 		break;
 	}
@@ -1416,7 +1423,7 @@ void Hilo_IO(int pid) {
 				sleep(block->tiempoIO);
 
 				log_info(logger,
-						" El proceso %i termina su I/O de %i y vuelve a la cola de listos",
+						" El proceso %i termina su I/O de %i y vuelve a la cola de Listos \n",
 						block->pid, block->tiempoIO);
 
 				t_ready* ready = malloc(sizeof(t_ready));
@@ -1468,7 +1475,7 @@ void Hilo_IO(int pid) {
 
 			} else {
 
-				printf("No existe CPU activa para asignarle un nuevo proceso");
+				printf("No existe CPU activa para asignarle un nuevo proceso \n");
 
 			}
 
@@ -1503,7 +1510,7 @@ void controlar_IO(char* pid_string) {
 	;
 
 	log_trace(logger,
-			"El proceso %d se encuentra en la cola de procesos Listos",
+			"El proceso %d se encuentra en la cola de procesos Listos \n",
 			pcb->pid);
 
 	pthread_exit(NULL);
@@ -1647,4 +1654,3 @@ int cpus_sin_dato_uso(t_cpu* cpu) {
 	return (cpu->usoUltimoMinuto == 0);
 
 }
-

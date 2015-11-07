@@ -49,6 +49,8 @@ int inicializar(){ ///////////////////
 	sem_init(&mutex_TLB, 0, 1);
 	sem_init(&mutex_PAGINAS, 0, 1);
 
+	iniciar_signals();
+
 	return 0;
 }
 
