@@ -241,7 +241,7 @@ t_pcb* es_el_pcb_buscado_por_id(int pid);
 
 t_pcb* es_el_pcb_buscado_struct(t_pcb* pcb);
 
-//t_pcb* es_el_pcb_buscado();
+int es_el_pcb_buscado(t_pcb* pcb);
 
 void Hilo_IO(int pid);
 void controlar_IO (char* pid_string);

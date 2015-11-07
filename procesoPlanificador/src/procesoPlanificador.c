@@ -210,7 +210,8 @@ void procesar_msg_consola(char* msg) {
 		if(list_any_satisfy(pcbs,(void*) es_el_pcb_buscado)){
 		PID_GLOBAL = pid;
 		pcb = list_get(pcbs, pos_del_pcb(pid));
-		pcb->pc = pcb->cant_sentencias;}
+		pcb->pc = pcb->cant_sentencias;
+		}
 		else
 		{
 			log_trace(logger,"No existe un proceso con el PID ingresado");
