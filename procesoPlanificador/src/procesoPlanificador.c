@@ -273,7 +273,7 @@ void procesar_msg_consola(char* msg) {
 
 	case CPU:
 		i = 0;
-		log_trace(logger, "Uso CPU en el ultimo min \n");
+		log_trace(logger, "Porcentaje de Usos de las CPUs en el último minuto \n");
 
 		//	int uso;
 		//	int uso_rodondeado;
@@ -734,7 +734,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				pcb->pid);
 
 		log_trace(logger,
-				"Métricas del Proceso %d \n El Tiempo de Retorno fue de %d \n El Tiempo de Respuesta fue de %d \n El Tiempo de Espera fue de %d\n",
+				"Métricas del Proceso %d \n El Tiempo de Retorno fue de %d segundos \n El Tiempo de Respuesta fue de %d segundos \n El Tiempo de Espera fue de %d segundos\n",
 				pcb->pid, pcb->tiempo_retorno, pcb->tiempo_respuesta, pcb->tiempo_espera);
 
 		//printf("Hay que finalizar el proceso");
@@ -1254,7 +1254,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 				if (cpu != NULL) {
 
-					log_trace(logger, "Porcentaje de Uso de la Cpu %d: %d",
+					log_trace(logger, "Porcentaje de Uso de la Cpu %d: %d %",
 							cpu->id, cpu->usoUltimoMinuto);
 
 				}
