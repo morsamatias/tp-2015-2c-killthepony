@@ -373,8 +373,7 @@ int correr_proceso(char* path) {
 
 	pcb->tiempo_inicio_proceso = time(NULL);
 
-	log_trace(logger, "Tiempo de inicio del proceso %d es %ld", pcb->pid,
-			pcb->tiempo_inicio_proceso);
+	//log_trace(logger, "Tiempo de inicio del proceso %d es %ld", pcb->pid,pcb->tiempo_inicio_proceso);
 
 	pcb->cantidad_IO = 0;
 
@@ -558,9 +557,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 			pcb->tiempo_entrada_salida = time(NULL);
 
-			log_trace(logger,
-					"Tiempo en el que el proceso %d inicia la Entrada-Salida es %ld",
-					pcb->pid, pcb->tiempo_entrada_salida);
+			//log_trace(logger,
+				//	"Tiempo en el que el proceso %d inicia la Entrada-Salida es %ld",
+					//pcb->pid, pcb->tiempo_entrada_salida);
 
 			pcb->tiempo_respuesta = difftime(pcb->tiempo_entrada_salida, pcb->tiempo_inicio_proceso);
 
@@ -711,9 +710,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		pcb->tiempo_fin_proceso = time(NULL);
 
-		log_trace(logger,
-				"Tiempo en el que el proceso %d finaliza operatoria es %ld",
-				pcb->pid, pcb->tiempo_fin_proceso);
+		//log_trace(logger,
+			//	"Tiempo en el que el proceso %d finaliza operatoria es %ld",
+				//pcb->pid, pcb->tiempo_fin_proceso);
 
 		pcb->tiempo_retorno = difftime(pcb->tiempo_fin_proceso, pcb->tiempo_inicio_proceso);
 
@@ -1617,8 +1616,8 @@ void cambiar_a_exec(int pid) {
 	list_add(list_exec, exec);
 	pcb->tiempo_fin_ready = time(NULL);
 
-	log_trace(logger, "Tiempo de fin del proceso %d en la cola de Ready es %d",
-			pcb->pid, pcb->tiempo_fin_ready);
+	//log_trace(logger, "Tiempo de fin del proceso %d en la cola de Ready es %d",
+		//	pcb->pid, pcb->tiempo_fin_ready);
 
 	pcb->tiempo_espera = pcb->tiempo_espera
 			+ difftime(pcb->tiempo_fin_ready , pcb->tiempo_inicio_ready);
