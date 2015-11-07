@@ -12,7 +12,11 @@
 
 
 int main(void) {
-	inicializar(); 																	// INICIALIZA ESTRUCTURAS
+	inicializar();
+
+	iniciar_signals();
+
+	// INICIALIZA ESTRUCTURAS
 	socket_swap = conectar_con_swap(); 												// SE CONECTA CON EL SWAP
 	pthread_create(&t_tasas_globales, NULL, (void*) tasa_aciertos_TLB_total,NULL);	// CREO EL HILO QUE MANEJA LAS ESTADISTICAS GLOBALES DE TASA
 	server_socket_select(PUERTO_ESCUCHA(), procesar_mensaje_cpu); 					// PROCESA LOS MENSAJES
@@ -460,7 +464,8 @@ int quitar_pagina_de_la_memoria(t_pagina* pag){
 	sem_post(&mutex_TLB);
 
 	// ACTUALIZO LA MEMORIA Y LA TABLA DE PAGINAS
-	memoria[pag->marco]->libre = 1;
+	if(pag->marco!=-1)
+		memoria[pag->marco]->libre = 1;
 	pag->marco = -1;
 	pag->modificado = 0;
 	pag->presencia = 0;
