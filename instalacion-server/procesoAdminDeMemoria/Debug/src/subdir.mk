@@ -5,15 +5,18 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../src/otros.c \
-../src/procesoAdminDeMemoria.c 
+../src/procesoAdminDeMemoria.c \
+../src/signals.c 
 
 OBJS += \
 ./src/otros.o \
-./src/procesoAdminDeMemoria.o 
+./src/procesoAdminDeMemoria.o \
+./src/signals.o 
 
 C_DEPS += \
 ./src/otros.d \
-./src/procesoAdminDeMemoria.d 
+./src/procesoAdminDeMemoria.d \
+./src/signals.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
