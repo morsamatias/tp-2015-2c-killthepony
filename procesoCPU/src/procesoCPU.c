@@ -31,10 +31,10 @@ int main(void) {
 	int* vector= malloc (contador*sizeof(int));
 	int* numero ;
 	for( ;contador>0;contador=contador-1){
-		//vector[contador-1]=contador;
+		//vector[contador-1]=contador-1;
 		//pthread_create(&(hilo[contador-1]), NULL,(void*)&hilo_cpu,(void*)&(vector[contador-1]) );
 		numero = malloc(sizeof(int));
-		*numero = contador;
+		*numero = contador-1;
 		pthread_create(&(hilo[contador - 1]), NULL, (void*) &hilo_cpu, (void*) numero);
 	}
 

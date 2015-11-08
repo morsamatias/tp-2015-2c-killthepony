@@ -72,15 +72,12 @@ void* hilo_porcentaje() {
 			//porcentaje_a_planificador[numero] = 0;
 			porcentaje_a_planificador[numero] = (sentencias_ejecutadas_ultimo_min[numero] * 100)	/ CANT_SENT_EN_UN_MIN;
 
-			log_trace(logger, "[PORCENTAJE] HILO #%d:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d", numero+1,sentencias_ejecutadas_ultimo_min[numero], porcentaje_a_planificador[numero]);
+			log_trace(logger, "[PORCENTAJE] HILO #%d:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d", numero,sentencias_ejecutadas_ultimo_min[numero], porcentaje_a_planificador[numero]);
 			sentencias_ejecutadas_ultimo_min[numero] = 0;
 		}
 		log_info(logger, "***************************************************");
 		pthread_mutex_unlock(&mutex);
 	}
-
-
-	sentencias_ejecutadas_ultimo_min = 0;
 
 	return NULL;
 }
@@ -101,6 +98,7 @@ void* hilo_cpu(int *numero_hilo) {
 	socket_memoria[numero] = sock_mem;
 	socket_planificador[numero] = sock_planif;
 	pthread_mutex_unlock(&mutex);
+
 
 	if (socket_memoria[numero]>0 && socket_planificador[numero]>0) {
 
@@ -375,8 +373,11 @@ char* sent_ejecutar_leer(t_sentencia* sent, int socket_mem) {
 }
 
 int sent_ejecutar(t_sentencia* sent, int socket_mem) {
+
+	sleep(RETARDO());
+
 	pthread_mutex_lock(&mutex);
-	sentencias_ejecutadas_ultimo_min[sent->hilo-1] ++;
+	sentencias_ejecutadas_ultimo_min[sent->hilo] ++;
 	pthread_mutex_unlock(&mutex);
 	char* pagina = NULL;
 	int st = 0;
@@ -419,13 +420,12 @@ void sent_free(t_sentencia* sent) {
 
 t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem, int hilo) {
 
-	bool es_entrada_salida = false;
 	int st = 0;
 
 	t_resultado_pcb resultado;
 
 	int cantidad_a_ejecutar = pcb->cant_a_ejectuar;
-	int contador = 0;
+	int sentencias_ejecutadas = 0;
 
 	char* mcod = file_get_mapped(pcb->path);
 	char** sents = string_split(mcod, "\n");
@@ -433,44 +433,45 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem, int hilo) {
 	e_sentencia ultima_sentencia_ejecutada;
 	sent = sentencia_crear(sents[pcb->pc], pcb->pid, hilo);
 
-	while ((sent->sentencia != final) && (!es_entrada_salida)
-			&& (cantidad_a_ejecutar != contador) && (st == 0)) {
+	while ((sent->sentencia != final) && (sent->sentencia != io)
+			&& (cantidad_a_ejecutar != sentencias_ejecutadas) && (st == 0)) {
 
-		sleep(RETARDO());
-
-		if (sent->sentencia != io) {
-
-			st = sent_ejecutar(sent, socket_mem);
-
-			ultima_sentencia_ejecutada = sent->sentencia;
-			sent_free(sent);
-			pcb->pc++;
-			sent = sentencia_crear(sents[pcb->pc], pcb->pid, hilo);
-			contador = contador + 1;
-
-		} else {
-			es_entrada_salida = true;
-		}
-	}
-
-	if ((sent->sentencia == final) && (cantidad_a_ejecutar != contador)) {
-		sleep(RETARDO());
-		sent_ejecutar(sent, socket_mem);
 		ultima_sentencia_ejecutada = sent->sentencia;
 
+		st = sent_ejecutar(sent, socket_mem);
+		sentencias_ejecutadas = sentencias_ejecutadas + 1;
+		pcb->pc++;
 
+		sent_free(sent);
+		sent = sentencia_crear(sents[pcb->pc], pcb->pid, hilo);
+
+	}
+
+	if ((sent->sentencia == final) && (cantidad_a_ejecutar != sentencias_ejecutadas)) {
+		st = sent_ejecutar(sent, socket_mem);
+		ultima_sentencia_ejecutada = sent->sentencia;
+		pcb->pc++;
+	}
+
+	//si es una io, voy a la siguiente posicion y hago que esta ejecutando
+	if(sent->sentencia == io){
+		log_trace(logger, "[HILO #%d] Entrada-Salida de %d", hilo, sent->tiempo);
+		sleep(RETARDO());
+		ultima_sentencia_ejecutada = sent->sentencia;
+		sentencias_ejecutadas = sentencias_ejecutadas + 1;
+		pcb->pc++;
 	}
 
 	file_mmap_free(mcod, pcb->path);
 
 	free_split(sents);
 	resultado.pcb = pcb;
-	if (st == 0)
-		resultado.sentencia = ultima_sentencia_ejecutada;
-	else
-		resultado.sentencia = error;
+
+	resultado.ejecuto_ok = st == 0;//si es igual a cero ejecuto OK
+
+	resultado.sentencia = ultima_sentencia_ejecutada;
 	resultado.tiempo = sent->tiempo;
-	resultado.cantidad_sentencias = contador;
+	resultado.cantidad_sentencias = sentencias_ejecutadas;
 	sent_free(sent);
 	return resultado;
 
@@ -482,33 +483,68 @@ int avisar_a_planificador(t_resultado_pcb respuesta, int socket_planif, int hilo
 	int i = 0;
 	//printf("Sentencia: %d - IO: %d - FINAL: %d - ERROR: %d ",respuesta.sentencia,io,final,error);
 
-	switch (respuesta.sentencia) {
-	case io:
-		mensaje_a_planificador = argv_message(PCB_IO, 4, respuesta.pcb->pid,
-				respuesta.sentencia, respuesta.tiempo,
-				respuesta.cantidad_sentencias);
-				log_trace(logger, "[HILO #%d] EnviarAlPlanif PCB_IO, PID:%d, sent:%d, t: %d, cant_sent_ejec:%d",hilo, respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo, respuesta.cantidad_sentencias);
-		break;
-	case final:
-		mensaje_a_planificador = argv_message(PCB_FINALIZAR, 4,
-				respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo,
-				respuesta.cantidad_sentencias);
-		log_trace(logger, "[HILO #%d] ************** PCB_FINALIZAR, PID:%d *****************", hilo, respuesta.pcb->pid);
-		log_trace(logger, "[HILO #%d] EnviarAlPlanif PCB_FINALIZAR, PID:%d, sent:%d, t: %d, cant_sent_ejec:%d",hilo, respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo, respuesta.cantidad_sentencias);
-		break;
-	case error:
+	/*
+	 * PRIMERO PID
+	 * SEGUNDO SENTENCIA
+	 * TERCERO TIEMPO
+	 * CUARTO CANT_SENTENCIAS_EJECUTADAS
+	 */
+	//primero verifico si no ejecuto bien, para enviarle la sentencia que dio error (respuesta.sentencia)
+	if (!respuesta.ejecuto_ok) {
 		mensaje_a_planificador = argv_message(PCB_ERROR, 4, respuesta.pcb->pid,
 				respuesta.sentencia, respuesta.tiempo,
 				respuesta.cantidad_sentencias);
-		log_trace(logger, "[HILO #%d] EnviarAlPlanif PCB_ERROR, PID:%d, sent:%d, t: %d, cant_sent_ejec:%d",hilo, respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo, respuesta.cantidad_sentencias);
-		break;
-	default: //si no entra a ninguno de los cases, significa que termino por fin de quantum
-		mensaje_a_planificador = argv_message(PCB_FIN_QUANTUM, 4,
-				respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo,
+		log_trace(logger,
+				"[HILO #%d] EnviarAlPlanif PCB_ERROR, PID:%d, sent:%d, t: %d, cant_sent_ejec:%d",
+				hilo, respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo,
 				respuesta.cantidad_sentencias);
-		log_trace(logger, "[HILO #%d] EnviarAlPlanif PCB_FIN_QUANTUM, PID:%d, sent:%d, t: %d, cant_sent_ejec:%d",hilo, respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo, respuesta.cantidad_sentencias);
-		break;
+	} else {
+		//si ejecuto bien, le paso la info
+		switch (respuesta.sentencia) {
+		case io:
+			//el planif recibe primero pid, despues tiempo
+			mensaje_a_planificador = argv_message(PCB_IO, 4, respuesta.pcb->pid,
+					respuesta.sentencia, respuesta.tiempo,
+					respuesta.cantidad_sentencias);
+			log_trace(logger,
+					"[HILO #%d] EnviarAlPlanif PCB_IO, PID:%d, sent:%d, t: %d, cant_sent_ejec:%d",
+					hilo, respuesta.pcb->pid, respuesta.sentencia,
+					respuesta.tiempo, respuesta.cantidad_sentencias);
+			break;
+		case final:
+			mensaje_a_planificador = argv_message(PCB_FINALIZAR, 4,
+					respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo,
+					respuesta.cantidad_sentencias);
+			log_trace(logger,
+					"[HILO #%d] ************** PCB_FINALIZAR, PID:%d *****************",
+					hilo, respuesta.pcb->pid);
+			log_trace(logger,
+					"[HILO #%d] EnviarAlPlanif PCB_FINALIZAR, PID:%d, sent:%d, t: %d, cant_sent_ejec:%d",
+					hilo, respuesta.pcb->pid, respuesta.sentencia,
+					respuesta.tiempo, respuesta.cantidad_sentencias);
+			break;
+		case error:
+			mensaje_a_planificador = argv_message(PCB_ERROR, 4,
+					respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo,
+					respuesta.cantidad_sentencias);
+			log_trace(logger,
+					"[HILO #%d] EnviarAlPlanif PCB_ERROR, PID:%d, sent:%d, t: %d, cant_sent_ejec:%d",
+					hilo, respuesta.pcb->pid, respuesta.sentencia,
+					respuesta.tiempo, respuesta.cantidad_sentencias);
+			break;
+		default: //si no entra a ninguno de los cases, significa que termino por fin de quantum
+			mensaje_a_planificador = argv_message(PCB_FIN_QUANTUM, 4,
+					respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo,
+					respuesta.cantidad_sentencias);
+			log_trace(logger,
+					"[HILO #%d] EnviarAlPlanif PCB_FIN_QUANTUM, PID:%d, sent:%d, t: %d, cant_sent_ejec:%d",
+					hilo, respuesta.pcb->pid, respuesta.sentencia,
+					respuesta.tiempo, respuesta.cantidad_sentencias);
+			break;
+		}
 	}
+
+
 
 	i = enviar_y_destroy_mensaje(socket_planif, mensaje_a_planificador);
 
@@ -519,17 +555,12 @@ int enviar_porcentaje_a_planificador() {
 
 	int i,l;
 	t_msg* mensaje_a_planificador;
-	/*mensaje_a_planificador = argv_message(CPU_PORCENTAJE_UTILIZACION,
-			CANTIDAD_HILOS(), porcentaje_a_planificador[0],
-			porcentaje_a_planificador[1], porcentaje_a_planificador[2],
-			porcentaje_a_planificador[3], porcentaje_a_planificador[4],
-			porcentaje_a_planificador[5]);*/
 
 	int porcentaje;
 	for (l=0;l<CANTIDAD_HILOS();l++){
 		pthread_mutex_lock(&mutex);
 		porcentaje = porcentaje_a_planificador[l];
-		log_trace(logger, "HILO #%d: CPU_PORCENTAJE_UTILIZACION: %d", l+1, porcentaje);
+		log_trace(logger, "HILO #%d: CPU_PORCENTAJE_UTILIZACION: %d", l, porcentaje);
 		pthread_mutex_unlock(&mutex);
 
 		mensaje_a_planificador = argv_message(CPU_PORCENTAJE_UTILIZACION, 2, l, porcentaje);
@@ -558,11 +589,15 @@ int conectar_con_memoria(int numero) {
 	//envio handshake
 	//envio un msj con el id del proceso
 	t_msg* msg = string_message(CPU_NUEVO, "[HILO #%d] Hola soy un CPU ", 1, numero);
-	if (enviar_mensaje(sock, msg) > 0) {
-		pthread_mutex_lock(&mutex);
-		log_trace(logger, "[HILO #%d] Mensaje enviado OK", numero                                                           );
-		pthread_mutex_unlock(&mutex);
+	int rs;
+	rs = enviar_mensaje(sock, msg);
+	pthread_mutex_lock(&mutex);
+	if (rs > 0) {
+		log_trace(logger, "[HILO #%d] Mensaje enviado OK CPU_NUEVO", numero);
+	} else {
+		log_trace(logger, "[HILO #%d] Error al enviar mensaje CPU_NUEVO", numero);
 	}
+	pthread_mutex_unlock(&mutex);
 	destroy_message(msg);
 
 	//enviar_mensaje_cpu(sock);
@@ -585,9 +620,13 @@ int conectar_con_planificador(int numero) {
 	//envio handshake
 	//envio un msj con el id del proceso
 	t_msg* msg = string_message(CPU_NUEVO, "[HILO #%d] Hola soy un CPU", 1, numero);
+	pthread_mutex_lock(&mutex);
 	if (enviar_mensaje(sock, msg) > 0) {
 		log_trace(logger, "[HILO #%d] Mensaje enviado OK", numero);
+	}else{
+		log_trace(logger, "[HILO #%d] Error al enviar mensaje CPU_NUEVO", numero);
 	}
+	pthread_mutex_unlock(&mutex);
 	destroy_message(msg);
 
 	//enviar_mensaje_cpu(sock);
@@ -609,11 +648,16 @@ int conectar_con_planificador_especial() {
 	//envio handshake
 	//envio un msj con el id del proceso
 	t_msg* msg = string_message(CPU_ESPECIAL, "[PORCENTAJE] Hola soy un CPU", 1, -1);
-	if (enviar_mensaje(sock, msg) > 0) {
-		pthread_mutex_lock(&mutex);
+	int rs;
+	rs = enviar_mensaje(sock, msg);
+
+	pthread_mutex_lock(&mutex);
+	if (rs > 0) {
 		log_trace(logger, "[PORCENTAJE] Mensaje enviado OK");
-		pthread_mutex_unlock(&mutex);
+	} else {
+		log_trace(logger, "[PORCENTAJE] Error al enviar mensaje CPU_ESPECIAL");
 	}
+	pthread_mutex_unlock(&mutex);
 	destroy_message(msg);
 
 	//enviar_mensaje_cpu(sock);

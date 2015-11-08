@@ -61,6 +61,7 @@ typedef struct{
 	t_pcb* pcb;
 	int cantidad_sentencias;
 	unsigned int tiempo;
+	bool ejecuto_ok;
 }t_resultado_pcb;
 ///////////////////////////////////////////////PROTOTIPOS//////////////////////////////////////////////
 
