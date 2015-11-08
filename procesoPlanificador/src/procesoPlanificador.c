@@ -43,7 +43,7 @@ int main(void) {
 	time1 = time(NULL);
 	//pthread_create(&th_server_cpu, NULL, (void*)iniciar_server_select, NULL);
 
-	//pthread_create(&contador_IO_PCB, NULL, (void*) Hilo_IO, (void*) PID_GLOBAL);
+	pthread_create(&contador_IO_PCB, NULL, (void*) Hilo_IO, (void*) PID_GLOBAL);
 	t_cpu* cpu = NULL;
 	t_pcb* pcb = NULL;
 	int port = PUERTO_ESCUCHA();
@@ -1478,6 +1478,29 @@ void Hilo_IO(int pid) {
 
 					list_remove_by_condition(list_block,
 							(void*) es_el_pcb_buscado_en_block);
+
+				}
+
+			if (list_size(list_ready) > 0) {
+					if (cpu_disponible()) {
+						cpu = cpu_seleccionar();
+						if (cpu != NULL) {
+							t_ready* ready = malloc(sizeof(t_ready));
+							ready = list_get(list_ready, 0);
+							t_pcb* pcb2;
+							pcb2 = es_el_pcb_buscado_por_id(ready->pid);
+
+							pcb2->cpu_asignado = cpu->id;
+							cpu_ejecutar(cpu, pcb2);
+							cpu->estado = 0;
+						} else {
+							printf(
+									"No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",
+									pcb->pid);
+						}
+					} else {
+						printf("No existe CPU activa para asignarle un proceso \n");
+					}
 
 				}
 

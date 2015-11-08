@@ -209,8 +209,8 @@ bool cpu_existe(int id){
 	return cpu !=NULL;
 }
 
-bool _estado_bloqueado(t_block block){
-	return block.estado==1;
+bool _estado_bloqueado(t_block* block){
+	return block->estado==1;
 
 }
 bool _cpu_buscar(t_cpu* cpu){
