@@ -15,7 +15,7 @@ char* CONFIG_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoPl
 
 int PUERTO_ESCUCHA();
 
-int ALGORITMO_PLANIFICACION();
+char* ALGORITMO_PLANIFICACION();
 
 int QUANTUM();
 
@@ -29,8 +29,8 @@ int PUERTO_ESCUCHA(){
 	return config_get_int_value(cfg, "PUERTO_ESCUCHA");
 }
 
-int ALGORITMO_PLANIFICACION(){
-	return config_get_int_value(cfg, "ALGORITMO_PLANIFICACION");
+char* ALGORITMO_PLANIFICACION(){
+	return config_get_string_value(cfg, "ALGORITMO_PLANIFICACION");
 }
 
 int QUANTUM(){

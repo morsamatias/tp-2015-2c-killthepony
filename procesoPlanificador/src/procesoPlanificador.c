@@ -15,6 +15,8 @@
 #include "util.h"
 #include <math.h>
 #include <time.h>
+
+
 int PID = 1;
 int PID_GLOBAL = 1;
 int PID_GLOBAL_READY = 1;
@@ -22,6 +24,10 @@ int PID_GLOBAL_EXEC = 1;
 int PID_GLOBAL_BLOCK = 1;
 int PID_GLOBAL_FINISH = 1;
 int IO_GLOBAL = 1;
+
+
+#define RR 1;
+#define FIFO 0;
 
 t_log* logger;
 char* LOG_PATH = "log.txt";
@@ -356,9 +362,9 @@ int correr_proceso(char* path) {
 
 	pcb->cant_sentencias = get_cant_sent(path);
 
-	int algoritmo = ALGORITMO_PLANIFICACION();
+	//char* algoritmo = ALGORITMO_PLANIFICACION();
 
-	if (algoritmo == 0) {
+	if (string_equals_ignore_case(ALGORITMO_PLANIFICACION(),"FIFO")) {
 
 		log_trace(logger, "El algoritmo de planificación será FIFO");
 

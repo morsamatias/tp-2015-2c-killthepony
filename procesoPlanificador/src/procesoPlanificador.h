@@ -32,7 +32,6 @@ void cambiar_a_exec(int pid);
 t_list* pcbs;/*lista de pcbs*/
 
 
-
 /*
 typedef struct {
 	char path[MAX_PATH];
