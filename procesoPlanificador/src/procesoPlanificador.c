@@ -266,8 +266,7 @@ void procesar_msg_consola(char* msg) {
 
 			default:
 
-				log_trace(logger,"No se puede determinar el estado del proceso %d",
-						pcb->pid);
+				log_trace(logger,"No se puede determinar el estado del proceso %d",	pcb->pid);
 
 				break;
 
@@ -557,6 +556,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
+		log_trace(logger,"El proceso %d realiza una Entrada/Salida",pcb->pid);
+
 		pcb->cantidad_IO = pcb->cantidad_IO + 1;
 
 		if (pcb->cantidad_IO == 1) {
@@ -572,9 +573,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		}
 
 		PID_GLOBAL_BLOCK = pcb->pid;
-		IO_GLOBAL = msg->argv[1];
+		IO_GLOBAL = msg->argv[2];
 
-		int cantIO = msg->argv[1];
+		int cantIO = msg->argv[2];
 
 		PID_GLOBAL_EXEC = pcb->pid;
 
@@ -593,9 +594,15 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		pcb->estado = BLOCK;
 
+		pcb->pc = pcb->pc + msg->argv[3];
+
 		log_trace(logger,
 				"El proceso %d se encuentra en la cola de procesos en Bloqueados",
 				pcb->pid);
+
+		cpu = cpu_buscar_por_socket(socket);
+
+		cpu->estado = 1;
 
 		//log_trace(logger,"Operaciones realizadas por el proceso %d hasta el momento son:", pcb->pid);
 
@@ -673,6 +680,28 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		 }
 
 		 */
+
+		if (list_size(list_ready) > 0) {
+					if (cpu_disponible()) {
+						cpu = cpu_seleccionar();
+						if (cpu != NULL) {
+							t_ready* ready = list_get(list_ready, 0);
+							t_pcb* pcb2;
+							pcb2 = es_el_pcb_buscado_por_id(ready->pid);
+
+							pcb2->cpu_asignado = cpu->id;
+							cpu_ejecutar(cpu, pcb2);
+							cpu->estado = 0;
+						} else {
+							printf(
+									"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",
+									pcb->pid);
+						}
+					} else {
+						printf("No existe CPU activa para asignarle un nuevo proceso");
+					}
+
+				}
 
 		destroy_message(msg);
 
@@ -776,6 +805,10 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		destroy_message(msg);
 
+		log_trace(logger,
+						"Operaciones realizadas por el proceso %d hasta el momento son:\n",
+						pcb->pid);
+
 		break;
 
 		/*
@@ -855,11 +888,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 	case PCB_LOGUEO:
 
-		pcb->pid = msg->argv[0];
-
-		log_trace(logger,
-				"Operaciones realizadas por el proceso %d hasta el momento son:\n",
-				pcb->pid);
+		pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
 		m = 1;
 
@@ -1451,32 +1480,6 @@ void Hilo_IO(int pid) {
 							(void*) es_el_pcb_buscado_en_block);
 
 				}
-
-			}
-
-		}
-		if (list_size(list_ready) > 0) {
-			if (cpu_disponible()) {
-				cpu = cpu_seleccionar();
-				if (cpu != NULL) {
-					t_ready* ready = malloc(sizeof(ready));
-
-					ready = list_get(list_ready, 0);
-
-					t_pcb* pcb2;
-
-					pcb2 = es_el_pcb_buscado_por_id(ready->pid);
-
-					pcb2->cpu_asignado = cpu->id;
-
-					cpu_ejecutar(cpu, pcb2);
-
-					cpu->estado = 0;
-				}
-
-			} else {
-
-				printf("No existe CPU activa para asignarle un nuevo proceso \n");
 
 			}
 
