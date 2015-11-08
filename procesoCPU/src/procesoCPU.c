@@ -14,7 +14,6 @@ int main(void) {
 	porcentaje_a_planificador = malloc (contador*sizeof(int));
 	inicializar_porcentajes();
 
-
 	//hilo que escucha las peticiones del planificador
 	pthread_t th_responder_porcentaje;
 	pthread_create(&th_responder_porcentaje, NULL,(void*)&hilo_responder_porcentaje,NULL );

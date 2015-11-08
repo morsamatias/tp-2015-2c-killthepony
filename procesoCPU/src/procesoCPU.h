@@ -41,6 +41,7 @@ int* socket_planificador;
 int socket_planificador_especial;
 int* socket_memoria;
 
+
 int* sentencias_ejecutadas_ultimo_min;
 int* porcentaje_a_planificador;
 
@@ -62,6 +63,7 @@ typedef struct{
 	int cantidad_sentencias;
 	unsigned int tiempo;
 	bool ejecuto_ok;
+	t_list* resultados_sentencias;
 }t_resultado_pcb;
 ///////////////////////////////////////////////PROTOTIPOS//////////////////////////////////////////////
 
@@ -70,8 +72,11 @@ int finalizar();
 int conectar_con_planificador(int numero);
 int conectar_con_planificador_especial();
 int enviar_porcentaje_a_planificador();
+t_msg* sent_to_msg(t_sentencia* sent);
+int enviar_logs(int socket, t_list* resultados_sentencias);
 void* hilo_responder_porcentaje();
 void inicializar_porcentajes();
+void inicializar_resultados_sentencias();
 void* hilo_porcentaje() ;
 int procesar_mensaje_planif(t_msg* msg,int numero);
 t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem, int hilo);
