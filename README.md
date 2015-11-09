@@ -22,9 +22,8 @@ ejemplo:para instalar el planificador seria
 source instalar-utiles.sh
 source instalar-procesoPlanificador.sh
 
-si aun asi no instala la libreria
-en consola:
-LD_LIBRARY_PATH=/home/utnso/Escritorio/git/tp-2015-2c-killthepony/utiles/Debug
+si aun asi no instala la libreria, escribir en consola:
+export LD_LIBRARY_PATH=/home/utnso/Escritorio/git/tp-2015-2c-killthepony/utiles/Debug
 
 NOTA: LA LIBRERIA HAY QUE HACERLA POR CADA SESION
 -----------------------------------------
