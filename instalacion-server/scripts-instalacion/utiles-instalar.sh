@@ -11,3 +11,5 @@ export LD_LIBRARY_PATH=/home/utnso/Escritorio/git/tp-2015-2c-killthepony/utiles/
 echo $LD_LIBRARY_PATH
 
 echo "fin instalacion utilesutilesutilesutilesutilesutiles"
+
+cd /home/utnso/Escritorio/git/tp-2015-2c-killthepony/instalacion-server
