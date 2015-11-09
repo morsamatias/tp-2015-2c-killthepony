@@ -583,13 +583,13 @@ int enviar_logs(int socket, t_list* resultados_sentencias){
 		sent = (t_sentencia*) list_get(resultados_sentencias, i);
 
 		msg = sent_to_msg(sent);
-/*
+
 		if(enviar_mensaje(socket, msg)<0){
 			log_error(logger, "[HILO #%d] ERROR AL ENVIAR LOG AL PLANIFICADOR", sent->hilo);
 			destroy_message(msg);
 			rs = -1;
 			break;
-		}*/
+		}
 		destroy_message(msg);
 	}
 	return rs;
