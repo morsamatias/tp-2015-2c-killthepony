@@ -12,4 +12,5 @@ echo $LD_LIBRARY_PATH
 
 echo "fin instalacion utilesutilesutilesutilesutilesutiles"
 
-cd /home/utnso/Escritorio/git/tp-2015-2c-killthepony/instalacion-server
+cd /home/utnso/Escritorio/git/tp-2015-2c-killthepony/instalacion-server/scripts-instalacion
+
