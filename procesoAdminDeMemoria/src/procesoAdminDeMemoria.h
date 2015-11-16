@@ -126,6 +126,8 @@ int 			encontrar_marco_libre							();
 void			quitar_todas_las_paginas_de_memoria_del_proceso	(t_proceso* proceso);
 void 			quitar_pagina_de_la_memoria_signal				(t_pagina* pagina);
 t_busq_marco 	buscar_marco_de_pagina_en_TLB_y_tabla_paginas	(int pid, int nro_pagina);
+t_pagina* 		mover_y_devolver_primer_pagina_al_final_de_la_lista(t_list* lista_paginas);
+t_pagina* 		buscar_pagina_victima_CLOCK						(t_list* lista_paginas);
 
 // MANEJO DE SEÑALES
 

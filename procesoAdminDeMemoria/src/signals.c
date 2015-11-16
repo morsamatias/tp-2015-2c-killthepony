@@ -65,9 +65,21 @@ void handler_SIGUSR1(){
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void handler_SIGUSR2(){
+
+
 	log_info(logger, "Señal Capturada: SIGUSR2 - Borrar Memoria");
 	sem_wait(&mutex_PAGINAS);
+	// GUARDO LAS VARIABLES GLOBALES EN UNA AUXILIAR POR LAS DUDAS
+	int gl_PID_aux = gl_PID;
+	int	gl_nro_pagina_aux = gl_nro_pagina;
+
+	// BORRO LAS PAGINAS DE MEMORIA
 	list_iterate(paginas,(void*)quitar_todas_las_paginas_de_memoria_del_proceso);
+
+	// RESTAURO LAS VARIABLES GLOABLES
+	gl_PID = gl_PID_aux;
+	gl_nro_pagina = gl_nro_pagina_aux;
+
 	sem_post(&mutex_PAGINAS);
 	log_info(logger, "Borrado Completo Memoria");
 }
@@ -103,7 +115,9 @@ void handler_SIGPOLL(){
 				else
 					fprintf(archivo,"Marco: %d	Contenido: %s\n",i,memoria[i]->contenido);
 			}
+			fclose(archivo);
 			log_info(logger, "Realizado correctamente Dump Memoria");
+			exit(1);
 	} else {
 			// CONTINUO LA EJECUCION NORMAL
 	}

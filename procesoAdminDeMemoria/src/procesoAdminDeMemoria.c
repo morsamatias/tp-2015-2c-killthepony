@@ -480,10 +480,11 @@ int reemplazar_pagina_en_memoria_segun_algoritmo(t_proceso* proceso, int pagina,
 	t_pagina* pag;
 
 	// BUSCO LA PAGINA "VICTIMA" PARA QUITAR DE MEMORIA
-	if(string_equals_ignore_case(ALGORITMO_REEMPLAZO(),"FIFO")||string_equals_ignore_case(ALGORITMO_REEMPLAZO(),"LRU")){
-		pag = list_remove(proceso->paginas,0);
-		list_add(proceso->paginas,pag);
+	if(string_equals_ignore_case(ALGORITMO_REEMPLAZO(),"FIFO")||
+			string_equals_ignore_case(ALGORITMO_REEMPLAZO(),"LRU")){
+		pag = mover_y_devolver_primer_pagina_al_final_de_la_lista(proceso->paginas);
 	} else {
+		pag = buscar_pagina_victima_CLOCK(proceso->paginas);
 	}
 
 	// SACO LA PAGINA DE MEMORIA
@@ -493,6 +494,51 @@ int reemplazar_pagina_en_memoria_segun_algoritmo(t_proceso* proceso, int pagina,
 	agregar_pagina_en_memoria(proceso, pagina, contenido);
 
 	return 2;
+}
+
+t_pagina* buscar_pagina_victima_CLOCK(t_list* lista_paginas){
+	t_pagina* pag;				// PAGINA VICTIMA
+	int flag_match = 0; 		// FLAG QUE INDICA CUANDO ENCONTRO A LA VICTIMA
+	int flag_primer_vuelta = 1; // FLAG QUE CUAL ES LA PRIMER PAGINA
+	int flag_find_00 = 1;		// FLAG QUE INDICA SI ESTAMOS BUSCANDO "00" (SIN USAR NI MODIFICAR)
+	int flag_find_01 = 0;		// FLAG QUE INDICA SI ESTAMOS BUSCANDO "01" (SIN USAR MODIFICADO)
+	int nro_pagina_inicial;		// PRIMER PAGINA PARA SABER CUANDO BUSCAR "01"
+
+	while(!flag_match){
+		pag = mover_y_devolver_primer_pagina_al_final_de_la_lista(lista_paginas);
+
+		if(flag_primer_vuelta){
+			nro_pagina_inicial = pag->pagina;
+			flag_primer_vuelta = 0;
+		} else {
+			if(nro_pagina_inicial == pag->pagina)
+				if(flag_find_00){
+					flag_find_00 = 0;
+					flag_find_01 = 1;
+				} else {
+					flag_find_00 = 1;
+					flag_find_01 = 0;
+				}
+		}
+
+		if(flag_find_00 && !pag->usado && !pag->modificado && pag->presencia)
+			flag_match = 1;
+
+		if(flag_find_01)
+			if(!pag->usado && pag->modificado && pag->presencia)
+				flag_match = 1;
+			else
+				pag->usado = 0;
+
+	}
+	return(pag);
+}
+
+t_pagina* mover_y_devolver_primer_pagina_al_final_de_la_lista(t_list* lista_paginas){
+	t_pagina* pag;
+	pag = list_remove(lista_paginas,0);
+	list_add(lista_paginas,pag);
+	return(pag);
 }
 
 
