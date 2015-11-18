@@ -69,6 +69,9 @@ t_list* list_block;/*lista de procesos bloqueados*/
 
 t_list* list_finish;/*lista de procesos terminados*/
 
+
+sem_t mutex_IO;
+
 typedef struct {
 	int pid;
 	int cant_sentencias;

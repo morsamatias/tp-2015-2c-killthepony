@@ -47,7 +47,11 @@ int main(void) {
 	time1 = time(NULL);
 	//pthread_create(&th_server_cpu, NULL, (void*)iniciar_server_select, NULL);
 
+	sem_init(&mutex_IO, 0, 1);
+
 	pthread_create(&contador_IO_PCB, NULL, (void*) Hilo_IO, (void*) PID_GLOBAL);
+
+
 	t_cpu* cpu = NULL;
 	t_pcb* pcb = NULL;
 	int port = PUERTO_ESCUCHA();
@@ -737,11 +741,14 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		pcb->estado = BLOCK
 		;
 
+		sem_post(&mutex_IO);
+
 		pcb->pc = pcb->pc + msg->argv[3];
 
 		log_info(logger,
 				"El proceso %d se encuentra en la cola de procesos en Bloqueados",
 				pcb->pid);
+
 
 		cpu = cpu_buscar_por_socket(socket);
 
@@ -1691,7 +1698,9 @@ void Hilo_IO(int pid) {
 
 	while (1) {
 
-		if ((list_size(list_block)) != 0) {
+sem_wait(&mutex_IO);
+
+		while(list_size(list_block) != 0) {
 			//hay bloqueados
 			if ((list_any_satisfy(list_block, (void*) _estado_bloqueado))) {
 
