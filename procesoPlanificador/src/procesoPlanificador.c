@@ -866,13 +866,19 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 					cpu_ejecutar(cpu, pcb2);
 					cpu->estado = 0;
 				} else {
-					printf(
+
+					/*printf(
 							"No existe CPU activa para asignar al proceso %d. El proceso queda en READY\n",
+							pcb->pid);*/
+					log_info(logger,"No existe CPU activa para asignar al proceso %d. El proceso queda en READY\n",
 							pcb->pid);
 				}
 			} else {
-				printf(
-						"No existe CPU activa para asignarle un nuevo proceso\n");
+
+			//	printf(
+				//		"No existe CPU activa para asignarle un nuevo proceso\n");
+
+			log_info(logger,"No existe CPU activa para asignarle un nuevo proceso\n");
 			}
 
 		}
@@ -972,7 +978,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		case iniciar:
 
-			log_trace(logger, "	mProc	%d	-	Iniciado.", pcb->pid);
+			log_info(logger, "	mProc	%d	-	Iniciado.", pcb->pid);
 
 			break;
 
@@ -980,7 +986,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 			pagina = msg->argv[2];
 
-			log_trace(logger, "mProc	%d	-	Pagina	%d	leida: %s \n", pcb->pid,
+			log_info(logger, "mProc	%d	-	Pagina	%d	leida: %s \n", pcb->pid,
 					pagina, msg->stream);
 
 			break;
@@ -989,7 +995,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 			pagina = msg->argv[2];
 
-			log_trace(logger, "mProc	%d	-	Pagina	%d	escrita: %s \n", pcb->pid,
+			log_info(logger, "mProc	%d	-	Pagina	%d	escrita: %s \n", pcb->pid,
 					msg->argv[m + 1], msg->stream);
 
 			break;
@@ -998,14 +1004,14 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 			segundos = msg->argv[2];
 
-			log_trace(logger, "mProc	%d	en	entrada-salida	de	tiempo	%d. \n",
+			log_info(logger, "mProc	%d	en	entrada-salida	de	tiempo	%d. \n",
 					pcb->pid, segundos);
 
 			break;
 
 		case final:
 
-			log_trace(logger, "mProc	%d	Finalizado.", pcb->pid);
+			log_info(logger, "mProc	%d	Finalizado.", pcb->pid);
 
 			m++;
 
@@ -1013,13 +1019,13 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		case error:
 
-			log_trace(logger, "mProc	%d	-	Fallo.", pcb->pid);
+			log_info(logger, "mProc	%d	-	Fallo.", pcb->pid);
 
 			break;
 
 		default:
 
-			log_trace(logger, "No se comprende el mensaje enviado \n");
+			log_error(logger, "No se comprende el mensaje enviado \n");
 
 			break;
 
@@ -1055,7 +1061,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		list_remove_by_condition(list_exec, (void*) es_el_pcb_buscado_en_exec);
 
-		log_trace(logger,
+		log_info(logger,
 				"El proceso de Pid %d finalizó su Quantum y pasa del estado en Ejecución al estado Listo \n",
 				msg->argv[0]);
 
@@ -1072,7 +1078,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		pcb->tiempo_inicio_ready = time(NULL);
 
-		log_trace(logger, "El proceso %d se encuentra en la cola de Listos \n",
+		log_info(logger, "El proceso %d se encuentra en la cola de Listos \n",
 				pcb->pid);
 
 		if (pcb->pc != pcb->cant_sentencias) {
@@ -1100,12 +1106,17 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 					cpu_ejecutar(cpu, pcb2);
 					cpu->estado = 0;
 				} else {
-					printf(
+				/*	printf(
+							"No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",
+							pcb->pid);*/
+					log_info(logger,
 							"No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",
 							pcb->pid);
 				}
 			} else {
-				printf("No existe CPU activa para asignarle un proceso \n");
+
+				log_info(logger,"No existe CPU activa para asignarle un nuevo proceso\n");
+				//printf("No existe CPU activa para asignarle un proceso \n");
 			}
 
 		}
@@ -1284,6 +1295,38 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		 break;
 
 
+		 if ((list_size(list_ready)) != 0) {
+		 if (cpu_disponible()) cpu = cpu_seleccionar();
+		 if(cpu!=NULL){
+		 pcb->cpu_asignado = cpu->id;
+		 cpu_ejecutar(cpu, pcb);
+		 cpu->estado=0;}
+		 else
+		 {printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+		 }
+		 }else
+		 {
+		 printf("No existe CPU activa para asignarle un nuevo proceso");
+		 }
+
+		 break;
+
+		 if ((list_size(list_ready)) != 0) {
+		 if (cpu_disponible()) cpu = cpu_seleccionar();
+		 if(cpu!=NULL){
+		 pcb->cpu_asignado = cpu->id;
+		 cpu_ejecutar(cpu, pcb);
+		 cpu->estado=0;}
+		 else
+		 {printf("No existe CPU activa para asignar al proceso %d. El proceso queda en READY", pcb->pid);
+		 }
+		 }else
+		 {
+		 printf("No existe CPU activa para asignarle un nuevo proceso");
+		 }
+
+		 break;
+
 		 case PCB_FINALIZAR:
 
 		 pcb = es_el_pcb_buscado_por_id(msg->argv[1]);
@@ -1366,7 +1409,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 				if (cpu != NULL) {
 
-					log_trace(logger, "Porcentaje de Uso de la Cpu %d: %d % \n",
+					log_info(logger, "Porcentaje de Uso de la Cpu %d: %d % \n",
 							cpu->id, cpu->usoUltimoMinuto);
 
 				}
@@ -1376,7 +1419,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		} else {
 
-			log_trace(logger,
+			log_warning(logger,
 					"Aún no está la información del Porcentaje de Uso de todas las CPUs\n");
 		}
 
@@ -1460,14 +1503,14 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		cpu_especial = socket;
 
-		log_trace(logger,
+		log_info(logger,
 				"Se conecta con el Planificador el Hilo al que se pedirán las solicitudes de Uso de CPUs \n");
 
 		break;
 
 	default:
 
-		printf("El código de mensaje enviado es incorrecto \n");
+		log_error(logger,"El código de mensaje enviado es incorrecto \n");
 
 		break;
 	}
@@ -1570,13 +1613,17 @@ void Hilo_IO(int pid) {
 							cpu_ejecutar(cpu, pcb2);
 							cpu->estado = 0;
 						} else {
-							printf(
+					/*		printf(
 									"No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",
 									pcb->pid);
+						*/
+						log_info(logger,
+								"No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",pcb->pid);
 						}
 					} else {
-						printf(
-								"No existe CPU activa para asignarle un proceso \n");
+						//printf(
+							log_info(logger,
+									"No existe CPU activa para asignarle un proceso \n");
 					}
 
 				}
@@ -1739,7 +1786,7 @@ void cambiar_a_exec(int pid) {
 	pcb->estado = EXEC
 	;
 
-	log_trace(logger,
+	log_info(logger,
 			"El proceso %d se encuentra en la cola de procesos en Ejecución y se está ejecutando en la CPU %d \n",
 			pcb->pid, pcb->cpu_asignado);
 

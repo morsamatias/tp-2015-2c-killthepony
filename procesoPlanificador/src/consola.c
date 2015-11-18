@@ -7,7 +7,6 @@
 
 #include "consola.h"
 
-
 e_comando parsear_comando(char* comando) {
 
 	if (string_equals_ignore_case(comando, "CORRER"))
@@ -24,7 +23,6 @@ e_comando parsear_comando(char* comando) {
 	return NADA;
 }
 
-
 void strip(char *s) {
 	char *p2 = s;
 	while (*s != '\0') {
@@ -36,8 +34,6 @@ void strip(char *s) {
 	}
 	*p2 = '\0';
 }
-
-
 
 char** separar_por_espacios(char* string) {
 	char** res = string_split(string, " ");
@@ -58,14 +54,12 @@ void leer_comando_consola(char* comando) {
 
 }
 
-
-int encontrar_espacio(char* msg)
-{
-	int tam,i;
-	tam=string_length(msg);
-	for( i=0;i<tam;i++)
-	{
-		if (msg[i]==' ') return(i);
+int encontrar_espacio(char* msg) {
+	int tam, i;
+	tam = string_length(msg);
+	for (i = 0; i < tam; i++) {
+		if (msg[i] == ' ')
+			return (i);
 	}
-	return(-1);
+	return (-1);
 }
