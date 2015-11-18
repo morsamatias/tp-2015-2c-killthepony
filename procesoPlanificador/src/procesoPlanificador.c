@@ -16,7 +16,6 @@
 #include <math.h>
 #include <time.h>
 
-
 int PID = 1;
 int PID_GLOBAL = 1;
 int PID_GLOBAL_READY = 1;
@@ -24,7 +23,6 @@ int PID_GLOBAL_EXEC = 1;
 int PID_GLOBAL_BLOCK = 1;
 int PID_GLOBAL_FINISH = 1;
 int IO_GLOBAL = 1;
-
 
 #define RR 1;
 #define FIFO 0;
@@ -121,7 +119,8 @@ int main(void) {
 							//si el cpu se desconecto habria que sacarlo de la lista de cpus, o marcarlo como desconectado
 							//todo: hay que buscar los pcbs que esta procesando este socket, para replanificarlos en otra cpu
 							log_trace(logger,
-									"El cpu %d, socket: %d se desconecto",cpu->id, cpu->socket);
+									"El cpu %d, socket: %d se desconecto",
+									cpu->id, cpu->socket);
 
 							pcb = pcb_buscar_por_cpu(cpu->id);
 
@@ -212,15 +211,13 @@ void procesar_msg_consola(char* msg) {
 		pid = atoi(input_user[1]);
 		log_trace(logger, "Finalizar proceso cuyo pid es: %d\n", pid);
 		t_pcb* pcb;
-		PID_GLOBAL=pid;
-		if(list_any_satisfy(pcbs,(void*) es_el_pcb_buscado)){
 		PID_GLOBAL = pid;
-		pcb = list_get(pcbs, pos_del_pcb(pid));
-		pcb->pc = pcb->cant_sentencias;
-		}
-		else
-		{
-			log_trace(logger,"No existe un proceso con el PID ingresado");
+		if (list_any_satisfy(pcbs, (void*) es_el_pcb_buscado)) {
+			PID_GLOBAL = pid;
+			pcb = list_get(pcbs, pos_del_pcb(pid));
+			pcb->pc = pcb->cant_sentencias;
+		} else {
+			log_trace(logger, "No existe un proceso con el PID ingresado");
 		}
 		break;
 	case PS:
@@ -272,7 +269,9 @@ void procesar_msg_consola(char* msg) {
 
 			default:
 
-				log_trace(logger,"No se puede determinar el estado del proceso %d",	pcb->pid);
+				log_trace(logger,
+						"No se puede determinar el estado del proceso %d",
+						pcb->pid);
 
 				break;
 
@@ -284,7 +283,8 @@ void procesar_msg_consola(char* msg) {
 
 	case CPU:
 		i = 0;
-		log_trace(logger, "Porcentaje de Usos de las CPUs en el último minuto \n");
+		log_trace(logger,
+				"Porcentaje de Usos de las CPUs en el último minuto \n");
 
 		//	int uso;
 		//	int uso_rodondeado;
@@ -348,7 +348,7 @@ void procesar_msg_consola(char* msg) {
 	free_split(input_user);
 }
 
-void mostrar_porcentaje(int cpu_id, int porcentaje){
+void mostrar_porcentaje(int cpu_id, int porcentaje) {
 	//t_cpu* cpu = cpu_buscar(cpu_id);
 	//cpu->usoUltimoMinuto = porcentaje;
 	log_trace(logger, "Porcentaje de Uso de la Cpu %d: %d", cpu_id, porcentaje);
@@ -364,7 +364,7 @@ int correr_proceso(char* path) {
 
 	//char* algoritmo = ALGORITMO_PLANIFICACION();
 
-	if (string_equals_ignore_case(ALGORITMO_PLANIFICACION(),"FIFO")) {
+	if (string_equals_ignore_case(ALGORITMO_PLANIFICACION(), "FIFO")) {
 
 		log_trace(logger, "El algoritmo de planificación será FIFO");
 
@@ -562,7 +562,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
-		log_trace(logger,"El proceso %d realiza una Entrada/Salida",pcb->pid);
+		log_trace(logger, "El proceso %d realiza una Entrada/Salida", pcb->pid);
 
 		pcb->cantidad_IO = pcb->cantidad_IO + 1;
 
@@ -571,10 +571,11 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 			pcb->tiempo_entrada_salida = time(NULL);
 
 			//log_trace(logger,
-				//	"Tiempo en el que el proceso %d inicia la Entrada-Salida es %ld",
-					//pcb->pid, pcb->tiempo_entrada_salida);
+			//	"Tiempo en el que el proceso %d inicia la Entrada-Salida es %ld",
+			//pcb->pid, pcb->tiempo_entrada_salida);
 
-			pcb->tiempo_respuesta = difftime(pcb->tiempo_entrada_salida, pcb->tiempo_inicio_proceso);
+			pcb->tiempo_respuesta = difftime(pcb->tiempo_entrada_salida,
+					pcb->tiempo_inicio_proceso);
 
 		}
 
@@ -598,7 +599,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		list_add(list_block, blocked);
 
-		pcb->estado = BLOCK;
+		pcb->estado = BLOCK
+		;
 
 		pcb->pc = pcb->pc + msg->argv[3];
 
@@ -688,26 +690,26 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		 */
 
 		if (list_size(list_ready) > 0) {
-					if (cpu_disponible()) {
-						cpu = cpu_seleccionar();
-						if (cpu != NULL) {
-							t_ready* ready = list_get(list_ready, 0);
-							t_pcb* pcb2;
-							pcb2 = es_el_pcb_buscado_por_id(ready->pid);
+			if (cpu_disponible()) {
+				cpu = cpu_seleccionar();
+				if (cpu != NULL) {
+					t_ready* ready = list_get(list_ready, 0);
+					t_pcb* pcb2;
+					pcb2 = es_el_pcb_buscado_por_id(ready->pid);
 
-							pcb2->cpu_asignado = cpu->id;
-							cpu_ejecutar(cpu, pcb2);
-							cpu->estado = 0;
-						} else {
-							printf(
-									"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",
-									pcb->pid);
-						}
-					} else {
-						printf("No existe CPU activa para asignarle un nuevo proceso");
-					}
-
+					pcb2->cpu_asignado = cpu->id;
+					cpu_ejecutar(cpu, pcb2);
+					cpu->estado = 0;
+				} else {
+					printf(
+							"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",
+							pcb->pid);
 				}
+			} else {
+				printf("No existe CPU activa para asignarle un nuevo proceso");
+			}
+
+		}
 
 		destroy_message(msg);
 
@@ -717,7 +719,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
 
-		log_trace(logger, "Se comienza a Finalizar el proceso %d \n",pcb->pid);
+		log_trace(logger, "Se comienza a Finalizar el proceso %d \n", pcb->pid);
 
 		printf("pcb->pid %d\n", msg->argv[0]);
 
@@ -754,16 +756,18 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		pcb->tiempo_fin_proceso = time(NULL);
 
 		//log_trace(logger,
-			//	"Tiempo en el que el proceso %d finaliza operatoria es %ld",
-				//pcb->pid, pcb->tiempo_fin_proceso);
+		//	"Tiempo en el que el proceso %d finaliza operatoria es %ld",
+		//pcb->pid, pcb->tiempo_fin_proceso);
 
-		pcb->tiempo_retorno = difftime(pcb->tiempo_fin_proceso, pcb->tiempo_inicio_proceso);
+		pcb->tiempo_retorno = difftime(pcb->tiempo_fin_proceso,
+				pcb->tiempo_inicio_proceso);
 
 		if (pcb->cantidad_IO == 0) {
 
 			pcb->tiempo_entrada_salida = time(NULL);
 
-			pcb->tiempo_respuesta = difftime(pcb->tiempo_fin_proceso,pcb->tiempo_inicio_proceso);
+			pcb->tiempo_respuesta = difftime(pcb->tiempo_fin_proceso,
+					pcb->tiempo_inicio_proceso);
 
 		}
 
@@ -777,7 +781,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		log_trace(logger,
 				"Métricas del Proceso %d \n El Tiempo de Retorno fue de %d segundos \n El Tiempo de Respuesta fue de %d segundos \n El Tiempo de Espera fue de %d segundos\n",
-				pcb->pid, pcb->tiempo_retorno, pcb->tiempo_respuesta, pcb->tiempo_espera);
+				pcb->pid, pcb->tiempo_retorno, pcb->tiempo_respuesta,
+				pcb->tiempo_espera);
 
 		//printf("Hay que finalizar el proceso");
 
@@ -802,7 +807,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 							pcb->pid);
 				}
 			} else {
-				printf("No existe CPU activa para asignarle un nuevo proceso\n");
+				printf(
+						"No existe CPU activa para asignarle un nuevo proceso\n");
 			}
 
 		}
@@ -812,8 +818,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		destroy_message(msg);
 
 		log_trace(logger,
-						"Operaciones realizadas por el proceso %d hasta el momento son:\n",
-						pcb->pid);
+				"Operaciones realizadas por el proceso %d hasta el momento son:\n",
+				pcb->pid);
 
 		break;
 
@@ -1487,7 +1493,7 @@ void Hilo_IO(int pid) {
 
 				}
 
-			if (list_size(list_ready) > 0) {
+				if (list_size(list_ready) > 0) {
 					if (cpu_disponible()) {
 						cpu = cpu_seleccionar();
 						if (cpu != NULL) {
@@ -1505,7 +1511,8 @@ void Hilo_IO(int pid) {
 									pcb->pid);
 						}
 					} else {
-						printf("No existe CPU activa para asignarle un proceso \n");
+						printf(
+								"No existe CPU activa para asignarle un proceso \n");
 					}
 
 				}
@@ -1587,8 +1594,11 @@ t_pcb* es_el_pcb_buscado_struct(t_pcb * pcb) {
 		pcb = list_get(pcbs, i);
 
 		if (pcb->pid == PID_GLOBAL) {
+
 			break;
-		} else {
+		}
+		else {
+
 			i++;
 		}
 	}
@@ -1657,12 +1667,13 @@ void cambiar_a_exec(int pid) {
 	pcb->tiempo_fin_ready = time(NULL);
 
 	//log_trace(logger, "Tiempo de fin del proceso %d en la cola de Ready es %d",
-		//	pcb->pid, pcb->tiempo_fin_ready);
+	//	pcb->pid, pcb->tiempo_fin_ready);
 
 	pcb->tiempo_espera = pcb->tiempo_espera
-			+ difftime(pcb->tiempo_fin_ready , pcb->tiempo_inicio_ready);
+			+ difftime(pcb->tiempo_fin_ready, pcb->tiempo_inicio_ready);
 
-	pcb->estado = EXEC;
+	pcb->estado = EXEC
+	;
 
 	log_trace(logger,
 			"El proceso %d se encuentra en la cola de procesos en Ejecución y se está ejecutando en la CPU %d \n",
