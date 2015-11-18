@@ -118,18 +118,20 @@ int main(void) {
 							cpu = cpu_buscar_por_socket(socket);
 							//si el cpu se desconecto habria que sacarlo de la lista de cpus, o marcarlo como desconectado
 							//todo: hay que buscar los pcbs que esta procesando este socket, para replanificarlos en otra cpu
-							log_trace(logger,
+							log_warning(logger,
 									"El cpu %d, socket: %d se desconecto",
 									cpu->id, cpu->socket);
 
 							pcb = pcb_buscar_por_cpu(cpu->id);
 
 							if (pcb != NULL) {
-								log_trace(logger,
+								log_info(logger,
 										" La CPU tenia a cargo los siguentes procesos  %d",
 										pcb->pid);
 							} else {
-								log_trace(logger, "Ningun pcb a replanificar");
+								//no se replanifica nada
+								//por eso no se tienen en cuenta esto
+								//log_trace(logger, "Ningun pcb a replanificar");
 							}
 
 						} else {
@@ -199,31 +201,52 @@ void procesar_msg_consola(char* msg) {
 		//	memset(path_completo, 0, 1000);
 		strcpy(path_completo,
 				"/home/utnso/Escritorio/git/tp-2015-2c-killthepony/tests/");
+
 		strcat(path_completo, path);
+
 		log_trace(logger, "Correr path completo: %s\n", path_completo);
+
 		if (file_exists(path_completo)) {
+
 			correr_proceso(path_completo);
 		} else {
+
 			log_trace(logger, "Mcod no existente\n");
 		}
+
 		break;
+
 	case FINALIZAR:
+
 		pid = atoi(input_user[1]);
-		log_trace(logger, "Finalizar proceso cuyo pid es: %d\n", pid);
+
+		log_info(logger,
+				"Finalizar proceso cuyo pid es: %d\n", pid);
+
 		t_pcb* pcb;
+
 		PID_GLOBAL = pid;
+
 		if (list_any_satisfy(pcbs, (void*) es_el_pcb_buscado)) {
 			PID_GLOBAL = pid;
-			pcb = list_get(pcbs, pos_del_pcb(pid));
+			pcb = list_get(pcbs,
+					pos_del_pcb(pid));
+
 			pcb->pc = pcb->cant_sentencias;
 		} else {
-			log_trace(logger, "No existe un proceso con el PID ingresado");
+			log_error(logger,
+					"No existe un proceso con el PID ingresado");
 		}
 		break;
 	case PS:
-		log_trace(logger, "PS listar procesos\n");
+
+		log_info(logger,
+				"PS listar procesos\n");
+
 		int i = 0;
+
 		t_pcb* pcb2;
+
 		while ((i + 1) <= list_size(pcbs)) {
 
 			pcb2 = list_get(pcbs, i);
@@ -233,43 +256,46 @@ void procesar_msg_consola(char* msg) {
 			switch (pcb2->estado) {
 
 			case 0:
-
+/*
 				log_trace(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",
+						pcb2->pid, pcb2->path, "NEW");
+*/
+				log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",
 						pcb2->pid, pcb2->path, "NEW");
 
 				break;
 
 			case 1:
 
-				log_trace(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",
+				log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",
 						pcb2->pid, pcb2->path, "READY");
 
 				break;
 
 			case 2:
 
-				log_trace(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",
+				log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",
 						pcb2->pid, pcb2->path, "BLOCK");
 
 				break;
 
 			case 3:
 
-				log_trace(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",
+				log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",
 						pcb2->pid, pcb2->path, "EXEC");
 
 				break;
 
 			case 4:
 
-				log_trace(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",
+				log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",
 						pcb2->pid, pcb2->path, "FINISH");
 
 				break;
 
 			default:
 
-				log_trace(logger,
+				log_error(logger,
 						"No se puede determinar el estado del proceso %d",
 						pcb->pid);
 
@@ -283,7 +309,7 @@ void procesar_msg_consola(char* msg) {
 
 	case CPU:
 		i = 0;
-		log_trace(logger,
+		log_info(logger,
 				"Porcentaje de Usos de las CPUs en el último minuto \n");
 
 		//	int uso;
@@ -342,7 +368,7 @@ void procesar_msg_consola(char* msg) {
 		 fin = true;
 		 break;*/
 	default:
-		log_trace(logger, "Comando desconocido\n");
+		log_error(logger, "Comando desconocido\n");
 		break;
 	}
 	free_split(input_user);
@@ -351,7 +377,8 @@ void procesar_msg_consola(char* msg) {
 void mostrar_porcentaje(int cpu_id, int porcentaje) {
 	//t_cpu* cpu = cpu_buscar(cpu_id);
 	//cpu->usoUltimoMinuto = porcentaje;
-	log_trace(logger, "Porcentaje de Uso de la Cpu %d: %d", cpu_id, porcentaje);
+	log_info(logger,
+			"Porcentaje de Uso de la Cpu %d: %d", cpu_id, porcentaje);
 }
 
 int correr_proceso(char* path) {
