@@ -343,7 +343,85 @@ void procesar_msg_consola(char* msg) {
 		 printf("No hay CPUs activas por el momento");
 		 }
 
+
+		//log_trace(logger,"Operaciones realizadas por el proceso %d hasta el momento son:", pcb->pid);
+
+
+
+		 log_trace(logger,"Operaciones realizadas por el proceso %d hasta el momento son:", pcb->pid);
+
+		 m=1;
+
+		 while(msg->argv[m]!='\0'){
+
+		 switch (msg->argv[m]) {
+
+		 case iniciar:
+
+		 log_trace(logger,"	mProc	%d	-	Iniciado.", pcb->pid);
+
+		 m++;
+
+		 break;
+
+
+		 case leer:
+
+		 log_trace(logger,"mProc	%d	-	Pagina	%d	leida:", pcb->pid,msg->argv[m+1]);
+
+		 m++;
+
+		 m++;
+
+		 break;
+
+		 case escribir:
+
+		 log_trace(logger,"mProc	%d	-	Pagina	%d	escrita:", pcb->pid,msg->argv[m+1]);
+
+		 m++;
+
+		 m++;
+
+		 break;
+
+		 case io:
+
+		 log_trace(logger,"mProc	%d	en	entrada-salida	de	tiempo	%d.", pcb->pid,msg->argv[1]);
+
+		 m++;
+
+		 break;
+
+		 case final:
+
+		 log_trace(logger,"mProc	%d	Finalizado.", pcb->pid);
+
+		 m++;
+
+		 break;
+
+		 case error:
+
+		 log_trace(logger,"mProc	%d	-	Fallo.", pcb->pid);
+
+		 m++;
+
+		 break;
+
+		 default:
+
+		 log_trace(logger,"No se comprende el mensaje enviado");
+
+		 break;
+
+		 }
+
+		 }
+
 		 */
+
+
 
 		t_msg* pedido_uso = argv_message(CPU_PORCENTAJE_UTILIZACION, 0);
 
@@ -1853,6 +1931,7 @@ void cambiar_a_exec(int pid) {
 	return;
 
 }
+
 
 int es_el_pcb_buscado_en_ready(t_ready* ready) {
 	return (ready->pid == PID_GLOBAL_READY);
