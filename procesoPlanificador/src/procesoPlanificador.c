@@ -237,6 +237,9 @@ void procesar_msg_consola(char* msg) {
 					pos_del_pcb(pid));
 
 			pcb->pc = pcb->cant_sentencias;
+
+			log_info(logger,"pcb->pc: %d",pcb->pc);
+
 		} else {
 			log_error(logger,
 					"No existe un proceso con el PID ingresado");
@@ -744,7 +747,11 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		sem_post(&mutex_IO);
 
+		if(pcb->pc!=pcb->cant_sentencias){
+
 		pcb->pc = pcb->pc + msg->argv[3];
+
+		}
 
 		log_info(logger,
 				"El proceso %d se encuentra en la cola de procesos en Bloqueados",
