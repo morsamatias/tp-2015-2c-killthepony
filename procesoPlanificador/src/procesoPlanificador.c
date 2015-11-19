@@ -236,7 +236,7 @@ void procesar_msg_consola(char* msg) {
 			pcb = list_get(pcbs,
 					pos_del_pcb(pid));
 
-			pcb->pc = pcb->cant_sentencias;
+			pcb->pc = pcb->cant_sentencias - 1;
 
 			log_info(logger,"pcb->pc: %d",pcb->pc);
 
@@ -513,6 +513,8 @@ int correr_proceso(char* path) {
 			"El proceso %d se encuentra en la cola de procesos Nuevos para ejecutar el programa Mcod %s",
 			pcb->pid, pcb->path);
 
+	pcb->pc=0;
+
 	pcb_agregar(pcb);
 
 	t_ready* new = malloc(sizeof(t_ready));
@@ -747,7 +749,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		sem_post(&mutex_IO);
 
-		if(pcb->pc!=pcb->cant_sentencias){
+		if((pcb->pc + 1)!=pcb->cant_sentencias){
 
 		pcb->pc = pcb->pc + msg->argv[3];
 
@@ -1174,7 +1176,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		log_info(logger, "El proceso %d se encuentra en la cola de Listos \n",
 				pcb->pid);
 
-		if (pcb->pc != pcb->cant_sentencias) {
+		if ((pcb->pc + 1) != pcb->cant_sentencias) {
 
 			pcb->pc = pcb->pc + QUANTUM();
 
@@ -1671,7 +1673,7 @@ int inicializar() {
  t_pcb* pcb;
  PID_GLOBAL=pid;
  pcb=list_get(pcbs,pos_del_pcb(pid));
- pcb->pc=pcb->cant_sentencias;
+ F=pcb->cant_sentencias;
  break;
  case PS:
  printf("PS listar procesos\n");
