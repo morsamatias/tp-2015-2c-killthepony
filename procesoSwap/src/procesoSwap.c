@@ -252,6 +252,8 @@ int compactar(){
 /*
  * si no encuentra nada devuelve -1;
  */
+
+////////////////////////////////////////////////////BUSCAR ESPACIOS LIBRES///////////////////////////
 int swap_buscar_hueco_libre(int paginas){
 
 	bool _swap_buscar_hueco_libre(t_libre* libre){
@@ -286,6 +288,9 @@ t_libre* swap_buscar_hueco_que_empiece_en(int pagina){
 	return list_find(esp_libre, (void*)_swap_buscar_libre);
 }
 
+
+/////////////////////////////////////////////////////////////ORDENAR////////////////////////////////////////////////////////
+
 void ordenar_ocupado(){
 	bool _ordenar_ocupado(t_ocupado* o1, t_ocupado* o2) {
 		return o1->posicion > o2->posicion;
@@ -308,6 +313,7 @@ int ordenar(){
 
 	return 0;
 }
+////////////////////////////////////////////////////////////OCUṔAR HUECO/////////////////////////////////////////////////
 
 int swap_ocupar_hueco(t_ocupado* ocupado){
 
@@ -556,6 +562,8 @@ void est_eliminar(int pid){
 
 	list_remove_and_destroy_by_condition(procesos, (void*)_proc_buscar,(void*) proceso_destroy);
 }
+
+///////////////////////////////////////////////////////////PRINTS////////////////////////////////
 void print_ocupado() {
 	printf("ESPACIO OCUPADO*********************\n");
 	void _print_ocupado(t_ocupado* o) {
@@ -570,6 +578,9 @@ void print_libre() {
 	}
 	list_iterate(esp_libre, (void*) _print_libre);
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 	char* contenido;
 	int pid, pagina, paginas;
@@ -619,7 +630,7 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			contenido = swap_leer(pid, pagina);
 			est_leer(pid);
 
-			dormir_swap(RETARDO_SWAP());
+			dormir_swap();
 			pagina_print_info("Lectura", pid, pagina, contenido);
 
 
