@@ -10,11 +10,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
 #include "procesoSwap.h"
 
 
+/////////////////////////////////////////////VARIABLES/////////////////////////////////////////
 bool FIN = false;
+
+//////////////////////////////////////////////MAIN() //////////////////////////////////////////
+
 int main(void) {
 	inicializar();
 
@@ -24,6 +27,36 @@ int main(void) {
 
 	return EXIT_SUCCESS;
 }
+
+//////////////////////////////////////////////RETARDO///////////////////////////////////////////////////////
+
+void dormir_swap(){
+
+	int retardo = RETARDO_SWAP();
+
+	if (retardo == 0) {
+		sleep(retardo);
+	}else{
+		usleep(RETARDO_SWAP_MINIMO()*1000);
+	}
+
+}
+
+
+void dormir_compactacion(){
+
+	int retardo = RETARDO_COMPACTACION();
+
+	if (retardo == 0) {
+		sleep(retardo);
+	}else{
+		usleep(RETARDO_COMPACTACION_MINIMO()*1000);
+	}
+
+}
+//////////////////////////////////////////////INICIALIZAR//////////////////////////////////////////////////////////
+
+
 char* swap_inicializar() {
 	TAMANIO_SWAP = CANTIDAD_PAGINAS() * TAMANIO_PAGINA();
 
@@ -44,10 +77,6 @@ char* swap_inicializar() {
 	return file_get_mapped(NOMBRE_SWAP());
 }
 
-void swap_destroy() {
-	munmap(swap, TAMANIO_SWAP);
-//mapped = NULL;
-}
 
 void esp_libre_inicializar(){
 	esp_libre = list_create();
@@ -92,6 +121,13 @@ int inicializar(){
 	return 0;
 }
 
+///////////////////////////////////////////////////////FINALIZAR//////////////////////////////////////////
+
+void swap_destroy() {
+	munmap(swap, TAMANIO_SWAP);
+//mapped = NULL;
+}
+
 void libre_destroy(t_libre* libre){
 	FREE_NULL(libre);
 }
@@ -103,6 +139,7 @@ void ocupado_destroy(t_ocupado* ocupado){
 void proceso_destroy(t_proceso* proc){
 	FREE_NULL(proc);
 }
+
 int finalizar(){
 
 	config_destroy(cfg);
@@ -118,6 +155,8 @@ int finalizar(){
 	printf("Fin OK \n");
 	return 0;
 }
+
+/////////////////////////////////////////////////////COMPACTACION///////////////////////////
 
 int swap_cant_huecos_libres(){
 	int huecos = 0;
@@ -204,6 +243,7 @@ int compactar(){
 	list_iterate(esp_ocupado_new, (void*)_ocupar);
 	*/
 
+	dormir_compactacion();
 
 	log_trace(logger, "Compactacion OK");
 	return 0;
@@ -579,7 +619,7 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			contenido = swap_leer(pid, pagina);
 			est_leer(pid);
 
-			sleep(RETARDO_SWAP());
+			dormir_swap(RETARDO_SWAP());
 			pagina_print_info("Lectura", pid, pagina, contenido);
 
 
@@ -604,7 +644,7 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			swap_escribir(pid, pagina, contenido);
 			est_escribir(pid);
 
-			sleep(RETARDO_SWAP());
+			dormir_swap();
 
 			pagina_print_info("Escritura", pid, pagina, contenido);
 

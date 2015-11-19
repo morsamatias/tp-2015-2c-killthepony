@@ -178,7 +178,7 @@ void dormir2(){
 	if (retardo == 0) {
 		sleep(retardo);
 	}else{
-		usleep(RETARDO_MINIMO());
+		usleep(RETARDO_MINIMO()*1000);
 	}
 
 }
