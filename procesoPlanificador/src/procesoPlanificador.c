@@ -847,6 +847,18 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		 */
 
+		t_msg* msge;
+
+		int i;
+
+		for (i=0;i<msg->argv[3];i++){
+
+		msge=recibir_mensaje(socket);
+		logueo (msge);
+		destroy_message(msge);
+
+		}
+
 		if (list_size(list_ready) > 0) {
 			if (cpu_disponible()) {
 				cpu = cpu_seleccionar();
@@ -950,6 +962,18 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				pcb->tiempo_espera);
 
 		//printf("Hay que finalizar el proceso");
+
+		t_msg* msge;
+
+				int i;
+
+				for (i=0;i<msg->argv[3];i++){
+
+				msge=recibir_mensaje(socket);
+				logueo (msge);
+				destroy_message(msge);
+
+				}
 
 		// Hay que ver si hay algún proceso en READY para ejecutar
 
@@ -1194,6 +1218,18 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		cpu->estado = 1;
 
+		t_msg* msge;
+
+				int i;
+
+				for (i=0;i<msg->argv[3];i++){
+
+				msge=recibir_mensaje(socket);
+				logueo (msge);
+				destroy_message(msge);
+
+				}
+
 		if (list_size(list_ready) > 0) {
 			if (cpu_disponible()) {
 				cpu = cpu_seleccionar();
@@ -1298,6 +1334,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		 }
 
 		 */
+
+
 
 		destroy_message(msg);
 
@@ -1976,5 +2014,76 @@ double round_2(double X, int k) {
 int cpus_sin_dato_uso(t_cpu* cpu) {
 
 	return (cpu->usoUltimoMinuto == 0);
+
+}
+
+void logueo (t_msg* msg){
+
+			t_pcb* pcb;
+
+			int m;
+
+			pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
+
+			m = 1;
+
+			switch (msg->argv[m]) {
+
+			case iniciar:
+
+				log_info(logger, "	mProc	%d	-	Iniciado.", pcb->pid);
+
+				break;
+
+			case leer:
+
+				pagina = msg->argv[2];
+
+				log_info(logger, "mProc	%d	-	Pagina	%d	leida: %s \n", pcb->pid,
+						pagina, msg->stream);
+
+				break;
+
+			case escribir:
+
+				pagina = msg->argv[2];
+
+				log_info(logger, "mProc	%d	-	Pagina	%d	escrita: %s \n", pcb->pid,
+						msg->argv[m + 1], msg->stream);
+
+				break;
+
+			case io:
+
+				segundos = msg->argv[2];
+
+				log_info(logger, "mProc	%d	en	entrada-salida	de	tiempo	%d. \n",
+						pcb->pid, segundos);
+
+				break;
+
+			case final:
+
+				log_info(logger, "mProc	%d	Finalizado.", pcb->pid);
+
+				m++;
+
+				break;
+
+			case error:
+
+				log_info(logger, "mProc	%d	-	Fallo.", pcb->pid);
+
+				break;
+
+			default:
+
+				log_error(logger, "No se comprende el mensaje enviado \n");
+
+				break;
+
+			}
+
+			destroy_message(msg);
 
 }

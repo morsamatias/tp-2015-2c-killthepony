@@ -252,4 +252,6 @@ double round_2(double X, int k);
 
 int cpus_sin_dato_uso(t_cpu* cpu);
 
+void logueo (t_msg* msg);
+
 #endif /* PROCESOPLANIFICADOR_H_ */
