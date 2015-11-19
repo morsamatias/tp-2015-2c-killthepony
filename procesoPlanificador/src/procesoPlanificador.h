@@ -198,6 +198,13 @@ bool _estado_bloqueado(t_block* block) {
 	return block->estado == 1;
 
 }
+
+
+
+bool _estado_libre(t_block* block) {
+	return block->estado == 0;
+
+}
 bool _cpu_buscar(t_cpu* cpu) {
 	return cpu->id == gl_id;
 }

@@ -747,7 +747,15 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		pcb->estado = BLOCK
 		;
 
+		log_info(logger,
+				"El proceso %d se encuentra en la cola de procesos en Bloqueados",
+				pcb->pid);
+
+
+
+		//if(list_size(list_block)==0){
 		sem_post(&sem_IO);
+       //    }
 
 		if((pcb->pc + 1)!=pcb->cant_sentencias){
 
@@ -755,9 +763,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		}
 
-		log_info(logger,
-				"El proceso %d se encuentra en la cola de procesos en Bloqueados",
-				pcb->pid);
+
 
 
 		cpu = cpu_buscar_por_socket(socket);
@@ -1712,13 +1718,10 @@ sem_wait(&sem_IO);
 
 		while(list_size(list_block) != 0) {
 			//hay bloqueados
-			if ((list_any_satisfy(list_block, (void*) _estado_bloqueado))) {
+			//if ((list_any_satisfy(list_block, (void*) _estado_bloqueado))) {
+				if(list_any_satisfy(list_block, (void*) _estado_libre)){
 
-//entrada salida ocupada
-//log_info(logger, "Entrada salida ocupada");
-
-			} else {
-
+						//Entrada salida libre
 
 				t_block* block;
 
@@ -1729,7 +1732,7 @@ sem_wait(&sem_IO);
 				log_info(logger,
 						" El proceso %i empieza su I/O de %i  \n",
 						block->pid, block->tiempoIO);
-				//Entrada salida libre
+
 
 
 
@@ -1743,7 +1746,7 @@ sem_wait(&sem_IO);
 
 				ready->pid = block->pid;
 
-				PID_GLOBAL = block->pid;
+				PID_GLOBAL_BLOCK = block->pid;
 
 				list_add(list_ready, ready);
 
@@ -1792,13 +1795,13 @@ sem_wait(&sem_IO);
 
 				}//fin pasar a ready
 
-			}
+			} // fin if ocupado/libre
 
 		}
 
 	}
-
 }
+//}
 
 void controlar_IO(char* pid_string) {
 
