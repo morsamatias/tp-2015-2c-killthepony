@@ -101,7 +101,7 @@ void* hilo_responder_porcentaje();
 void* hilo_cpu(int *numero_hilo);
 void* hilo_porcentaje() ;
 
-void dormir();
+void dormir2();
 void inicializar_porcentajes();
 void inicializar_resultados_sentencias();
 

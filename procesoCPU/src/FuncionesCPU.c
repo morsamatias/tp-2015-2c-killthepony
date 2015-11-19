@@ -170,11 +170,11 @@ void* hilo_cpu(int *numero_hilo) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-void dormir(){
+void dormir2(){
 
 	int retardo = RETARDO();
 
-	if (retardo > 0) {
+	if (retardo > 1) {
 		sleep(retardo);
 	}else{
 		usleep(retardo);
@@ -467,7 +467,7 @@ int sent_ejecutar(t_sentencia* sent, int socket_mem) {
 		break;
 	}
 
-	dormir();
+	dormir2();
 
 	return st;
 
