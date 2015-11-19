@@ -2082,6 +2082,4 @@ void logueo (t_msg* msg){
 
 			}
 
-			destroy_message(msg);
-
 }
