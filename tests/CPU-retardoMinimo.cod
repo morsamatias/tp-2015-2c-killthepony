@@ -1,0 +1,32 @@
+iniciar 10
+leer 0
+leer 1
+leer 2
+leer 3
+leer 4
+leer 9
+leer 8
+leer 7
+escribir 0 "Seh"
+escribir 9 "Noooooo"
+entrada-salida 2
+eer 1
+leer 2
+leer 3
+leer 4
+leer 2
+leer 3
+escribir 0 "Hola"
+escribir 5 "chau"
+escribir 9 "PorFavooor"
+entrada-salida 2
+leer 6
+leer 5
+leer 0
+leer 4
+leer 9
+leer 8
+leer 7
+leer 6
+leer 5
+finalizar
