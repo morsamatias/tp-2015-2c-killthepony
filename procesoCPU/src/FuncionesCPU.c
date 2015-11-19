@@ -94,12 +94,13 @@ void inicializar_porcentajes(){
 
 
 void* hilo_porcentaje() {
+
 	int numero,CANT_SENT_EN_UN_MIN;
 
-	if (RETARDO() != 0) {
-		CANT_SENT_EN_UN_MIN = 60 / RETARDO();
+	if (RETARDO() == 0) {
+			CANT_SENT_EN_UN_MIN = 60 / RETARDO_MINIMO() * 100;
 	}else{
-		CANT_SENT_EN_UN_MIN = 60 / RETARDO_MINIMO();
+		CANT_SENT_EN_UN_MIN = 60 / RETARDO();
 	}
 
 	while(true){
@@ -174,10 +175,10 @@ void dormir2(){
 
 	int retardo = RETARDO();
 
-	if (retardo > 1) {
+	if (retardo == 0) {
 		sleep(retardo);
 	}else{
-		usleep(retardo);
+		usleep(RETARDO_MINIMO());
 	}
 
 }
@@ -891,11 +892,10 @@ int CANTIDAD_HILOS() {
 }
 
 int RETARDO() {
-	return config_get_int_value(cfg, "RETARDO");
+	return config_get_int_value(cfg, "RETARDO_SEGUNDOS");
 }
 
 int RETARDO_MINIMO() {
-	return config_get_int_value(cfg, "RETARDO_MINIMO");
+	return config_get_int_value(cfg, "RETARDO_MILISEGUNDOS");
 }
-
 

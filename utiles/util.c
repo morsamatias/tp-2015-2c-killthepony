@@ -7,14 +7,18 @@
 
 #include "util.h"
 
-void dormir(int tiempo){
+void dormir(int segundos,int milisegundos){
 
-	if (tiempo > 1){
-		sleep(tiempo);
+	int retardo = RETARDO();
+
+	if (segundos == 0) {
+		sleep(retardo);
 	}else{
-		usleep(tiempo);
+		usleep(milisegundos*100);
 	}
+
 }
+
 
 sem_t* sem_crear(int* shmid, key_t* shmkey, int contador_ftok){
 	sem_t* sem= NULL;

@@ -181,7 +181,7 @@ typedef struct{
 }__attribute__ ((__packed__)) t_foo;
 
 
-void dormir(int tiempo);
+void dormir(int segundos,int milisegundos);
 
 bool file_exists(const char* filename);
 
