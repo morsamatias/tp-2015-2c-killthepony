@@ -522,15 +522,16 @@ int correr_proceso(char* path) {
 	;
 
 	pcb->tiempo_inicio_ready = time(NULL);
+t_cpu* cpu = NULL;
 
-	log_info(logger,
-			"El proceso %d se encuentra en la cola de procesos Listos",
-			pcb->pid);
 
-	t_cpu* cpu = NULL;
+	log_info(logger,"El proceso %d se encuentra en la cola de procesos Listoss",pcb->pid);
+printf("TODOOOOOOOOOOOOOOOOOOOOOOOOBIEN");
+fflush(stdout);
+
 	if (cpu_disponible()) {
-
 		cpu = cpu_seleccionar();
+
 
 		if (cpu != NULL) {
 
@@ -538,24 +539,24 @@ int correr_proceso(char* path) {
 
 			cpu_ejecutar(cpu, pcb);
 
+			printf("3");
 			cpu->estado = 0;
 		} else {
-			/*printf(
+		/*	printf(
 					"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",
 					pcb->pid);*/
 
-		log_warning(logger,
+		log_info(logger,
 				"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",pcb->pid);
 		}
-	} else {
-	/*	printf(
-				"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",
-				pcb->pid);*/
-
-		log_warning(logger,
+	}
+	else {		log_info(logger,
 						"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",pcb->pid);
 
+
 	}
+
+	printf("4");
 	return 0;
 }
 /*
@@ -686,13 +687,13 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 							"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",pcb->pid);
 							}
 				}
-			} else {
+			else {
 				//printf("No existe CPU activa para asignarle un nuevo proceso");
 				log_info(logger,
 						"No existe CPU activa para asignarle un nuevo proceso"	);
 						}
 
-
+		}
 
 
 		break;
@@ -1705,16 +1706,23 @@ sem_wait(&mutex_IO);
 			if ((list_any_satisfy(list_block, (void*) _estado_bloqueado))) {
 
 //entrada salida ocupada
-				log_info(logger, "Entrada salida ocupada");
+//log_info(logger, "Entrada salida ocupada");
 
 			} else {
 
-				//Entrada salida libre
+
 				t_block* block;
 
 				block = list_get(list_block, 0);
 
 				block->estado = 1; //i/o ocupado
+
+				log_info(logger,
+						" El proceso %i empieza su I/O de %i  \n",
+						block->pid, block->tiempoIO);
+				//Entrada salida libre
+
+
 
 				sleep(block->tiempoIO);
 
@@ -1773,7 +1781,7 @@ sem_wait(&mutex_IO);
 									"No existe CPU activa para asignarle un proceso \n");
 					}
 
-				}
+				}//fin pasar a ready
 
 			}
 
