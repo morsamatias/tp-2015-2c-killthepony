@@ -47,7 +47,7 @@ int main(void) {
 	time1 = time(NULL);
 	//pthread_create(&th_server_cpu, NULL, (void*)iniciar_server_select, NULL);
 
-	sem_init(&mutex_IO, 0, 1);
+	sem_init(&sem_IO, 0, 0);
 
 	pthread_create(&contador_IO_PCB, NULL, (void*) Hilo_IO, (void*) PID_GLOBAL);
 
@@ -747,7 +747,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		pcb->estado = BLOCK
 		;
 
-		sem_post(&mutex_IO);
+		sem_post(&sem_IO);
 
 		if((pcb->pc + 1)!=pcb->cant_sentencias){
 
@@ -1708,7 +1708,7 @@ void Hilo_IO(int pid) {
 
 	while (1) {
 
-sem_wait(&mutex_IO);
+sem_wait(&sem_IO);
 
 		while(list_size(list_block) != 0) {
 			//hay bloqueados
