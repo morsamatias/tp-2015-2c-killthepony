@@ -166,6 +166,23 @@ void* hilo_cpu(int *numero_hilo) {
 	return NULL;
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+void dormir(){
+
+	int retardo = RETARDO();
+
+	if (retardo > 0) {
+		sleep(retardo);
+	}else{
+		usleep(retardo);
+	}
+
+}
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 int procesar_mensaje_planif(t_msg* msg, int numero) {
 	//print_msg(msg);
@@ -450,7 +467,7 @@ int sent_ejecutar(t_sentencia* sent, int socket_mem) {
 		break;
 	}
 
-	sleep(RETARDO());
+	dormir();
 
 	return st;
 
@@ -672,14 +689,37 @@ t_msg* sent_to_msg(t_sentencia* sent){
 
 int desconexion_planificador(){
 
+		int i;
+		t_msg* mensaje_a_memoria;
+		pthread_mutex_lock(&mutex);
+		log_trace(logger, "Desconexion del planificador se avisa al administrador de memoria.");
+		pthread_mutex_unlock(&mutex);
 
-	return 0;
+		mensaje_a_memoria = argv_message(CAIDA_PLANIFICADOR, 0);
+			i = enviar_y_destroy_mensaje(socket_memoria, mensaje_a_memoria);
+			if (i== -1){
+				log_trace(logger, "Desconexion del administrador de memoria.");
+			}
+
+	return i;
 }
 
 int desconexion_memoria(){
 
+	int i;
+	t_msg* mensaje_a_planificador;
+	pthread_mutex_lock(&mutex);
+	log_trace(logger, "Desconexion del administrador de memoria se avisa al planificador.");
+	pthread_mutex_unlock(&mutex);
 
-	return 0;
+	mensaje_a_planificador = argv_message(CAIDA_MEMORIA, 0);
+		i = enviar_y_destroy_mensaje(socket_planificador, mensaje_a_planificador);
+		if (i== -1){
+			log_trace(logger, "Desconexion del planificador.");
+		}
+
+return i;
+
 }
 
 //////////////////////////////////////////////////CONEXION CON MEMORIA Y PLANIFICADOR//////////
