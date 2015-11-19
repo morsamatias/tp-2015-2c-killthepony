@@ -1875,11 +1875,12 @@ t_pcb* es_el_pcb_buscado_struct(t_pcb * pcb) {
 int pos_del_pcb(int pid) {
 
 	int i = 0;
+
 	t_pcb* pcb;
 
-	pcb = list_get(pcbs, i);
-
 	while ((i + 1) <= list_size(pcbs)) {
+
+		pcb = list_get(pcbs, i);
 
 		if (pcb->pid == PID_GLOBAL) {
 			break;
