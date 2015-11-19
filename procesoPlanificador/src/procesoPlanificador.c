@@ -648,6 +648,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 	int segundos;
 	int n;
 	int m;
+	int i;
+	t_msg* msge;
 
 	switch (msg->header.id) {
 	case CPU_NUEVO:
@@ -963,17 +965,13 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		//printf("Hay que finalizar el proceso");
 
-		t_msg* msge;
+		for (i=0;i<msg->argv[3];i++){
 
-				int i;
+		msge=recibir_mensaje(socket);
+		logueo (msge);
+		destroy_message(msge);
 
-				for (i=0;i<msg->argv[3];i++){
-
-				msge=recibir_mensaje(socket);
-				logueo (msge);
-				destroy_message(msge);
-
-				}
+		}
 
 		// Hay que ver si hay algún proceso en READY para ejecutar
 
@@ -1218,17 +1216,13 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		cpu->estado = 1;
 
-		t_msg* msge;
+		for (i=0;i<msg->argv[3];i++){
 
-				int i;
+		msge=recibir_mensaje(socket);
+		logueo (msge);
+		destroy_message(msge);
 
-				for (i=0;i<msg->argv[3];i++){
-
-				msge=recibir_mensaje(socket);
-				logueo (msge);
-				destroy_message(msge);
-
-				}
+		}
 
 		if (list_size(list_ready) > 0) {
 			if (cpu_disponible()) {
@@ -1537,7 +1531,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		cpu = cpu_buscar_por_socket(msg->argv[0]);
 		uso_cpu = msg->argv[1];
 		cpu->usoUltimoMinuto = uso_cpu;
-		int i;
+
 
 		if ((list_count_satisfying(cpus, (void*) cpus_sin_dato_uso)) < 1) {
 			i = 0;
@@ -2020,6 +2014,10 @@ int cpus_sin_dato_uso(t_cpu* cpu) {
 void logueo (t_msg* msg){
 
 			t_pcb* pcb;
+
+			int segundos;
+
+			int pagina;
 
 			int m;
 
