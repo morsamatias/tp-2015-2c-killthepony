@@ -853,6 +853,10 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		int i;
 
+		log_info(logger,
+					"Operaciones realizadas por el proceso %d hasta el momento son:\n",
+					pcb->pid);
+
 		for (i=0;i<msg->argv[3];i++){
 
 		msge=recibir_mensaje(socket);
@@ -965,6 +969,10 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		//printf("Hay que finalizar el proceso");
 
+		log_info(logger,
+					"Operaciones realizadas por el proceso %d hasta el momento son:\n",
+					pcb->pid);
+
 		for (i=0;i<msg->argv[3];i++){
 
 		msge=recibir_mensaje(socket);
@@ -1010,9 +1018,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		destroy_message(msg);
 
-		log_info(logger,
-				"Operaciones realizadas por el proceso %d hasta el momento son:\n",
-				pcb->pid);
+
 
 		break;
 
@@ -1215,6 +1221,10 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		cpu = cpu_buscar_por_socket(socket);
 
 		cpu->estado = 1;
+
+		log_info(logger,
+			"Operaciones realizadas por el proceso %d hasta el momento son:\n",
+			pcb->pid);
 
 		for (i=0;i<msg->argv[3];i++){
 
