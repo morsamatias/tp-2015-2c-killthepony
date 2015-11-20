@@ -8,45 +8,30 @@
 #ifndef UTILES_UTIL_H_
 #define UTILES_UTIL_H_
 
+#include "commons/collections/list.h"
+#include "commons/string.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <time.h>
+#include <stdio.h>
 #include <stdlib.h>
- #include <sys/time.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdarg.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
-
 #include <sys/sendfile.h>
-
-#include <stdio.h>
-#include <fcntl.h>
+#include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <netinet/in.h>
+#include <fcntl.h>
 #include <net/if.h>
-
-#include "commons/collections/list.h"
-#include "commons/string.h"
-#include <pthread.h>
-#include <stdbool.h>
-
 #include <wait.h>
-
-
-#include <sys/types.h>      /* key_t, sem_t, pid_t      */
-#include <sys/shm.h>        /* shmat(), IPC_RMID        */
+#include <pthread.h>
 #include <errno.h>          /* errno, ECHILD            */
 #include <semaphore.h>      /* sem_open(), sem_destroy(), sem_wait().. */
-#include <fcntl.h>          /* O_CREAT, O_EXEC          */
 
 
 #define handle_error(msj) \
@@ -193,7 +178,6 @@ float  bytes_to_kilobytes(size_t bytes);
 int recibir_mensaje_script(int socket, char* save_as);
 
 t_cpu_base* cpu_base_new(int id, char* ip, int puerto);
-sem_t* sem_crear(int* shmid, key_t* shmkey, int contador_ftok);
 float bytes_to_megabytes(size_t bytes);
 
 int cant_registros(char** registros) ;

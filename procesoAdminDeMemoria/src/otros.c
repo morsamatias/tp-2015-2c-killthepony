@@ -27,6 +27,9 @@ int TLB_HABILITADA(){
 int RETARDO_MEMORIA(){
 	return config_get_int_value(cfg, "RETARDO_MEMORIA");
 }
+int RETARDO_MEMORIA_MINIMO(){
+	return config_get_int_value(cfg, "RETARDO_MEMORIA_MILISEGUNDOS");
+}
 char* ALGORITMO_REEMPLAZO(){
 	return config_get_string_value(cfg, "ALGORITMO_REEMPLAZO");
 }
@@ -142,8 +145,20 @@ int swap_finalizar(int pid){
 		}
 		destroy_message(msg);
 	}else
-		log_trace(logger, "SWAP_FINALIZAR Erro al recibir mensaje");
+		log_trace(logger, "SWAP_FINALIZAR Error al recibir mensaje");
 
 	return 0;
 }
 
+
+void dormir_memoria(){
+
+	int retardo = RETARDO_MEMORIA();
+
+	if (retardo == 0) {
+		usleep(RETARDO_MEMORIA_MINIMO*1000);
+	}else{
+		sleep(RETARDO_MEMORIA());
+	}
+
+}

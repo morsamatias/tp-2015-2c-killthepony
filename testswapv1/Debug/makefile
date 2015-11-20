@@ -26,7 +26,7 @@ endif
 all: testswapv1
 
 dependents:
-	-cd /home/utnso/Escritorio/git/tp-2015-2c-killthepony/utiles/Debug && $(MAKE) clean all
+	-cd /home/utnso/Escritorio/git/tp-2015-2c-killthepony/utiles/Debug && $(MAKE) all
 
 # Tool invocations
 testswapv1: $(OBJS) $(USER_OBJS) /home/utnso/Escritorio/git/tp-2015-2c-killthepony/utiles/Debug/libutiles.so

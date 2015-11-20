@@ -69,8 +69,9 @@ int enviar_porcentaje_a_planificador() {
 		mensaje_a_planificador = argv_message(CPU_PORCENTAJE_UTILIZACION, 2, numero_de_cpu, porcentaje);
 
 		i = enviar_y_destroy_mensaje(socket_planificador_especial, mensaje_a_planificador);
-		if (i== -1){
+		if (i < 0){
 			retorno = -1;
+			desconexion_planificador();
 		}
 	}
 
@@ -176,9 +177,9 @@ void dormir2(){
 	int retardo = RETARDO();
 
 	if (retardo == 0) {
-		sleep(retardo);
-	}else{
 		usleep(RETARDO_MINIMO()*1000);
+	}else{
+		sleep(RETARDO());
 	}
 
 }
@@ -329,6 +330,7 @@ int sent_ejecutar_iniciar(t_sentencia* sent, int socket_mem) {
 
 	msg = argv_message(MEM_INICIAR, 2, sent->pid, sent->cant_paginas);
 	log_trace(logger, "[HILO #%d] Enviando mensaje MemIniciar %d", sent->hilo, sent->cant_paginas);
+
 	enviar_y_destroy_mensaje(socket_mem, msg);
 
 	log_trace(logger, "[HILO #%d] Esperando Rta MemIniciar %d", sent->hilo, sent->cant_paginas);
@@ -351,11 +353,17 @@ int sent_ejecutar_iniciar(t_sentencia* sent, int socket_mem) {
 }
 
 int sent_ejecutar_finalizar(t_sentencia* sent, int socket_mem) {
-	int rs = 0;
+	int i,rs = 0;
 	t_msg* msg = NULL;
 	msg = argv_message(MEM_FINALIZAR, 1, sent->pid);
 	log_trace(logger, "[HILO #%d] Enviando mensaje MEM_FINALIZAR ", sent->hilo);
-	enviar_y_destroy_mensaje(socket_mem, msg);
+
+	i= enviar_y_destroy_mensaje(socket_mem, msg);
+
+	if (i < 0){
+		i = -1;
+		desconexion_memoria();
+	}
 
 	log_trace(logger, "[HILO #%d] Esperando Rta MEM_FINALIZAR", sent->hilo);
 	msg = recibir_mensaje(socket_mem);
@@ -377,17 +385,25 @@ int sent_ejecutar_finalizar(t_sentencia* sent, int socket_mem) {
 }
 
 int sent_ejecutar_escribir(t_sentencia* sent, int socket_mem) {
-	int rs = 0;
+	int i,rs = 0;
 
 	t_msg* msg = NULL;
 	msg = string_message(MEM_ESCRIBIR, sent->texto, 2, sent->pid, sent->pagina);
+
 	log_trace(logger, "[HILO #%d] Enviando mensaje MEM_ESCRIBIR %d %s", sent->hilo, sent->pagina,
 			sent->texto);
-	enviar_y_destroy_mensaje(socket_mem, msg);
+
+	i = enviar_y_destroy_mensaje(socket_mem, msg);
+
+	if (i < 0){
+			i = -1;
+			desconexion_memoria();
+		}
 
 	log_trace(logger, "[HILO #%d] Esperando rta mensaje MEM_ESCRIBIR %d",sent->hilo, sent->pagina,
 			sent->texto);
 	msg = recibir_mensaje(socket_mem);
+
 	if (msg != NULL) {
 		if (msg->header.id == MEM_OK) {
 			//en el stream esta el contenido de la pagina
@@ -407,11 +423,18 @@ int sent_ejecutar_escribir(t_sentencia* sent, int socket_mem) {
 
 char* sent_ejecutar_leer(t_sentencia* sent, int socket_mem) {
 	char* pagina = NULL;
+	int i;
 
 	t_msg* msg = NULL;
 	msg = argv_message(MEM_LEER, 2, sent->pid, sent->pagina);
 	log_trace(logger, "[HILO #%d] Enviando mensaje MEM_LEER %d", sent->hilo,  sent->pagina);
-	enviar_y_destroy_mensaje(socket_mem, msg);
+
+	i = enviar_y_destroy_mensaje(socket_mem, msg);
+
+	if (i < 0){
+			i = -1;
+			desconexion_memoria();
+	}
 
 	log_trace(logger, "[HILO #%d] Esperando rta mensaje MEM_LEER %d",sent->hilo, sent->pagina);
 	msg = recibir_mensaje(socket_mem);
@@ -618,7 +641,8 @@ int avisar_a_planificador(t_resultado_pcb respuesta, int socket_planif, int hilo
 	i = enviar_y_destroy_mensaje(socket_planif, mensaje_a_planificador);
 
 	if(i<0){
-		log_error(logger, "[HILO #%d] ERROR Enviar Al Planificador el resultado ", hilo);
+		log_error(logger, "[HILO #%d] ERROR al enviar el resultado al planificador. ", hilo);
+		desconexion_planificador();
 		return -1;
 	}
 
@@ -642,13 +666,15 @@ int enviar_logs(int socket, t_list* resultados_sentencias){
 		msg = sent_to_msg(sent);
 
 		if(enviar_mensaje(socket, msg)<0){
+
 			log_error(logger, "[HILO #%d] ERROR AL ENVIAR LOG AL PLANIFICADOR", sent->hilo);
+			desconexion_planificador();
 			destroy_message(msg);
 			rs = -1;
 			break;
-		}
+		}else{
 		destroy_message(msg);
-	}
+	}}
 	return rs;
 }
 

@@ -7,120 +7,16 @@
 
 #include "util.h"
 
+
 void dormir(int segundos,int milisegundos){
 
-	int retardo = RETARDO();
-
 	if (segundos == 0) {
-		sleep(retardo);
-	}else{
 		usleep(milisegundos*100);
+	}else{
+		sleep(segundos);
 	}
 
 }
-
-
-sem_t* sem_crear(int* shmid, key_t* shmkey, int contador_ftok){
-	sem_t* sem= NULL;
-	//pid_t pid; /*      fork pid                */
-	//unsigned int n; /*      fork count              */
-	unsigned int value; /*      semaphore value         */
-
-	/* initialize a shared variable in shared memory */
-
-	char* sem_name = string_from_format("pSem_%d", contador_ftok);
-
-	//shmkey = ftok("/dev/null", 5); /* valid directory name and a number */
-	*shmkey = ftok("/dev/null", contador_ftok); /* valid directory name and a number */
-
-	//printf("shmkey for p = %d\n", *shmkey);
-	*shmid = shmget(*shmkey, sizeof(int), 0644 | IPC_CREAT);
-	if (*shmid < 0) { /* shared memory error check */
-		perror("shmget\n");
-		exit(1);
-	}
-
-	///////////////////////////////////////////
-	value = 0;
-	/* initialize semaphores for shared processes */
-	//sem = sem_open("pSem", O_CREAT | O_EXCL, 0644, value);
-
-
-	//sem = sem_open("pSem", O_CREAT , 0644, value);
-	sem = sem_open(sem_name, O_CREAT , 0644, value);
-	if(sem==SEM_FAILED){
-		perror("sem_open___");
-		printf("***************************************************sdfadfasd\n");
-		_exit(1);
-	}
-
-	/* name of semaphore is "pSem", semaphore is reached using this name */
-	//sem_unlink("pSem");
-	sem_unlink(sem_name);
-	/* unlink prevents the semaphore existing forever */
-	/* if a crash occurs during the execution         */
-	//printf ("semaphores initialized.\n\n");
-
-	FREE_NULL(sem_name);
-
-	return sem;
-}
-
-//Size of each chunk of data received, try changing this
-		#define CHUNK_SIZE 512
-		/*
-		    Receive data in multiple chunks by checking a non-blocking socket
-		    Timeout in seconds
-		*/
-		int recv_timeout(int s , int timeout)
-		{
-		    int size_recv , total_size= 0;
-		    struct timeval begin , now;
-		    char chunk[CHUNK_SIZE];
-		    double timediff;
-
-		    //make socket non blocking
-		    fcntl(s, F_SETFL, O_NONBLOCK);
-
-		    //beginning time
-		    gettimeofday(&begin , NULL);
-
-		    while(1)
-		    {
-		        gettimeofday(&now , NULL);
-
-		        //time elapsed in seconds
-		        timediff = (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
-
-		        //if you got some data, then break after timeout
-		        if( total_size > 0 && timediff > timeout )
-		        {
-		            break;
-		        }
-
-		        //if you got no data at all, wait a little longer, twice the timeout
-		        else if( timediff > timeout*2)
-		        {
-		            break;
-		        }
-
-		        memset(chunk ,0 , CHUNK_SIZE);  //clear the variable
-		        if((size_recv =  recv(s , chunk , CHUNK_SIZE , 0) ) < 0)
-		        {
-		            //if nothing was received then we want to wait a little before trying again, 0.1 seconds
-		            usleep(100000);
-		        }
-		        else
-		        {
-		            total_size += size_recv;
-		            printf("%s" , chunk);
-		            //reset beginning time
-		            gettimeofday(&begin , NULL);
-		        }
-		    }
-
-		    return total_size;
-		}
 
 size_t file_get_size(char* filename) {
 	struct stat st;
