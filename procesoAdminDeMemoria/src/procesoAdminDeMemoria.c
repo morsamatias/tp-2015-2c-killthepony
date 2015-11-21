@@ -161,14 +161,14 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 								st = reemplazar_pagina_en_memoria_segun_algoritmo(proceso,nro_pagina,buff_pag);
 								flag_reemplazo=1;
 							}
-							sleep(RETARDO_MEMORIA());
+							dormir_memoria();
 						}else{
 							st = 1;
 						}
 					}
 				}
 				else {
-					sleep(RETARDO_MEMORIA());
+					dormir_memoria();
 					buff_pag = string_duplicate(memoria[b_marco.marco]->contenido);
 					// SI ES LRU MUEVO LA PAGINA AL FINAL
 					if(string_equals_ignore_case(ALGORITMO_REEMPLAZO(),"LRU")){
@@ -191,7 +191,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 					log_error(logger, "La pagina %d del proceso %d no fue recibida bien del SWAP",nro_pagina,pid);
 					break;
 				case 2:
-					//sleep(RETARDO_MEMORIA());
+					//dormir_memoria();
 					resp = string_message(MEM_OK, buff_pag, 0);
 					if(flag_reemplazo)
 						log_info(logger, "Lectura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d",
@@ -257,7 +257,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 								flag_reemplazo=1;
 							}
 							pagina->modificado=1;
-							sleep(RETARDO_MEMORIA());
+							dormir_memoria();
 						}else{
 							st = 1;
 						}
@@ -272,7 +272,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 						list_remove_by_condition(proceso->paginas,(void*)es_la_pagina_segun_PID_y_nro_pagina);
 						list_add(proceso->paginas,pagina);
 					}
-					sleep(RETARDO_MEMORIA());
+					dormir_memoria();
 					st = 2;
 				}
 			}
@@ -290,7 +290,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 					log_error(logger, "Escritura Erronea --> La pagina %d del proceso %d no fue recibida bien del SWAP",nro_pagina,pid);
 					break;
 				case 2:
-					//sleep(RETARDO_MEMORIA());
+					//dormir_memoria();
 					resp = argv_message(MEM_OK, 1 ,0);
 					if(!flag_reemplazo)
 						log_info(logger, "Escritura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d",
@@ -341,6 +341,11 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 		case CPU_NUEVO:
 			break;
 
+		case CAIDA_PLANIFICADOR:
+			log_error(logger, "SE CERRO EL PLANIFICADOR, CIERRO EL PROGRAMA");
+			exit(0);
+			break;
+
 		default:
 			log_warning(logger, "LA OPCION SELECCIONADA NO ESTA REGISTRADA");
 			break;
@@ -368,7 +373,7 @@ t_busq_marco buscar_marco_de_pagina_en_TLB_y_tabla_paginas(int pid, int nro_pagi
 
 	// SE FIJA SI ESTA LA PAGINA EN MEMORIA
 	if(busc_marco.marco == -1){
-		sleep(RETARDO_MEMORIA());
+		dormir_memoria();
 		busc_marco.marco = buscar_marco_en_paginas(proceso,nro_pagina);
 		busc_marco.TLB_HIT=0;
 	}else{
@@ -405,8 +410,8 @@ void tasa_aciertos_TLB_total(){
 }
 
 void sumar_tasas_TLB(t_proceso* proceso){
-	gl_TLB_hit += proceso->TLB_hit;
-	gl_TLB_total += proceso->TLB_total;
+	gl_TLB_hit =+ proceso->TLB_hit;
+	gl_TLB_total =+ proceso->TLB_total;
 }
 
 void tasa_aciertos_TLB(t_proceso* proceso){
@@ -511,7 +516,7 @@ t_pagina* buscar_pagina_victima_CLOCK(t_list* lista_paginas){
 			nro_pagina_inicial = pag->pagina;
 			flag_primer_vuelta = 0;
 		} else {
-			if(nro_pagina_inicial == pag->pagina)
+			if(nro_pagina_inicial == pag->pagina){
 				if(flag_find_00){
 					flag_find_00 = 0;
 					flag_find_01 = 1;
@@ -519,16 +524,18 @@ t_pagina* buscar_pagina_victima_CLOCK(t_list* lista_paginas){
 					flag_find_00 = 1;
 					flag_find_01 = 0;
 				}
+			}
 		}
 
 		if(flag_find_00 && !pag->usado && !pag->modificado && pag->presencia)
 			flag_match = 1;
 
-		if(flag_find_01)
+		if(flag_find_01){
 			if(!pag->usado && pag->modificado && pag->presencia)
 				flag_match = 1;
 			else
 				pag->usado = 0;
+		}
 
 	}
 	return(pag);
@@ -659,3 +666,15 @@ void destruir_proceso(t_proceso* proceso){
 	free(proceso);
 }
 
+
+void dormir_memoria(){
+
+	int retardo = RETARDO_MEMORIA();
+
+	if (retardo == 0) {
+		usleep(RETARDO_MEMORIA_MINIMO()*1000);
+	}else{
+		sleep(RETARDO_MEMORIA());
+	}
+
+}
