@@ -781,34 +781,58 @@ t_msg* sent_to_msg(t_sentencia* sent){
 
 int desconexion_planificador(){
 
-		int i;
-		t_msg* mensaje_a_memoria;
-		pthread_mutex_lock(&mutex);
-		log_trace(logger, "Desconexion del planificador se avisa al administrador de memoria.");
-		pthread_mutex_unlock(&mutex);
+	int i = 0;
 
-		mensaje_a_memoria = argv_message(CAIDA_PLANIFICADOR, 0);
+	if(flag_error_planificador == 0){
+
+			t_msg* mensaje_a_memoria;
+
+			pthread_mutex_lock(&mutex);
+			log_trace(logger, "DESCONEXION DEL PLANIFICADOR SE LE AVISA AL ADMINISTRADOR DE MEMORIA.");
+			pthread_mutex_unlock(&mutex);
+
+			mensaje_a_memoria = argv_message(CAIDA_PLANIFICADOR, 0);
 			i = enviar_y_destroy_mensaje(socket_memoria[0], mensaje_a_memoria);
-			if (i== -1){
-				log_trace(logger, "Desconexion del administrador de memoria.");
-			}
+
+			flag_error_planificador = 1;
+
+			abort();
+	}
+
+	if ((i== -1)&&(flag_error_memoria == 0)){
+		log_trace(logger, "DESCONEXION DEL ADMINISTRADOR DE MEMORIA.");
+		flag_error_memoria = 1;
+		abort();
+	}
 
 	return i;
 }
 
 int desconexion_memoria(){
 
-	int i;
-	t_msg* mensaje_a_planificador;
-	pthread_mutex_lock(&mutex);
-	log_trace(logger, "Desconexion del administrador de memoria se avisa al planificador.");
-	pthread_mutex_unlock(&mutex);
+	int i = 0;
+	int flag_error_memoria;
+	int flag_error_planificador;
 
-	mensaje_a_planificador = argv_message(CAIDA_MEMORIA, 0);
-		i = enviar_y_destroy_mensaje(socket_planificador[0], mensaje_a_planificador);
-		if (i== -1){
-			log_trace(logger, "Desconexion del planificador.");
-		}
+	if (flag_error_memoria == 0){
+
+			t_msg* mensaje_a_planificador;
+			pthread_mutex_lock(&mutex);
+			log_trace(logger, "Desconexion del administrador de memoria se avisa al planificador.");
+			pthread_mutex_unlock(&mutex);
+
+			mensaje_a_planificador = argv_message(CAIDA_MEMORIA, 0);
+
+			i = enviar_y_destroy_mensaje(socket_planificador[0], mensaje_a_planificador);
+
+			flag_error_memoria = 1;
+	}
+
+	if ((i== -1)&&(flag_error_planificador == 0)){
+
+		log_trace(logger, "Desconexion del planificador.");
+		flag_error_planificador = 1;
+	}
 
 return i;
 
@@ -939,6 +963,9 @@ void config_inicializar(){
 }
 
 int inicializar() {
+
+	flag_error_memoria = 0;
+	flag_error_planificador = 0;
 
 	cfg = config_create(CONFIG_PATH);
 	config_inicializar();

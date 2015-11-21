@@ -47,6 +47,8 @@ int socket_planificador_especial;
 int puertomem;
 int cant_hilos;
 int puertoplanif;
+int flag_error_memoria;
+int flag_error_planificador;
 
 /////////////////////////////////////////////////ESTRUCTURAS/////////////////////////////////////////
 
