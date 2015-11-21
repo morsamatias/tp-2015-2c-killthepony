@@ -154,7 +154,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 					}else{
 						buff_pag = swap_leer_pagina(pid, nro_pagina);
 						if(buff_pag != NULL){
-							if(cant_paginas<MAXIMO_MARCOS_POR_PROCESO()){
+							if(cant_paginas<MAXIMO_MARCOS_POR_PROCESO()&& b_marco.marco != -1){
 								agregar_pagina_en_memoria(proceso,nro_pagina,buff_pag);
 								st = 2;
 							}else{
@@ -249,7 +249,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 						// OPCIONAL
 
 						if(buff_pag != NULL){
-							if(cant_paginas<MAXIMO_MARCOS_POR_PROCESO()){
+							if(cant_paginas<MAXIMO_MARCOS_POR_PROCESO()&& b_marco.marco != -1){
 								agregar_pagina_en_memoria(proceso,nro_pagina,buff_pag);
 								st = 2;
 							}else{
