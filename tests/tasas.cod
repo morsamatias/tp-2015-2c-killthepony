@@ -1,0 +1,9 @@
+iniciar 2
+escribir 0 "Hola"
+leer 0
+entrada-salida 61
+escribir 1 "No?"
+leer 0
+leer 1
+entrada-salida 61
+finalizar

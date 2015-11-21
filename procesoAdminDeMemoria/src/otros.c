@@ -151,14 +151,3 @@ int swap_finalizar(int pid){
 }
 
 
-void dormir_memoria(){
-
-	int retardo = RETARDO_MEMORIA();
-
-	if (retardo == 0) {
-		usleep(RETARDO_MEMORIA_MINIMO*1000);
-	}else{
-		sleep(RETARDO_MEMORIA());
-	}
-
-}

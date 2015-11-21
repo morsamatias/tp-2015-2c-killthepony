@@ -65,7 +65,7 @@ t_marco**	memoria;
 t_config* 	cfg;
 int 		gl_PID;
 int			gl_nro_pagina;
-int			gl_TLB_hit;
+float		gl_TLB_hit;
 int			gl_TLB_total;
 pthread_t 	t_tasas_globales;
 
@@ -98,6 +98,7 @@ int 	ENTRADAS_TLB();
 int 	TLB_HABILITADA();
 int 	RETARDO_MEMORIA();
 char* 	ALGORITMO_REEMPLAZO();
+int 	RETARDO_MEMORIA_MINIMO();
 
 //// NUEVAS
 
@@ -128,11 +129,12 @@ void 			quitar_pagina_de_la_memoria_signal				(t_pagina* pagina);
 t_busq_marco 	buscar_marco_de_pagina_en_TLB_y_tabla_paginas	(int pid, int nro_pagina);
 t_pagina* 		mover_y_devolver_primer_pagina_al_final_de_la_lista(t_list* lista_paginas);
 t_pagina* 		buscar_pagina_victima_CLOCK						(t_list* lista_paginas);
+void 			dormir_memoria									();
 
 // MANEJO DE SEÑALES
 
 void iniciar_signals();
-void handler(int signal);
+void handler		(int signal);
 void handler_SIGUSR1();
 void handler_SIGUSR2();
 void handler_SIGPOLL();
