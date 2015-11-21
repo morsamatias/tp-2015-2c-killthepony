@@ -464,6 +464,8 @@ void mostrar_porcentaje(int cpu_id, int porcentaje) {
 	//cpu->usoUltimoMinuto = porcentaje;
 	log_info(logger,
 			"Porcentaje de Uso de la Cpu %d: %d", cpu_id, porcentaje);
+
+	printf("Porcentaje de Uso de la Cpu %d: %d", cpu_id, porcentaje);
 }
 
 int correr_proceso(char* path) {
@@ -531,7 +533,7 @@ t_cpu* cpu = NULL;
 
 
 	log_info(logger,"El proceso %d se encuentra en la cola de procesos Listoss",pcb->pid);
-printf("TODOOOOOOOOOOOOOOOOOOOOOOOOBIEN");
+//printf("TODOOOOOOOOOOOOOOOOOOOOOOOOBIEN");
 fflush(stdout);
 
 	if (cpu_disponible()) {
@@ -1673,7 +1675,7 @@ int inicializar() {
 
 	int tipo_logueo = TIPO_LOG();
 
-	logger = log_create(LOG_PATH, "planificador", true, tipo_logueo);
+	logger = log_create(LOG_PATH, "planificador", false, tipo_logueo);
 
 	cpus = list_create();
 
@@ -1761,7 +1763,7 @@ sem_wait(&sem_IO);
 		while(list_size(list_block) != 0) {
 			//hay bloqueados
 			//if ((list_any_satisfy(list_block, (void*) _estado_bloqueado))) {
-				if(list_any_satisfy(list_block, (void*) _estado_libre)){
+				if(list_all_satisfy(list_block, (void*) _estado_libre)){
 
 						//Entrada salida libre
 
