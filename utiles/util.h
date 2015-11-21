@@ -8,6 +8,9 @@
 #ifndef UTILES_UTIL_H_
 #define UTILES_UTIL_H_
 
+
+/////////////////////////////////////////////////////////////BIBLIOTECAS///////////////////////////////////////////////////
+
 #include "commons/collections/list.h"
 #include "commons/string.h"
 #include <arpa/inet.h>
@@ -33,6 +36,8 @@
 #include <errno.h>          /* errno, ECHILD            */
 #include <semaphore.h>      /* sem_open(), sem_destroy(), sem_wait().. */
 
+
+///////////////////////////////////////////////////////////////DEFINE CONSTANTES/////////////////////////////////////////////////////
 
 #define handle_error(msj) \
 	do{perror(msj);exit(EXIT_FAILURE);} while(0)
@@ -66,23 +71,27 @@
 
 #define MAX_PATH 1024
 
-/****************** IDS DE MENSAJES. ******************/
-typedef enum {
-	iniciar,
-	leer,
-	escribir,
-	io,
-	final,
-	error
-}e_sentencia;
+/*************************************************************** IDS DE MENSAJES. *************************************/
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 typedef enum {
+
+	///////////////////CPU////////////////
 	CPU_NUEVO,
 	CPU_BASE,
+	CPU_ESPECIAL,
+	CPU_PORCENTAJE_UTILIZACION,
+
 	PCB,
 	PCB_A_EJECUTAR,
 	PCB_IO,
+	PCB_ERROR,
+	PCB_FIN_QUANTUM,
+	PCB_LOGUEO,
+	PCB_FINALIZAR,
+
 	MEM_INICIAR,
 	MEM_OK,
 	MEM_LEER,
@@ -96,17 +105,24 @@ typedef enum {
 	SWAP_ESCRIBIR,
 	SWAP_FINALIZAR,
 	SWAP_NO_OK,
+
+	/////////////ERROR / FINALIZAR/////////////////////////////////
 	SENTENCIAS_EJECUTADAS,
-	PCB_FINALIZAR,
-	PCB_ERROR,
-	CPU_PORCENTAJE_UTILIZACION,
-	PCB_FIN_QUANTUM,
-	CPU_ESPECIAL,
-	PCB_LOGUEO,
 	CAIDA_PLANIFICADOR,
 	CAIDA_MEMORIA
 
 } t_msg_id;
+
+/////////////////////////////////////////////////////////////////ESCTRUCTURAS////////////////////////////////////////////
+
+typedef enum {
+	iniciar,
+	leer,
+	escribir,
+	io,
+	final,
+	error
+}e_sentencia;
 
 
 typedef struct{
@@ -166,30 +182,37 @@ typedef struct{
 }__attribute__ ((__packed__)) t_foo;
 
 
+////////////////////////////////////////////////////////PROTOTIPOS///////////////////////////////////////////////
+
+void* file_get_mapped(char* filename);
+
+
+
 void dormir(int segundos,int milisegundos);
+void file_mmap_free(char* mapped, char* filename);
 
 bool file_exists(const char* filename);
 
 size_t file_get_size(char* filename);
-void* file_get_mapped(char* filename);
-void file_mmap_free(char* mapped, char* filename);
-float  bytes_to_kilobytes(size_t bytes);
-
-int recibir_mensaje_script(int socket, char* save_as);
-
 t_cpu_base* cpu_base_new(int id, char* ip, int puerto);
+
+float  bytes_to_kilobytes(size_t bytes);
 float bytes_to_megabytes(size_t bytes);
 
+
+
 int cant_registros(char** registros) ;
+
+/****************************************************MENSAJES******************************************/
+
+int recibir_mensaje_script(int socket, char* save_as);
 int enviar_mensaje_flujo(int unSocket, int8_t tipo, int tamanio, void *buffer);
 int recibir_mensaje_flujo(int unSocket, void** buffer);
 int recibir_mensaje_script_y_guardar(int fd, char* path_destino);
 int enviar_mensaje_script(int fd, char* path_script);
-
-
 int enviar_mensaje_sin_header(int sock_fd, int tamanio, void* buffer);
 
-/****************** FUNCIONES SOCKET. ******************/
+/****************************************************** FUNCIONES SOCKET. ******************************/
 int server_socket_select(uint16_t port, void (*procesar_mensaje)(int, t_msg*));
 int recibirMensaje(int unSocket, void** buffer) ;
 int mandarMensaje(int unSocket, int8_t tipo, int tamanio, void *buffer) ;
@@ -212,6 +235,8 @@ int client_socket(char* ip, uint16_t port);
 int accept_connection(int sock_fd);
 int accept_connection_and_get_ip(int sock_fd, char **ip);
 int len_hasta_enter(char* strings);
+
+//////////////////////////////////////////////////////////////////////MENSAJES//////////////////////////////////////////////////////
 /*
  * Recibe un t_msg a partir de un socket determinado.
  */

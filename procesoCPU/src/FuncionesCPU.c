@@ -326,12 +326,18 @@ t_sentencia* sent_crear(char* sentencia, int pid, int hilo) {
 int sent_ejecutar_iniciar(t_sentencia* sent, int socket_mem) {
 
 	int rs = 0;
+	int i;
 	t_msg* msg = NULL;
 
 	msg = argv_message(MEM_INICIAR, 2, sent->pid, sent->cant_paginas);
 	log_trace(logger, "[HILO #%d] Enviando mensaje MemIniciar %d", sent->hilo, sent->cant_paginas);
 
-	enviar_y_destroy_mensaje(socket_mem, msg);
+	i = enviar_y_destroy_mensaje(socket_mem, msg);
+	if (i < 0){
+			i = -1;
+			desconexion_memoria();
+			return i;
+	}
 
 	log_trace(logger, "[HILO #%d] Esperando Rta MemIniciar %d", sent->hilo, sent->cant_paginas);
 	msg = recibir_mensaje(socket_mem);
@@ -671,7 +677,7 @@ int enviar_logs(int socket, t_list* resultados_sentencias){
 			desconexion_planificador();
 			destroy_message(msg);
 			rs = -1;
-			break;
+			return -1;
 		}else{
 		destroy_message(msg);
 	}}
@@ -723,7 +729,7 @@ int desconexion_planificador(){
 		pthread_mutex_unlock(&mutex);
 
 		mensaje_a_memoria = argv_message(CAIDA_PLANIFICADOR, 0);
-			i = enviar_y_destroy_mensaje(socket_memoria, mensaje_a_memoria);
+			i = enviar_y_destroy_mensaje(socket_memoria[0], mensaje_a_memoria);
 			if (i== -1){
 				log_trace(logger, "Desconexion del administrador de memoria.");
 			}
@@ -740,7 +746,7 @@ int desconexion_memoria(){
 	pthread_mutex_unlock(&mutex);
 
 	mensaje_a_planificador = argv_message(CAIDA_MEMORIA, 0);
-		i = enviar_y_destroy_mensaje(socket_planificador, mensaje_a_planificador);
+		i = enviar_y_destroy_mensaje(socket_planificador[0], mensaje_a_planificador);
 		if (i== -1){
 			log_trace(logger, "Desconexion del planificador.");
 		}
@@ -889,6 +895,9 @@ int inicializar() {
 ///////////////////////////////////////////////////FINALIZAR////////////////////////////////
 
 int finalizar() {
+
+	free(sentencias_ejecutadas_ultimo_min);
+	free(porcentaje_a_planificador);
 
 	config_destroy(cfg);
 	log_destroy(logger);
