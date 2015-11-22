@@ -27,14 +27,24 @@ int main(void) {
 int inicializar(){ ///////////////////
 	int i;
 
-	CONFIG_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoAdminDeMemoria/Debug/config.txt";
-	LOGGER_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoAdminDeMemoria/Debug/log.txt";
 	// ARCHIVO DE CONFIGURACION
+	CONFIG_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoAdminDeMemoria/Debug/config.txt";
 	cfg = config_create(CONFIG_PATH);
 
 	// ARCHIVO DE LOG
-	clean_file(LOGGER_PATH);
-	logger = log_create(LOGGER_PATH, "procesoAdminMem", true, LOG_LEVEL_TRACE);
+	//LOGGER_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoAdminDeMemoria/Debug/log.txt";
+	//clean_file(LOGGER_PATH);
+	clean_file("log_general.txt");
+	clean_file("log_errores.txt");
+	clean_file("log_memoria.txt");
+	clean_file("log_estadisticas.txt");
+	clean_file("log_status_memoria.txt");
+	log_general_p = log_create("log_general.txt", "Adm_Mem", true, LOG_LEVEL_TRACE);
+	log_general_f = log_create("log_general.txt", "Adm_Mem", false, LOG_LEVEL_TRACE);
+	log_errores = log_create("log_errores.txt", "Adm_Mem", false, LOG_LEVEL_TRACE);
+	log_memoria = log_create("log_memoria.txt", "Adm_Mem", false, LOG_LEVEL_TRACE);
+	log_estadisticas = log_create("log_estadisticas.txt", "Adm_Mem", false, LOG_LEVEL_TRACE);
+	log_print_mem = log_create("log_status_memoria.txt", "Adm_Mem", false, LOG_LEVEL_TRACE);
 
 	// ESTRUCTURA MEMORIA
 	memoria = (t_marco**)malloc(CANTIDAD_MARCOS()*sizeof(t_marco*));
@@ -65,7 +75,8 @@ int finalizar(){  ///////////////////
 	config_destroy(cfg);
 
 	// ARCHIVO DE LOG
-	log_destroy(logger);
+	log_destroy(log_general_p);
+	log_destroy(log_general_f);
 
 	// DESTRUIR LA MEMORIA
 	for(i=0;i<CANTIDAD_MARCOS();i++){
@@ -105,7 +116,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			pid 			= msg->argv[0];
 			cant_paginas 	= msg->argv[1];
 
-			log_trace(logger, "Iniciar Proceso %d con %d paginas",pid,cant_paginas);
+			log_info(log_general_p, "Iniciar Proceso %d con %d paginas",pid,cant_paginas);
 			destroy_message(msg);
 
 			st = iniciar_proceso_CPU(pid,cant_paginas);
@@ -114,12 +125,13 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 				case 0:
 					resp = argv_message(MEM_OK, 1 ,0);
 					enviar_y_destroy_mensaje(socket, resp);
-					log_info(logger, "El proceso %d fue inicializado correctamente",pid);
+					log_info(log_general_p, "El proceso %d fue inicializado correctamente",pid);
 					break;
 				case 1:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
 					enviar_y_destroy_mensaje(socket, resp);
-					log_warning(logger, "No hay espacio suficiente para alocar la memoria del proceso %d",pid);
+					log_info(log_general_p, "No hay espacio suficiente para alocar la memoria del proceso %d",pid);
+					log_error(log_errores, "No hay espacio suficiente para alocar la memoria del proceso %d",pid);
 					break;
 			}
 
@@ -130,9 +142,10 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			pid 		= msg->argv[0];
 			nro_pagina  = msg->argv[1];
 			destroy_message(msg);
-			log_trace(logger, "Leer pagina %d del proceso %d", nro_pagina,pid);
+			log_info(log_memoria, "Leer pagina %d del proceso %d", nro_pagina,pid);
 			flag_reemplazo=0;
 
+			loguear_memoria();
 			// BUSCO EL PROCESO
 			gl_PID=pid;
 			gl_nro_pagina=nro_pagina;
@@ -180,33 +193,37 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			}
 
 			sem_post(&mutex_PAGINAS);
+			loguear_memoria();
 
 			switch(st){
 				case 0:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
-					log_error(logger, "No existe la pagina %d solicitada por el proceso %d",nro_pagina,pid);
+					log_info(log_memoria, "No existe la pagina %d solicitada por el proceso %d",nro_pagina,pid);
+					log_error(log_errores, "No existe la pagina %d solicitada por el proceso %d",nro_pagina,pid);
 					break;
 				case 1:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
-					log_error(logger, "La pagina %d del proceso %d no fue recibida bien del SWAP",nro_pagina,pid);
+					log_info(log_memoria, "La pagina %d del proceso %d no fue recibida bien del SWAP",nro_pagina,pid);
+					log_error(log_errores, "La pagina %d del proceso %d no fue recibida bien del SWAP",nro_pagina,pid);
 					break;
 				case 2:
-					//dormir_memoria();
 					resp = string_message(MEM_OK, buff_pag, 0);
 					if(flag_reemplazo)
-						log_info(logger, "Lectura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d",
+						log_info(log_memoria, "Lectura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d",
 								nro_pagina,pid, b_marco.TLB_HIT, b_marco.marco);
 					else
-						log_info(logger, "Lectura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d - Algoritmo: %s",
+						log_info(log_memoria, "Lectura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d - Algoritmo: %s",
 								nro_pagina,pid, b_marco.TLB_HIT, b_marco.marco, ALGORITMO_REEMPLAZO());
 					break;
 				case 3:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
-					log_error(logger, "No hay lugar en memoria para guardar la pagina %d del proceso %d",nro_pagina,pid);
+					log_info(log_memoria, "No hay lugar en memoria para guardar la pagina %d del proceso %d",nro_pagina,pid);
+					log_error(log_errores, "No hay lugar en memoria para guardar la pagina %d del proceso %d",nro_pagina,pid);
 					break;
 				case 4:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
-					log_error(logger, "No se pudo guardar la informacion de la pagina desalojada del proceso %d en SWAP",pid);
+					log_info(log_memoria, "No se pudo guardar la informacion de la pagina desalojada del proceso %d en SWAP",pid);
+					log_error(log_errores, "No se pudo guardar la informacion de la pagina desalojada del proceso %d en SWAP",pid);
 					break;
 			}
 
@@ -221,9 +238,10 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			pid 		= msg->argv[0];
 			nro_pagina 	= msg->argv[1];
 			destroy_message(msg);
-			log_trace(logger, "Escribir en Memoria la pagina %d del PID %d y texto: \"%s\"", nro_pagina, pid,buff_pag);
+			log_info(log_memoria, "Escribir en Memoria la pagina %d del PID %d y texto: \"%s\"", nro_pagina, pid,buff_pag);
 			flag_reemplazo=0;
 
+			loguear_memoria();
 			// BUSCO EL PROCESO y la PAGINA
 			sem_wait(&mutex_PAGINAS);
 			gl_PID=pid;
@@ -277,35 +295,40 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 				}
 			}
 			sem_post(&mutex_PAGINAS);
+			loguear_memoria();
 
 			// BORRADO DE CODIGO EN BKP
 
 			switch(st){
 				case 0:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
-					log_error(logger, "Escritura Erronea --> No existe la pagina %d solicitada por el proceso %d",nro_pagina,pid);
+					log_info(log_memoria, "Escritura Erronea --> No existe la pagina %d solicitada por el proceso %d",nro_pagina,pid);
+					log_error(log_errores, "Escritura Erronea --> No existe la pagina %d solicitada por el proceso %d",nro_pagina,pid);
 					break;
 				case 1:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
-					log_error(logger, "Escritura Erronea --> La pagina %d del proceso %d no fue recibida bien del SWAP",nro_pagina,pid);
+					log_info(log_memoria, "Escritura Erronea --> La pagina %d del proceso %d no fue recibida bien del SWAP",nro_pagina,pid);
+					log_error(log_errores, "Escritura Erronea --> La pagina %d del proceso %d no fue recibida bien del SWAP",nro_pagina,pid);
 					break;
 				case 2:
 					//dormir_memoria();
 					resp = argv_message(MEM_OK, 1 ,0);
 					if(!flag_reemplazo)
-						log_info(logger, "Escritura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d",
+						log_info(log_memoria, "Escritura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d",
 								nro_pagina,pid, b_marco.TLB_HIT, b_marco.marco);
 					else
-						log_info(logger, "Escritura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d - Algoritmo: %s",
+						log_info(log_memoria, "Escritura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d - Algoritmo: %s",
 								nro_pagina,pid, b_marco.TLB_HIT, b_marco.marco, ALGORITMO_REEMPLAZO());
 					break;
 				case 3:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
-					log_error(logger, "Escritura Erronea --> No hay lugar en memoria para guardar la pagina %d del proceso %d",nro_pagina,pid);
+					log_info(log_memoria, "Escritura Erronea --> No hay lugar en memoria para guardar la pagina %d del proceso %d",nro_pagina,pid);
+					log_error(log_errores, "Escritura Erronea --> No hay lugar en memoria para guardar la pagina %d del proceso %d",nro_pagina,pid);
 					break;
 				case 4:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
-					log_error(logger, "Escritura Erronea --> No se pudo guardar la informacion de la pagina desalojada del proceso %d en SWAP",pid);
+					log_info(log_memoria, "Escritura Erronea --> No se pudo guardar la informacion de la pagina desalojada del proceso %d en SWAP",pid);
+					log_error(log_errores, "Escritura Erronea --> No se pudo guardar la informacion de la pagina desalojada del proceso %d en SWAP",pid);
 					break;
 			}
 
@@ -314,25 +337,31 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 
 		case MEM_FINALIZAR:
 			//param 0 PID
-			log_info(logger, "MEM_FINALIZAR");
 
 			gl_PID = msg->argv[0];
 			destroy_message(msg);
 
+			log_info(log_general_p, "Finalizar Proceso %d",gl_PID);
+
 			// LE AVISO AL SWAP QUE LIBERE EL ESPACIO
 			st = swap_finalizar(gl_PID);
 			if(st !=0){
+				log_info(log_general_p, "No se pudo finalizar el proceso %d por un problema en el SWAP",gl_PID);
+				log_error(log_errores, "No se pudo finalizar el proceso %d por un problema en el SWAP",gl_PID);
 				resp = argv_message(MEM_NO_OK, 1, 0);
 				enviar_y_destroy_mensaje(socket, resp);
 				break;
 			}
 
+			loguear_memoria();
 			// ELIMINO LAS ESTRUCTURAS
 			sem_wait(&mutex_PAGINAS);
 			list_remove_and_destroy_by_condition(paginas,(void*)es_el_proceso_segun_PID,(void*)destruir_proceso);
 			sem_post(&mutex_PAGINAS);
+			loguear_memoria();
 
 			// LE AVISOA LA CPU COMO TERMINO
+			log_info(log_general_p, "Se finalizo correctamente el proceso %d",gl_PID);
 			resp = argv_message(MEM_OK, 1, 0);
 			enviar_y_destroy_mensaje(socket, resp);
 			break;
@@ -342,12 +371,12 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			break;
 
 		case CAIDA_PLANIFICADOR:
-			log_error(logger, "SE CERRO EL PLANIFICADOR, CIERRO EL PROGRAMA");
+			log_info(log_general_p, "Se cerro el Planificador por lo cual se termina el proceso");
 			exit(0);
 			break;
 
 		default:
-			log_warning(logger, "LA OPCION SELECCIONADA NO ESTA REGISTRADA");
+			log_error(log_errores, "El mensaje %d no es correcto",msg->header.id);
 			break;
 	}
 
@@ -370,6 +399,7 @@ t_busq_marco buscar_marco_de_pagina_en_TLB_y_tabla_paginas(int pid, int nro_pagi
 		busc_marco.marco = -1;
 	}
 	proceso->TLB_total++;
+	gl_TLB_total++;
 
 	// SE FIJA SI ESTA LA PAGINA EN MEMORIA
 	if(busc_marco.marco == -1){
@@ -378,6 +408,7 @@ t_busq_marco buscar_marco_de_pagina_en_TLB_y_tabla_paginas(int pid, int nro_pagi
 		busc_marco.TLB_HIT=0;
 	}else{
 		proceso->TLB_hit++;
+		gl_TLB_hit++;
 		busc_marco.TLB_HIT=1;
 	}
 
@@ -397,14 +428,22 @@ int encontrar_marco_libre(){ ////////////////
 
 void tasa_aciertos_TLB_total(){
 	float valor;
+	//log_info(log_general_p, "arranco ¬¬");
 	while(1){
-		sleep(60);
+		//log_info(log_general_p, "me duermo ¬¬");
 		gl_TLB_hit=0.0;
 		gl_TLB_total = 0;
-		list_iterate(paginas,(void*)sumar_tasas_TLB);
+		sleep(60);
+		//log_info(log_general_p, "despierto ¬¬");
+		//list_iterate(paginas,(void*)sumar_tasas_TLB);
+		//log_info(log_general_p, "a ver que onda: %f - %d",gl_TLB_hit,gl_TLB_total);
 		if(gl_TLB_total!=0){
 			valor= (gl_TLB_hit/gl_TLB_total)*100;
-			log_info(logger, "TLB - Tasa de aciertos: %f",valor);
+			log_info(log_general_p, "TLB - Tasa de aciertos: %f",valor);
+			log_info(log_estadisticas, "TLB - Tasa de aciertos: %f",valor);
+		} else {
+			log_info(log_general_p, "TLB - Sin pedidos ultimo minuto");
+			log_info(log_estadisticas, "TLB - Sin pedidos ultimo minuto");
 		}
 	}
 }
@@ -417,7 +456,8 @@ void sumar_tasas_TLB(t_proceso* proceso){
 void tasa_aciertos_TLB(t_proceso* proceso){
 	float valor;
 	valor= (proceso->TLB_hit/proceso->TLB_total)*100;
-	log_info(logger, "Tasa de aciertos para el proceso %d: %f",proceso->PID,valor);
+	log_info(log_general_p, "Tasa de aciertos para el proceso %d: %f",proceso->PID,valor);
+	log_info(log_estadisticas, "Tasa de aciertos para el proceso %d: %f",proceso->PID,valor);
 }
 
 
@@ -677,4 +717,17 @@ void dormir_memoria(){
 		sleep(RETARDO_MEMORIA());
 	}
 
+}
+
+
+void loguear_memoria(){
+	int i;
+	for(i=0;i<CANTIDAD_MARCOS();i++){
+		if(memoria[i]->libre)
+			log_info(log_print_mem,"Marco: %d	Contenido: <vacio> Flag: %d",i,memoria[i]->libre);
+		else
+			log_info(log_print_mem,"Marco: %d	Contenido: %s\n",i,memoria[i]->contenido,memoria[i]->libre);
+	}
+	log_info(log_print_mem,"---------------------------------------------------");
+	log_info(log_print_mem,"---------------------------------------------------");
 }

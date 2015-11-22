@@ -51,13 +51,13 @@ void handler(int signal){
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void handler_SIGUSR1(){
-	log_info(logger, "Señal Capturada: SIGUSR1 - Borrar TLB");
+	log_info(log_general_p, "Señal Capturada: SIGUSR1 - Borrar TLB");
 	if(TLB_HABILITADA()){
 		sem_wait(&mutex_TLB);
 		list_clean(TLB);
 		sem_post(&mutex_TLB);
 	}
-	log_info(logger, "Borrado Completo TLB");
+	log_info(log_general_p, "Borrado Completo TLB");
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -67,7 +67,7 @@ void handler_SIGUSR1(){
 void handler_SIGUSR2(){
 
 
-	log_info(logger, "Señal Capturada: SIGUSR2 - Borrar Memoria");
+	log_info(log_general_p, "Señal Capturada: SIGUSR2 - Borrar Memoria");
 	sem_wait(&mutex_PAGINAS);
 	// GUARDO LAS VARIABLES GLOBALES EN UNA AUXILIAR POR LAS DUDAS
 	int gl_PID_aux = gl_PID;
@@ -81,7 +81,7 @@ void handler_SIGUSR2(){
 	gl_nro_pagina = gl_nro_pagina_aux;
 
 	sem_post(&mutex_PAGINAS);
-	log_info(logger, "Borrado Completo Memoria");
+	log_info(log_general_p, "Borrado Completo Memoria");
 }
 
 void quitar_todas_las_paginas_de_memoria_del_proceso(t_proceso* proceso){
@@ -97,26 +97,27 @@ void quitar_pagina_de_la_memoria_signal(t_pagina* pagina){
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void handler_SIGPOLL(){
-	log_info(logger, "Señal Capturada: SIGPOLL - Dump Memoria");
+	log_info(log_general_p, "Señal Capturada: SIGPOLL - Dump Memoria");
 
 	int i, pid;
 	FILE* archivo;
 
 	pid=fork();
 	if(pid<0){
-		log_error(logger, "Error al querer hacer Dump Memoria - No se pudo hacer FORK");
+		log_info(log_general_p, "Error al querer hacer Dump Memoria - No se pudo hacer FORK");
+		log_error(log_errores, "Error al querer hacer Dump Memoria - No se pudo hacer FORK");
 	} else
 		if(pid==0) {
 			// REALIZO EL DUMP DE LA MEMORIA
 			archivo = fopen("/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoAdminDeMemoria/Debug/Dump_Memoria.txt","w");
 			for(i=0;i<CANTIDAD_MARCOS();i++){
 				if(memoria[i]->libre)
-					fprintf(archivo,"Marco: %d	Contenido: <vacio>\n",i);
+					fprintf(archivo,"Marco: %d	Contenido: <vacio>",i);
 				else
-					fprintf(archivo,"Marco: %d	Contenido: %s\n",i,memoria[i]->contenido);
+					fprintf(archivo,"Marco: %d	Contenido: %s",i,memoria[i]->contenido);
 			}
 			fclose(archivo);
-			log_info(logger, "Realizado correctamente Dump Memoria");
+			log_info(log_general_p, "Realizado correctamente Dump Memoria");
 			exit(1);
 	} else {
 			// CONTINUO LA EJECUCION NORMAL

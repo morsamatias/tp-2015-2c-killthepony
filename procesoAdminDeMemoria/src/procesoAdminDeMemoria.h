@@ -56,7 +56,7 @@ typedef struct {
 
 pthread_t 	th_server_cpu;
 int 		socket_swap;
-t_log* 		logger;
+
 char* 		CONFIG_PATH ;
 char* 		LOGGER_PATH ;
 t_list* 	TLB;
@@ -73,7 +73,14 @@ pthread_t 	t_tasas_globales;
 sem_t mutex_TLB;
 sem_t mutex_PAGINAS;
 
-
+// Loggers
+//t_log* 		logger;
+t_log* 	log_general_p;
+t_log* 	log_general_f;
+t_log* 	log_errores;
+t_log* 	log_memoria;
+t_log* 	log_estadisticas;
+t_log*	log_print_mem;
 
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -130,6 +137,7 @@ t_busq_marco 	buscar_marco_de_pagina_en_TLB_y_tabla_paginas	(int pid, int nro_pa
 t_pagina* 		mover_y_devolver_primer_pagina_al_final_de_la_lista(t_list* lista_paginas);
 t_pagina* 		buscar_pagina_victima_CLOCK						(t_list* lista_paginas);
 void 			dormir_memoria									();
+void 			loguear_memoria									();
 
 // MANEJO DE SEÑALES
 
