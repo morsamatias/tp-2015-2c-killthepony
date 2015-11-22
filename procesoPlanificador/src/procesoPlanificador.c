@@ -364,11 +364,11 @@ void procesar_msg_consola(char* msg) {
 
 				log_error(logger,
 						"No se puede determinar el estado del proceso %d",
-						pcb->pid);
+						pcb2->pid);
 
 				log_error(log_consola,
 						"No se puede determinar el estado del proceso %d",
-						pcb->pid);
+						pcb2->pid);
 
 				break;
 
@@ -1364,7 +1364,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 				"El proceso de Pid %d finalizó su Quantum y pasa del estado en Ejecución al estado Listo \n",
 				msg->argv[0]);
 
-		t_ready* ready = malloc(sizeof(ready));
+		t_ready* ready=malloc(sizeof(t_ready));
 
 		ready->pid = msg->argv[0];
 
@@ -1722,6 +1722,124 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		 }
 
 		 break;*/
+
+
+	case PCB_ERROR:
+
+				pcb = es_el_pcb_buscado_por_id(msg->argv[0]);
+
+				if(pcb!=NULL){
+
+				log_info(logger,
+						"El proceso cuyo pid es: %d\n ha sufrido un Error y se Finalizará", pcb->pid);
+
+				log_info(log_consola,
+								"El proceso cuyo pid es: %d\n ha sufrido un Error y se Finalizará", pcb->pid);
+
+				PID_GLOBAL = pcb->pid;
+
+				pcb->pc = pcb->cant_sentencias - 1;
+
+				log_info(logger,"pcb->pc: %d",pcb->pc);
+
+				log_info(log_consola,"pcb->pc: %d",pcb->pc);
+
+				}else{
+
+					log_info(logger,
+							"No existe el proceso que se indicó como error");
+
+					log_info(log_consola,
+							"No existe el proceso que se indicó como error");
+
+				}
+
+
+						PID_GLOBAL_EXEC = (msg->argv[0]);
+
+						list_remove_by_condition(list_exec, (void*) es_el_pcb_buscado_en_exec);
+
+
+						t_ready* ready2=malloc(sizeof(t_ready));
+
+						ready2->pid = msg->argv[0];
+
+						list_add(list_ready, ready2);
+
+						pcb->estado = READY
+						;
+
+						pcb->tiempo_inicio_ready = time(NULL);
+
+						log_info(logger, "El proceso %d se encuentra en la cola de Listos \n",
+								pcb->pid);
+
+						log_info(log_listas, "El proceso %d se encuentra en la cola de Listos \n",
+								pcb->pid);
+
+						pcb->cpu_asignado = 100; //Hay que poner un número alto
+
+						cpu = cpu_buscar_por_socket(socket);
+
+						cpu->estado = 1;
+
+						log_info(logger,
+							"Operaciones realizadas por el proceso %d hasta el momento son:\n",
+							pcb->pid);
+
+
+						log_info(log_consola,
+							"Operaciones realizadas por el proceso %d hasta el momento son:\n",
+							pcb->pid);
+
+						for (i=0;i<msg->argv[3];i++){
+
+						msge=recibir_mensaje(socket);
+						logueo (msge);
+						destroy_message(msge);
+
+						}
+
+						if (list_size(list_ready) > 0) {
+							if (cpu_disponible()) {
+								cpu = cpu_seleccionar();
+								if (cpu != NULL) {
+									t_ready* ready = malloc(sizeof(t_ready));
+									ready = list_get(list_ready, 0);
+									t_pcb* pcb2;
+									pcb2 = es_el_pcb_buscado_por_id(ready->pid);
+
+									pcb2->cpu_asignado = cpu->id;
+									cpu_ejecutar(cpu, pcb2);
+									cpu->estado = 0;
+								} else {
+								/*	printf(
+											"No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",
+											pcb->pid);*/
+									log_info(logger,
+											"No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",
+											pcb->pid);
+									log_info(log_consola,
+									         "No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",
+																pcb->pid);
+
+
+								}
+							} else {
+
+								log_info(logger,"No existe CPU activa para asignarle un nuevo proceso\n");
+								//printf("No existe CPU activa para asignarle un proceso \n");
+
+								log_info(log_consola,"No existe CPU activa para asignarle un nuevo proceso\n");
+
+
+							}
+
+						}
+
+						destroy_message(msg);
+
+		break;
 
 	case CPU_PORCENTAJE_UTILIZACION:
 
