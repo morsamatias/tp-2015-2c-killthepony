@@ -52,6 +52,9 @@ pthread_t contador_IO_PCB;
 time_t time1;
 
 int main(void) {
+
+	system("clear");
+
 	inicializar();
 
 	char comando_usuario[COMMAND_MAX_SIZE];

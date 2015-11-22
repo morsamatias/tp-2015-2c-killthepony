@@ -19,6 +19,9 @@ bool FIN = false;
 //////////////////////////////////////////////MAIN() //////////////////////////////////////////
 
 int main(void) {
+
+	system("clear");
+
 	inicializar();
 
 	server_socket_select(PUERTO_ESCUCHA(), procesar_mensaje_mem);

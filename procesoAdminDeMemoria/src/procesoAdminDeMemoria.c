@@ -12,6 +12,9 @@
 
 
 int main(void) {
+
+	system("clear");
+
 	inicializar();
 
 	iniciar_signals();
