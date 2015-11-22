@@ -109,7 +109,7 @@ void* hilo_porcentaje() {
 	int numero,CANT_SENT_EN_UN_MIN;
 
 	if (RETARDO() == 0) {
-			CANT_SENT_EN_UN_MIN = dividir (60,(RETARDO_MINIMO() * 1000)); //CALCULO CANTIDAD DE SENTENCIAS MAXIMAS COMO SON MICROSEGUNDOS MULTIPLICO * 1000//
+			CANT_SENT_EN_UN_MIN = dividir (60000,(RETARDO_MINIMO())); //CALCULO CANTIDAD DE SENTENCIAS MAXIMAS COMO SON MICROSEGUNDOS MULTIPLICO * 1000//
 	}else{
 			CANT_SENT_EN_UN_MIN = dividir (60 ,RETARDO());                 //CALCULO CANTIDAD DE SENTENCIAS MAXIMAS EN SEGUNDOS//
 	}
@@ -623,7 +623,7 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem, int hilo) {
 
 	}
 
-	if (((sent->sentencia == final) && (cantidad_a_ejecutar != sentencias_ejecutadas)) || sent->sentencia == io){ //ES IO
+	if (((sent->sentencia == final) && (cantidad_a_ejecutar != sentencias_ejecutadas) && (sent->sentencia == io) && (st == 0))){ //ES IO
 																												//O YA SE EJECUTARON TODAS
 		st = sent_ejecutar(sent, socket_mem);
 		ultima_sentencia_ejecutada = sent->sentencia;
@@ -631,6 +631,7 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem, int hilo) {
 		sentencias_ejecutadas++;
 		list_add(resultado.resultados_sentencias, sent);
 	}
+
 
 	//si es una io, voy a la siguiente posicion y hago que esta ejecutando
 	/*
@@ -672,8 +673,7 @@ int avisar_a_planificador(t_resultado_pcb respuesta, int socket_planif, int hilo
 	//primero verifico si no ejecuto bien, para enviarle la sentencia que dio error (respuesta.sentencia)
 	if (!respuesta.ejecuto_ok) {
 		mensaje_a_planificador = argv_message(PCB_ERROR, 4, respuesta.pcb->pid,
-				respuesta.sentencia, respuesta.tiempo,
-				respuesta.cantidad_sentencias);
+				respuesta.sentencia, respuesta.tiempo,respuesta.cantidad_sentencias);
 		log_trace(logger,
 				"[HILO #%d] EnviarAlPlanif PCB_ERROR, PID:%d, sent:%d, t: %d, cant_sent_ejec:%d",
 				hilo, respuesta.pcb->pid, respuesta.sentencia, respuesta.tiempo,
@@ -792,7 +792,7 @@ t_msg* sent_to_msg(t_sentencia* sent){
 			log_trace(logger, "[HILO #%d] LOG ENVIAR ENTRADA-SALIDA PID:%d, Tiempo: %d", sent->hilo, sent->pid, sent->tiempo);
 			break;
 		default:
-			log_error(logger, "[HILO #%d] ERRORRRRRRRRRRRRRRR", sent->hilo);
+			log_error(logger, "[HILO #%d] ERROR", sent->hilo);
 			msg = NULL;
 			break;
 	}
