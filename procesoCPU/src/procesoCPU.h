@@ -74,47 +74,43 @@ typedef struct{
 ///////////////////////////////////////////////PROTOTIPOS//////////////////////////////////////////////
 
 
-int avisar_a_planificador(t_resultado_pcb respuesta,int socket_planif, int hilo);
-int CANTIDAD_HILOS();
-int conectar_con_memoria(int numero);
-int conectar_con_planificador(int numero);
-int conectar_con_planificador_especial();
-int desconexion_planificador();
-int desconexion_memoria();
-int enviar_porcentaje_a_planificador();
-int enviar_logs(int socket, t_list* resultados_sentencias);
-int finalizar();
-int inicializar();
-int PUERTO_MEMORIA();
-int PUERTO_PLANIFICADOR();
-int procesar_mensaje_planif(t_msg* msg,int numero);
-int procesar_mensaje_planif(t_msg* msg,int numero);
-int pcb_tiene_que_seguir_ejecutando(t_pcb* pcb);
-int RETARDO();
-int RETARDO_MINIMO();
-int sent_ejecutar_iniciar(t_sentencia* sent,int socket_mem);
-int sent_ejecutar_finalizar(t_sentencia* sent,int socket_mem);
+int 			avisar_a_planificador(t_resultado_pcb respuesta,int socket_planif, int hilo);
+int 			CANTIDAD_HILOS();
+int 			conectar_con_memoria(int numero);
+int 			conectar_con_planificador(int numero);
+int 			conectar_con_planificador_especial();
+int 		    dividir(unsigned long int sent_ejecutadas,int sent_maximas);
+int				desconexion_planificador();
+int 			desconexion_memoria();
+int 			enviar_porcentaje_a_planificador();
+int 			enviar_logs(int socket, t_list* resultados_sentencias);
+int 			finalizar();
+int 			inicializar();
+int 			PUERTO_MEMORIA();
+int 			PUERTO_PLANIFICADOR();
+int 			procesar_mensaje_planif(t_msg* msg,int numero);
+int 			procesar_mensaje_planif(t_msg* msg,int numero);
+int 			pcb_tiene_que_seguir_ejecutando(t_pcb* pcb);
+int				RETARDO();
+int 			RETARDO_MINIMO();
+int 			sent_ejecutar_iniciar(t_sentencia* sent,int socket_mem);
+int 			sent_ejecutar_finalizar(t_sentencia* sent,int socket_mem);
 
-t_msg* sent_to_msg(t_sentencia* sent);
+t_msg* 			sent_to_msg(t_sentencia* sent);
 t_resultado_pcb ejecutar(t_pcb* pcb,int socket_mem, int hilo);
 
+void 			dormir2();
+void 		    inicializar_porcentajes();
+void  			inicializar_resultados_sentencias();
+void* 			hilo_responder_porcentaje();
+void* 			hilo_cpu(int *numero_hilo);
+void* 			hilo_porcentaje() ;
 
-void* hilo_responder_porcentaje();
-void* hilo_cpu(int *numero_hilo);
-void* hilo_porcentaje() ;
-
-void dormir2();
-void inicializar_porcentajes();
-void inicializar_resultados_sentencias();
-
-char* CONFIG_PAT();
-char* IP_PLANIFICADOR();
-char* IP_MEMORIA();
-char* LOGGER_PAT();
-char* sent_ejecutar_leer(t_sentencia* sent,int socket_mem);
-
-
-
+char* 			CONFIG_PAT();
+char* 			IP_PLANIFICADOR();
+char* 			IP_MEMORIA();
+char* 			LOGGER_PAT();
+char* 			sent_ejecutar_leer(t_sentencia* sent,int socket_mem);
 
 
 #endif /* PROCESOCPU_H_ */

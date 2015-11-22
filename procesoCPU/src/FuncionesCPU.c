@@ -21,19 +21,19 @@ void* hilo_responder_porcentaje() {
 	if (socket_planificador_especial>0) {
 		while (true) {
 
-			log_trace(logger, "[PORCENTAJE] Esperando peticiones para responder el CPU_PORCENTAJE_UTILIZACION del planificador");
+			log_trace(logger, "[PORCENTAJE] Esperando peticiones CPU_PORCENTAJE_UTILIZACION del planificador");
 			msg = recibir_mensaje(socket_planificador_especial);
 
-			if(msg!=NULL){ //VALIDACION //
+			if(msg!=NULL){												 //VALIDACION //
 
-				if(msg->header.id == CPU_PORCENTAJE_UTILIZACION){ //VALIDA QUE SEA EL MENSAJE ESPERADO//
+				if(msg->header.id == CPU_PORCENTAJE_UTILIZACION){ 		//VALIDA QUE SEA EL MENSAJE ESPERADO//
 
 					destroy_message(msg);
-					log_trace(logger, "[PORCENTAJE] Nuevo mensaje del planificador pidiendo CPU_PORCENTAJE_UTILIZACION");
+					log_trace(logger, "[PORCENTAJE] Nuevo mensaje del planificador  CPU_PORCENTAJE_UTILIZACION");
 					enviar_porcentaje_a_planificador();
 
 				}else{
-					log_error(logger, "[PORCENTAJE] mensaje desconocido");
+					log_error(logger, "[PORCENTAJE] Mensaje desconocido");
 					break;
 				}
 			}else{
@@ -68,7 +68,7 @@ int enviar_porcentaje_a_planificador() {
 		pthread_mutex_lock(&mutex);
 
 		porcentaje = porcentaje_a_planificador[numero_de_cpu];
-		log_trace(logger, "[HILO #%d]: CPU_PORCENTAJE_UTILIZACION: %d ", numero_de_cpu, porcentaje);
+		log_trace(logger, "[HILO #%d]: CPU_PORCENTAJE_UTILIZACION: %d%c.", numero_de_cpu, porcentaje,'%');
 
 		pthread_mutex_unlock(&mutex);
 
@@ -90,10 +90,14 @@ int enviar_porcentaje_a_planificador() {
 
 
 void inicializar_porcentajes(){
+
 	int contador;
+
 	for (contador = 0; contador < CANTIDAD_HILOS(); ++contador) {
+
 		sentencias_ejecutadas_ultimo_min[contador] = 0;
 		porcentaje_a_planificador[contador] = 0;
+
 	}
 }
 
@@ -105,9 +109,9 @@ void* hilo_porcentaje() {
 	int numero,CANT_SENT_EN_UN_MIN;
 
 	if (RETARDO() == 0) {
-			CANT_SENT_EN_UN_MIN = 60 / (RETARDO_MINIMO() * 1000); //CALCULO CANTIDAD DE SENTENCIAS MAXIMAS COMO SON MICROSEGUNDOS MULTIPLICO * 1000//
+			CANT_SENT_EN_UN_MIN = dividir (60,(RETARDO_MINIMO() * 1000)); //CALCULO CANTIDAD DE SENTENCIAS MAXIMAS COMO SON MICROSEGUNDOS MULTIPLICO * 1000//
 	}else{
-			CANT_SENT_EN_UN_MIN = 60 / RETARDO();                 //CALCULO CANTIDAD DE SENTENCIAS MAXIMAS EN SEGUNDOS//
+			CANT_SENT_EN_UN_MIN = dividir (60 ,RETARDO());                 //CALCULO CANTIDAD DE SENTENCIAS MAXIMAS EN SEGUNDOS//
 	}
 
 	while(true){
@@ -122,10 +126,24 @@ void* hilo_porcentaje() {
 
 		for (numero = 0; numero < CANTIDAD_HILOS(); numero++) {
 
-			porcentaje_a_planificador[numero] = (sentencias_ejecutadas_ultimo_min[numero] * 100)	/ CANT_SENT_EN_UN_MIN;
+			if(CANT_SENT_EN_UN_MIN != 0){
+
+			porcentaje_a_planificador[numero] = dividir(sentencias_ejecutadas_ultimo_min[numero]*100,CANT_SENT_EN_UN_MIN);
 
 			log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d.", numero,sentencias_ejecutadas_ultimo_min[numero], porcentaje_a_planificador[numero]);
+
+			}else{
+
+				porcentaje_a_planificador[numero] = 0;
+
+				log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d.", numero,sentencias_ejecutadas_ultimo_min[numero], porcentaje_a_planificador[numero]);
+
+
+			}
+
 			sentencias_ejecutadas_ultimo_min[numero] = 0;
+
+
 		}
 
 		printf("\n*****************************************************************************\n");
@@ -521,8 +539,9 @@ char* sent_ejecutar_leer(t_sentencia* sent, int socket_mem) {
 	}
 }
 
-int sent_ejecutar(t_sentencia* sent, int socket_mem) {
+int sent_ejecutar(t_sentencia* sent, int socket_mem) {				//TINE INCLUIDO EL RETARDO//
 
+	dormir2();
 
 	pthread_mutex_lock(&mutex);
 	sentencias_ejecutadas_ultimo_min[sent->hilo] ++;
@@ -556,8 +575,6 @@ int sent_ejecutar(t_sentencia* sent, int socket_mem) {
 		break;
 	}
 
-	dormir2();
-
 	return st;
 
 	//return 0;
@@ -575,21 +592,24 @@ void sent_free(t_sentencia* sent) {
 t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem, int hilo) {
 
 	int st = 0;
-
-	t_resultado_pcb resultado;
-	resultado.resultados_sentencias = list_create();
-
 	int cantidad_a_ejecutar = pcb->cant_a_ejectuar;
 	int sentencias_ejecutadas = 0;
 
 	char* mcod = file_get_mapped(pcb->path);
 	char** sents = string_split(mcod, "\n");
+
+	t_resultado_pcb resultado;
+	resultado.resultados_sentencias = list_create();
+
+
 	t_sentencia* sent = NULL;
 	e_sentencia ultima_sentencia_ejecutada;
+
 	sent = sent_crear(sents[pcb->pc], pcb->pid, hilo);
 
-	while ((sent->sentencia != final) && (sent->sentencia != io)
-			&& (cantidad_a_ejecutar != sentencias_ejecutadas) && (st == 0)) {
+	while ((sent->sentencia != final) && (sent->sentencia != io)                       //QUE NO SEA IO NI FINAL//
+			&& (cantidad_a_ejecutar != sentencias_ejecutadas) && (st == 0)) {		   //NI SE HAYAN EJECUTADO TODAS//
+
 
 		ultima_sentencia_ejecutada = sent->sentencia;
 
@@ -603,7 +623,8 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem, int hilo) {
 
 	}
 
-	if (((sent->sentencia == final) && (cantidad_a_ejecutar != sentencias_ejecutadas)) || sent->sentencia == io){
+	if (((sent->sentencia == final) && (cantidad_a_ejecutar != sentencias_ejecutadas)) || sent->sentencia == io){ //ES IO
+																												//O YA SE EJECUTARON TODAS
 		st = sent_ejecutar(sent, socket_mem);
 		ultima_sentencia_ejecutada = sent->sentencia;
 		pcb->pc++;
@@ -721,10 +742,11 @@ int avisar_a_planificador(t_resultado_pcb respuesta, int socket_planif, int hilo
 }
 
 int enviar_logs(int socket, t_list* resultados_sentencias){
-	//envio los logs
+
 	t_msg* msg;
 	int i, rs = 0;
 	t_sentencia* sent = NULL;
+
 	for (i = 0; i < list_size(resultados_sentencias); ++i) {
 		sent = (t_sentencia*) list_get(resultados_sentencias, i);
 
@@ -737,6 +759,7 @@ int enviar_logs(int socket, t_list* resultados_sentencias){
 			destroy_message(msg);
 			rs = -1;
 			return -1;
+
 		}else{
 		destroy_message(msg);
 	}}
@@ -990,6 +1013,19 @@ int finalizar() {
 	pthread_mutex_destroy(&mutex);
 	return 0;
 }
+
+/////////////////////////////////////////////////DIVISION DE FLOATS////////////////////////////////
+
+int dividir(unsigned long int sent_ejecutadas,int sent_maximas)
+{
+	unsigned long int valor;
+	valor = (sent_ejecutadas/sent_maximas);
+	return(valor);
+}
+
+
+
+
 
 //////////////////////////////////////////////////FUNCIONES CONFIGURACION////////////////////////
 
