@@ -620,9 +620,9 @@ int correr_proceso(char* path) {
 t_cpu* cpu = NULL;
 
 
-	log_info(logger,"El proceso %d se encuentra en la cola de procesos Listoss",pcb->pid);
+	log_info(logger,"El proceso %d se encuentra en la cola de procesos Listos",pcb->pid);
 
-	log_info(log_listas,"El proceso %d se encuentra en la cola de procesos Listoss",pcb->pid);
+	log_info(log_listas,"El proceso %d se encuentra en la cola de procesos Listos",pcb->pid);
 
 
 
@@ -646,20 +646,20 @@ t_cpu* cpu = NULL;
 					pcb->pid);*/
 
 		log_info(logger,
-				"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",pcb->pid);
+				"No existe una CPU libre para asignar al proceso %d. El proceso queda en READY",pcb->pid);
 
 
 		log_info(log_listas,
-						"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",pcb->pid);
+						"No existe una CPU libre para asignar al proceso %d. El proceso queda en READY",pcb->pid);
 				}
 	}
 	else {
 
 
 		log_info(logger,
-						"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",pcb->pid);
+						"No existe una CPU libre para asignar al proceso %d. El proceso queda en READY",pcb->pid);
 		log_info(log_listas,
-						"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",pcb->pid);
+						"No existe una CPU libre para asignar al proceso %d. El proceso queda en READY",pcb->pid);
 
 
 	}
@@ -797,20 +797,20 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 							"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",
 							pcb->pid);*/
 					log_info(logger,
-							"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",pcb->pid);
+							"No existe una CPU libre para asignar al proceso %d. El proceso queda en READY",pcb->pid);
 
 					log_info(log_consola,
-						"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",pcb->pid);
+						"No existe una CPU libre para asignar al proceso %d. El proceso queda en READY",pcb->pid);
 
 				}
 				}
 			else {
 				//printf("No existe CPU activa para asignarle un nuevo proceso");
 				log_info(logger,
-						"No existe CPU activa para asignarle un nuevo proceso"	);
+						"No existe una CPU libre para asignarle un nuevo proceso"	);
 
 			log_info(log_consola,
-					"No existe CPU activa para asignarle un nuevo proceso"	);
+					"No existe una CPU libre para asignarle un nuevo proceso"	);
 									}
 
 		}
@@ -1003,18 +1003,18 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 							"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",
 							pcb->pid);*/
 					log_info(logger,
-							"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",
+							"No existe una CPU libre para asignar al proceso %d. El proceso queda en READY",
 														pcb->pid);
 					log_info(log_consola,
-								"No existe CPU activa para asignar al proceso %d. El proceso queda en READY",
+								"No existe una CPU libre para asignar al proceso %d. El proceso queda en READY",
 																			pcb->pid);
 				}
 			} else {
 
 				//printf("No existe CPU activa para asignarle un nuevo proceso");
-			log_info(logger,"No existe CPU activa para asignarle un nuevo proceso");
+			log_info(logger,"No existe una CPU libre para asignarle un nuevo proceso");
 
-			log_info(log_consola,"No existe CPU activa para asignarle un nuevo proceso");
+			log_info(log_consola,"No existe una CPU libre para asignarle un nuevo proceso");
 
 			}
 
@@ -1146,9 +1146,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 					/*printf(
 							"No existe CPU activa para asignar al proceso %d. El proceso queda en READY\n",
 							pcb->pid);*/
-					log_info(logger,"No existe CPU activa para asignar al proceso %d. El proceso queda en READY\n",
+					log_info(logger,"No existe una CPU libre para asignar al proceso %d. El proceso queda en READY\n",
 							pcb->pid);
-					log_info(log_consola,"No existe CPU activa para asignar al proceso %d. El proceso queda en READY\n",
+					log_info(log_consola,"No existe una CPU libre para asignar al proceso %d. El proceso queda en READY\n",
 												pcb->pid);
 				}
 			} else {
@@ -1156,9 +1156,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 			//	printf(
 				//		"No existe CPU activa para asignarle un nuevo proceso\n");
 
-			log_info(logger,"No existe CPU activa para asignarle un nuevo proceso\n");
+			log_info(logger,"No existe una CPU libre para asignarle un nuevo proceso\n");
 
-			log_info(log_consola,"No existe CPU activa para asignarle un nuevo proceso\n");
+			log_info(log_consola,"No existe una CPU libre para asignarle un nuevo proceso\n");
 
 			}
 
@@ -1432,20 +1432,20 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 							"No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",
 							pcb->pid);*/
 					log_info(logger,
-							"No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",
+							"No existe una CPU libre para asignar al proceso %d. El proceso queda en READY \n",
 							pcb->pid);
 					log_info(log_consola,
-					         "No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",
+					         "No existe una CPU libre para asignar al proceso %d. El proceso queda en READY \n",
 												pcb->pid);
 
 
 				}
 			} else {
 
-				log_info(logger,"No existe CPU activa para asignarle un nuevo proceso\n");
+				log_info(logger,"No existe una CPU libre para asignarle un nuevo proceso\n");
 				//printf("No existe CPU activa para asignarle un proceso \n");
 
-				log_info(log_consola,"No existe CPU activa para asignarle un nuevo proceso\n");
+				log_info(log_consola,"No existe una CPU libre para asignarle un nuevo proceso\n");
 
 
 			}
@@ -1786,14 +1786,14 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 						cpu->estado = 1;
 
-						log_info(logger,
+						/*log_info(logger,
 							"Operaciones realizadas por el proceso %d hasta el momento son:\n",
 							pcb->pid);
 
 
 						log_info(log_consola,
 							"Operaciones realizadas por el proceso %d hasta el momento son:\n",
-							pcb->pid);
+							pcb->pid);*/
 
 						for (i=0;i<msg->argv[3];i++){
 
@@ -1820,20 +1820,20 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 											"No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",
 											pcb->pid);*/
 									log_info(logger,
-											"No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",
+											"No existe una CPU libre para asignar al proceso %d. El proceso queda en READY \n",
 											pcb->pid);
 									log_info(log_consola,
-									         "No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",
+									         "No existe una CPU libre para asignar al proceso %d. El proceso queda en READY \n",
 																pcb->pid);
 
 
 								}
 							} else {
 
-								log_info(logger,"No existe CPU activa para asignarle un nuevo proceso\n");
+								log_info(logger,"No existe una CPU libre para asignarle un nuevo proceso\n");
 								//printf("No existe CPU activa para asignarle un proceso \n");
 
-								log_info(log_consola,"No existe CPU activa para asignarle un nuevo proceso\n");
+								log_info(log_consola,"No existe una CPU libre para asignarle un nuevo proceso\n");
 
 
 							}
@@ -2167,20 +2167,20 @@ sem_wait(&sem_IO);
 									pcb->pid);
 						*/
 						log_info(logger,
-								"No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",pcb->pid);
+								"No existe una CPU libre para asignar al proceso %d. El proceso queda en READY \n",pcb->pid);
 
 						log_info(log_consola,
-								"No existe CPU activa para asignar al proceso %d. El proceso queda en READY \n",pcb->pid);
+								"No existe una CPU libre para asignar al proceso %d. El proceso queda en READY \n",pcb->pid);
 
 
 						}
 					} else {
 						//printf(
 							log_info(logger,
-									"No existe CPU activa para asignarle un proceso \n");
+									"No existe una CPU libre para asignarle un proceso \n");
 
 							log_info(log_consola,
-									"No existe CPU activa para asignarle un proceso \n");
+									"No existe una CPU libre para asignarle un proceso \n");
 
 
 					}
