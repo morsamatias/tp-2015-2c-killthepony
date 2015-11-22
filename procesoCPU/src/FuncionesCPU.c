@@ -819,13 +819,15 @@ int desconexion_planificador(){
 
 			flag_error_planificador = 1;
 
-			abort();
+			//abort();
+			exit();
 	}
 
 	if ((i== -1)&&(flag_error_memoria == 0)){
 		log_trace(logger, "DESCONEXION DEL ADMINISTRADOR DE MEMORIA.");
 		flag_error_memoria = 1;
-		abort();
+		//abort();
+		exit();
 	}
 
 	return i;
