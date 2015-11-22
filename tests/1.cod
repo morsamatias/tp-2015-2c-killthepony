@@ -1,7 +1,7 @@
 iniciar 50
 escribir 0 "Hola"
 escribir 45 "chau"
-escribir 10 "ERROR"
+escribir 10 "ERsaROsadsadR"
 escribir 9 "Noooooo"
 escribir 12 "PorFavooor"
 entrada-salida 2
@@ -13,13 +13,13 @@ leer 1
 escribir 0 "Seh"
 escribir 0 "Hola"
 escribir 45 "chau"
-escribir 10 "ERROR"
+escribir 10 "ERRasdsaOR"
 escribir 9 "Noooooo"
 escribir 12 "PorFavooor"
 escribir 19 "No?"
 escribir 0 "Hola"
 escribir 45 "chau"
-escribir 10 "ERROR"
+escribir 10 "ERsadsROR"
 escribir 9 "Noooooo"
 escribir 12 "PorFavooor"
 entrada-salida 2

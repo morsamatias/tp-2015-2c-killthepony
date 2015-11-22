@@ -145,7 +145,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			log_info(log_memoria, "Leer pagina %d del proceso %d", nro_pagina,pid);
 			flag_reemplazo=0;
 
-			loguear_memoria();
+			//loguear_memoria();
 			// BUSCO EL PROCESO
 			gl_PID=pid;
 			gl_nro_pagina=nro_pagina;
@@ -241,7 +241,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			log_info(log_memoria, "Escribir en Memoria la pagina %d del PID %d y texto: \"%s\"", nro_pagina, pid,buff_pag);
 			flag_reemplazo=0;
 
-			loguear_memoria();
+			//loguear_memoria();
 			// BUSCO EL PROCESO y la PAGINA
 			sem_wait(&mutex_PAGINAS);
 			gl_PID=pid;
@@ -474,12 +474,16 @@ void agregar_pagina_en_memoria(t_proceso* proceso, int nro_pagina, char* conteni
 	// BUSCO LA PAGINA EN LA TABLA DE PROCESOS
 	gl_nro_pagina = nro_pagina;
 	gl_PID 		  = proceso->PID;
-	t_pagina* pagina = list_find(proceso->paginas,(void*)es_la_pagina_segun_PID_y_nro_pagina);
+
+	// PONGO LA PAGINA AL FINAL DE LA LISTA DE PAGINAS DEL PROCESO
+	t_pagina* pagina = list_remove_by_condition(proceso->paginas,(void*)es_la_pagina_segun_PID_y_nro_pagina);
+	list_add(proceso->paginas,pagina);
 
 	// ACTUALIZO ATRIBUTOS
 	pagina->marco=marco;
 	pagina->presencia=1;
 	pagina->usado=1;
+
 
 	// AGREGO LA PAGINA EN LA TLB, SIEMPRE Y CUANDO ESTE HABILITADA Y YA NO EXISTA LA PAGINA
 	sem_wait(&mutex_TLB);
@@ -538,7 +542,12 @@ int reemplazar_pagina_en_memoria_segun_algoritmo(t_proceso* proceso, int pagina,
 	// AGREGO LA NUEVA PAGINA
 	agregar_pagina_en_memoria(proceso, pagina, contenido);
 
-	return 2;
+	if(st==0)
+		st=4;
+	else
+		st=2;
+
+	return st;
 }
 
 t_pagina* buscar_pagina_victima_CLOCK(t_list* lista_paginas){
@@ -583,7 +592,7 @@ t_pagina* buscar_pagina_victima_CLOCK(t_list* lista_paginas){
 
 t_pagina* mover_y_devolver_primer_pagina_al_final_de_la_lista(t_list* lista_paginas){
 	t_pagina* pag;
-	pag = list_remove(lista_paginas,0);
+	pag = list_remove_by_condition(lista_paginas,(void*)la_pagina_esta_cargada_en_memoria);
 	list_add(lista_paginas,pag);
 	return(pag);
 }
@@ -726,7 +735,7 @@ void loguear_memoria(){
 		if(memoria[i]->libre)
 			log_info(log_print_mem,"Marco: %d	Contenido: <vacio> Flag: %d",i,memoria[i]->libre);
 		else
-			log_info(log_print_mem,"Marco: %d	Contenido: %s\n",i,memoria[i]->contenido,memoria[i]->libre);
+			log_info(log_print_mem,"Marco: %d	Contenido: %s",i,memoria[i]->contenido,memoria[i]->libre);
 	}
 	log_info(log_print_mem,"---------------------------------------------------");
 	log_info(log_print_mem,"---------------------------------------------------");

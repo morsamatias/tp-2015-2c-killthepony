@@ -1,0 +1,42 @@
+[INFO] 16:18:06:387 Adm_Mem/(8320:8320): Marco: 0	Contenido: Hola
+[INFO] 16:18:06:387 Adm_Mem/(8320:8320): Marco: 1	Contenido: <vacio> Flag: 1
+[INFO] 16:18:06:388 Adm_Mem/(8320:8320): Marco: 2	Contenido: <vacio> Flag: 1
+[INFO] 16:18:06:388 Adm_Mem/(8320:8320): Marco: 3	Contenido: <vacio> Flag: 1
+[INFO] 16:18:06:388 Adm_Mem/(8320:8320): Marco: 4	Contenido: <vacio> Flag: 1
+[INFO] 16:18:06:388 Adm_Mem/(8320:8320): ---------------------------------------------------
+[INFO] 16:18:06:388 Adm_Mem/(8320:8320): ---------------------------------------------------
+[INFO] 16:18:08:396 Adm_Mem/(8320:8320): Marco: 0	Contenido: Hola
+[INFO] 16:18:08:397 Adm_Mem/(8320:8320): Marco: 1	Contenido: chau
+[INFO] 16:18:08:397 Adm_Mem/(8320:8320): Marco: 2	Contenido: <vacio> Flag: 1
+[INFO] 16:18:08:397 Adm_Mem/(8320:8320): Marco: 3	Contenido: <vacio> Flag: 1
+[INFO] 16:18:08:397 Adm_Mem/(8320:8320): Marco: 4	Contenido: <vacio> Flag: 1
+[INFO] 16:18:08:397 Adm_Mem/(8320:8320): ---------------------------------------------------
+[INFO] 16:18:08:397 Adm_Mem/(8320:8320): ---------------------------------------------------
+[INFO] 16:18:10:407 Adm_Mem/(8320:8320): Marco: 0	Contenido: Hola
+[INFO] 16:18:10:407 Adm_Mem/(8320:8320): Marco: 1	Contenido: chau
+[INFO] 16:18:10:407 Adm_Mem/(8320:8320): Marco: 2	Contenido: ERsaROsadsadR
+[INFO] 16:18:10:408 Adm_Mem/(8320:8320): Marco: 3	Contenido: <vacio> Flag: 1
+[INFO] 16:18:10:408 Adm_Mem/(8320:8320): Marco: 4	Contenido: <vacio> Flag: 1
+[INFO] 16:18:10:408 Adm_Mem/(8320:8320): ---------------------------------------------------
+[INFO] 16:18:10:408 Adm_Mem/(8320:8320): ---------------------------------------------------
+[INFO] 16:18:14:938 Adm_Mem/(8320:8320): Marco: 0	Contenido: Noooooo
+[INFO] 16:18:14:938 Adm_Mem/(8320:8320): Marco: 1	Contenido: chau
+[INFO] 16:18:14:938 Adm_Mem/(8320:8320): Marco: 2	Contenido: ERsaROsadsadR
+[INFO] 16:18:14:938 Adm_Mem/(8320:8320): Marco: 3	Contenido: <vacio> Flag: 1
+[INFO] 16:18:14:938 Adm_Mem/(8320:8320): Marco: 4	Contenido: <vacio> Flag: 1
+[INFO] 16:18:14:938 Adm_Mem/(8320:8320): ---------------------------------------------------
+[INFO] 16:18:14:938 Adm_Mem/(8320:8320): ---------------------------------------------------
+[INFO] 16:18:17:878 Adm_Mem/(8320:8320): Marco: 0	Contenido: Noooooo
+[INFO] 16:18:17:878 Adm_Mem/(8320:8320): Marco: 1	Contenido: PorFavooor
+[INFO] 16:18:17:878 Adm_Mem/(8320:8320): Marco: 2	Contenido: ERsaROsadsadR
+[INFO] 16:18:17:878 Adm_Mem/(8320:8320): Marco: 3	Contenido: <vacio> Flag: 1
+[INFO] 16:18:17:878 Adm_Mem/(8320:8320): Marco: 4	Contenido: <vacio> Flag: 1
+[INFO] 16:18:17:878 Adm_Mem/(8320:8320): ---------------------------------------------------
+[INFO] 16:18:17:879 Adm_Mem/(8320:8320): ---------------------------------------------------
+[INFO] 16:18:23:643 Adm_Mem/(8320:8320): Marco: 0	Contenido: Noooooo
+[INFO] 16:18:23:643 Adm_Mem/(8320:8320): Marco: 1	Contenido: PorFavooor
+[INFO] 16:18:23:643 Adm_Mem/(8320:8320): Marco: 2	Contenido: ERsaROsadsadR
+[INFO] 16:18:23:644 Adm_Mem/(8320:8320): Marco: 3	Contenido: No?
+[INFO] 16:18:23:644 Adm_Mem/(8320:8320): Marco: 4	Contenido: <vacio> Flag: 1
+[INFO] 16:18:23:644 Adm_Mem/(8320:8320): ---------------------------------------------------
+[INFO] 16:18:23:644 Adm_Mem/(8320:8320): ---------------------------------------------------

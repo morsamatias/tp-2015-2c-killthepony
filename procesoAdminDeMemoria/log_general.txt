@@ -1,0 +1,26 @@
+[INFO] 16:17:47:331 Adm_Mem/(8320:8320): Conectado con swap. 127.0.0.1:6000
+[INFO] 16:17:47:336 Adm_Mem/(8320:8320): SWAP - Mensaje de confirmacion enviado correctamente
+[INFO] 16:18:04:367 Adm_Mem/(8320:8320): Iniciar Proceso 1 con 50 paginas
+[INFO] 16:18:04:369 Adm_Mem/(8320:8320): SWAP - Pedido reserva: Proceso 1 - Paginas 50
+[INFO] 16:18:04:369 Adm_Mem/(8320:8320): SWAP - Reserva correcta
+[INFO] 16:18:04:370 Adm_Mem/(8320:8320): El proceso 1 fue inicializado correctamente
+[INFO] 16:18:05:377 Adm_Mem/(8320:8320): SWAP - Pedido lectura: Proceso 1 - Pagina 0
+[INFO] 16:18:05:386 Adm_Mem/(8320:8320): SWAP - Lectura correcta: AAAA
+[INFO] 16:18:07:393 Adm_Mem/(8320:8320): SWAP - Pedido lectura: Proceso 1 - Pagina 45
+[INFO] 16:18:07:396 Adm_Mem/(8320:8320): SWAP - Lectura correcta: AAAA
+[INFO] 16:18:09:404 Adm_Mem/(8320:8320): SWAP - Pedido lectura: Proceso 1 - Pagina 10
+[INFO] 16:18:09:407 Adm_Mem/(8320:8320): SWAP - Lectura correcta: AAAA
+[INFO] 16:18:11:433 Adm_Mem/(8320:8320): SWAP - Pedido lectura: Proceso 1 - Pagina 9
+[INFO] 16:18:11:437 Adm_Mem/(8320:8320): SWAP - Lectura correcta: AAAA
+[INFO] 16:18:13:932 Adm_Mem/(8320:8320): SWAP - Pedido escritura: Proceso 1 - Pagina 0 - Contenido Hola
+[INFO] 16:18:13:937 Adm_Mem/(8320:8320): SWAP - Escritura correcta
+[INFO] 16:18:15:945 Adm_Mem/(8320:8320): SWAP - Pedido lectura: Proceso 1 - Pagina 12
+[INFO] 16:18:15:954 Adm_Mem/(8320:8320): SWAP - Lectura correcta: AAAA
+[INFO] 16:18:16:873 Adm_Mem/(8320:8320): SWAP - Pedido escritura: Proceso 1 - Pagina 45 - Contenido chau
+[INFO] 16:18:16:877 Adm_Mem/(8320:8320): SWAP - Escritura correcta
+[INFO] 16:18:20:890 Adm_Mem/(8320:8320): SWAP - Pedido lectura: Proceso 1 - Pagina 19
+[INFO] 16:18:20:893 Adm_Mem/(8320:8320): SWAP - Lectura correcta: AAAA
+[INFO] 16:18:21:843 Adm_Mem/(8320:8320): SWAP - Pedido escritura: Proceso 1 - Pagina 10 - Contenido ERsaROsadsadR
+[INFO] 16:18:22:641 Adm_Mem/(8320:8320): SWAP - Escritura incorrecta por problemas de comunicacion
+[INFO] 16:18:24:650 Adm_Mem/(8320:8320): SWAP - Pedido lectura: Proceso 1 - Pagina 33
+[INFO] 16:18:24:650 Adm_Mem/(8320:8320): SWAP - Lectura incorrecta por problemas de comunicacion

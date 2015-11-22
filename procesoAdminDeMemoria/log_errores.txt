@@ -1,0 +1,2 @@
+[ERROR] 16:18:22:642 Adm_Mem/(8320:8320): SWAP - Escritura incorrecta por problemas de comunicacion
+[ERROR] 16:18:24:651 Adm_Mem/(8320:8320): SWAP - Lectura incorrecta por problemas de comunicacion
