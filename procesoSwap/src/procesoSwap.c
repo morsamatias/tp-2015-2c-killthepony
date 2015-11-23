@@ -61,19 +61,21 @@ void dormir_compactacion(){
 
 
 char* swap_inicializar() {
+
 	TAMANIO_SWAP = CANTIDAD_PAGINAS() * TAMANIO_PAGINA();
+	char CREAR_DATA[1024];
 
 	char* TRUNC_DATA = string_from_format("truncate -s %d %s", TAMANIO_SWAP, NOMBRE_SWAP());
-	printf("%s\n", TRUNC_DATA);
+	//printf("%s\n", TRUNC_DATA);
+
 	system(TRUNC_DATA);
 	free(TRUNC_DATA);
 
-	char CREAR_DATA[1024];
 	sprintf(CREAR_DATA, "dd if=/dev/zero of=%s bs=%d count=%d", NOMBRE_SWAP(), TAMANIO_PAGINA(), CANTIDAD_PAGINAS());
-	printf("%s\n", CREAR_DATA);
+	//printf("%s\n", CREAR_DATA);
 	system(CREAR_DATA);
 
-	log_trace(logger, "Creado archivo swap %s de %d paginas de tamaño %d", NOMBRE_SWAP(), CANTIDAD_PAGINAS(), TAMANIO_PAGINA());
+	log_trace(logger, "Creado archivo swap %s de %d paginas de tamaño %d.", NOMBRE_SWAP(), CANTIDAD_PAGINAS(), TAMANIO_PAGINA());
 
 
 
@@ -568,17 +570,19 @@ void est_eliminar(int pid){
 
 ///////////////////////////////////////////////////////////PRINTS////////////////////////////////
 void print_ocupado() {
-	printf("ESPACIO OCUPADO*********************\n");
+	printf("	ESPACIO OCUPADO \n");
 	void _print_ocupado(t_ocupado* o) {
-		printf("pid:%d, pos:%d, cant:%d\n", o->pid, o->posicion, o->cantidad);
+		printf("-pid:%d.\n -pos:%d.\n cant:%d.\n", o->pid, o->posicion, o->cantidad);
 	}
 	list_iterate(esp_ocupado, (void*) _print_ocupado);
 }
 void print_libre() {
-	printf("ESPACIO LIBRE********************\n");
+	printf("	ESPACIO LIBRE \n");
 	void _print_libre(t_libre* l) {
-		printf("pos:%d, cant:%d\n", l->posicion, l->cantidad);
+			printf("-Poscion:%d.\n-Cantidad:%d.\n", l->posicion, l->cantidad);
+			printf("************************************************************************\n");
 	}
+
 	list_iterate(esp_libre, (void*) _print_libre);
 }
 
@@ -699,7 +703,7 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 		default:
 			break;
 	}//FIN SWITCH
-	printf("**********************************************\n");
+	printf("************************************************************************\n");
 	print_ocupado();
 	print_libre();
 

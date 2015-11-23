@@ -131,7 +131,7 @@ int server_socket_select(uint16_t port, void (*procesar_mensaje)(int, t_msg*)) {
 	if ((fdNuevoNodo = server_socket(port)) < 0) {
 		handle_error("No se pudo iniciar el server");
 	}
-	printf("server iniciado en %d\n", port);
+	printf("Server iniciado: %d.\n", port);
 
 	FD_ZERO(&master); // borra los conjuntos maestro y temporal
 	FD_ZERO(&read_fds);
@@ -927,6 +927,7 @@ void free_split(char** splitted){
 
 
 int pcb_print(t_pcb* pcb){
+
 	printf("Mostrar PCB::\n");
 	printf("path: %s, pc: %d, cant_a_exec: %d\n", pcb->path, pcb->pc, pcb->cant_a_ejectuar);
 	printf("**********************\n");

@@ -623,8 +623,9 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem, int hilo) {
 
 	}
 
-	if (((sent->sentencia == final) && (cantidad_a_ejecutar != sentencias_ejecutadas) && (sent->sentencia == io) && (st == 0))){ //ES IO
-																												//O YA SE EJECUTARON TODAS
+	if (((sent->sentencia == final) && (cantidad_a_ejecutar != sentencias_ejecutadas)) || sent->sentencia == io){
+
+		//O YA SE EJECUTARON TODAS
 		st = sent_ejecutar(sent, socket_mem);
 		ultima_sentencia_ejecutada = sent->sentencia;
 		pcb->pc++;
