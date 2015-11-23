@@ -375,6 +375,8 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 
 		case CAIDA_PLANIFICADOR:
 			log_info(log_general_p, "Se cerro el Planificador por lo cual se termina el proceso");
+			resp = argv_message(CAIDA_PLANIFICADOR, 1, 0);
+			enviar_y_destroy_mensaje(socket_swap, resp);
 			exit(0);
 			break;
 

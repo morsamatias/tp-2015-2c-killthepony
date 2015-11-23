@@ -693,6 +693,11 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			//FIN = true;
 			//return ;
 			break;
+
+		case CAIDA_PLANIFICADOR:
+					log_info(logger, "PROCESO TERMINADO PORQUE SE CERRO EL PLANIFICADOR.");
+					exit(0);
+		break;
 		case -10:
 			destroy_message(msg);
 
