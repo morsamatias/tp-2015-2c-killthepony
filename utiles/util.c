@@ -8,6 +8,8 @@
 #include "util.h"
 
 
+/////////////////////////////////////////////////////////////////RETARDO/////////////////////////////////////////
+
 void dormir(int segundos,int milisegundos){
 
 	if (segundos == 0) {
@@ -18,6 +20,8 @@ void dormir(int segundos,int milisegundos){
 
 }
 
+
+///////////////////////////////////////////////////// ARCHIVOS Y MAPPEO/////////////////////////////////////////////
 size_t file_get_size(char* filename) {
 	struct stat st;
 	stat(filename, &st);
@@ -25,32 +29,10 @@ size_t file_get_size(char* filename) {
 }
 
 
-
-int len_hasta_enter(char* strings){
-		int i=0;
-		while(strings[i]!='\n' && strings[i]!='\0')
-			i++;
-
-		return i+1;
-	}
-
-
-void file_mmap_free(char* mapped, char* filename) {
-	munmap(mapped, file_get_size(filename));
-}
-
-int cant_registros(char** registros) {
-	int i = 0;
-	while (registros[i] != NULL) {
-		i++;
-	}
-	return i;
-}
-
-
 /*
  * devuelve el arhivo mappeado modo lectura y escritura
  */
+
 void* file_get_mapped(char* filename) {
 
 	char *addr;
@@ -72,39 +54,33 @@ void* file_get_mapped(char* filename) {
 	if (addr == MAP_FAILED)
 		handle_error("mmap");
 	return addr;
-	/*
-	//el archivo ya esta creado con el size maximo
-	void* mapped = NULL;
-	struct stat st;
-	int fd = 0;
-	fd = open(filename, O_RDWR);
-	if (fd == -1) {
-		handle_error("open");
-	}
 
-	stat(filename, &st);
-	//printf("%ld\n", st.st_size);
-	size_t size = st.st_size;
-
-	mapped = mmap(NULL, size, PROT_WRITE, MAP_SHARED | MAP_NORESERVE, fd, 0);
-	close(fd);
-
-	if (mapped == MAP_FAILED) {
-		if(size==0)
-			printf("el archivo tiene tamaño 0. Imposible mappear");
-		handle_error("mmap");
-	}
-
-	return mapped;
-	*/
 }
 
-/*
-void free_null(void** data) {
-	free(*data);
-	*data = NULL;
-	data = NULL;
-}*/
+///////////////////////////////////////////////////////LIBERAR MAPEO//////////////////////////////////////////////////
+
+void file_mmap_free(char* mapped, char* filename) {
+	munmap(mapped, file_get_size(filename));
+}
+
+
+int len_hasta_enter(char* strings){
+		int i=0;
+		while(strings[i]!='\n' && strings[i]!='\0')
+			i++;
+
+		return i+1;
+}
+
+
+int cant_registros(char** registros) {
+	int i = 0;
+	while (registros[i] != NULL) {
+		i++;
+	}
+	return i;
+}
+
 
 bool file_exists(const char* filename) {
 	bool rs = true;
@@ -151,13 +127,11 @@ int server_socket_select(uint16_t port, void (*procesar_mensaje)(int, t_msg*)) {
 		for (i = 0; i <= fdmax; i++) {
 			if (FD_ISSET(i, &read_fds)) { // ¡¡tenemos datos!!
 				if (i == fdNuevoNodo) {	// gestionar nuevas conexiones
-					//char * ip;
-					//newfd = accept_connection_and_get_ip(fdNuevoNodo, &ip);
+
 					newfd = accept_connection(fdNuevoNodo);
 					if (newfd < 0) {
 						printf("no acepta mas conexiones\n");
 					} else {
-						//printf("nueva conexion desde IP: %s\n", ip);
 						FD_SET(newfd, &master); // añadir al conjunto maestro
 						if (newfd > fdmax) { // actualizar el máximo
 							fdmax = newfd;
@@ -168,12 +142,10 @@ int server_socket_select(uint16_t port, void (*procesar_mensaje)(int, t_msg*)) {
 					t_msg *msg = recibir_mensaje(i);
 					if (msg == NULL) {
 						/* Socket closed connection. */
-						//int status = remove_from_lists(i);
 						printf("Conexion cerrada %d\n", i);
 						close(i);
 						FD_CLR(i, &master);
 					} else {
-						//print_msg(msg);
 						procesar_mensaje(i, msg);
 
 					}
@@ -214,7 +186,6 @@ int server_socket(uint16_t port) {
 	}
 
 	/* Listen to incoming connections. */
-	//if (listen(sock_fd, BACK_LOG) < 0) {
 	if (listen(sock_fd, 127) < 0) {
 		perror("listen");
 		return -4;
@@ -234,8 +205,7 @@ int client_socket(char *ip, uint16_t port) {
 		return -1;
 	}
 
-	//make socket non blocking
-	//fcntl(sock_fd, F_SETFL, O_NONBLOCK);
+
 
 	/* Fill server ip / port info. */
 	servername.sin_family = AF_INET;
@@ -321,19 +291,6 @@ t_msg *argv_message(t_msg_id id, uint16_t count, ...) {
 
 	return new;
 }
-
-
-/*
-int send_file(int socket, char* filename){
-	size_t size = file_get_size(filename);
-
-	int fd = open(filename, O_RDONLY);
-	sendfile(socket, fd, NULL, size);
-	close(fd);
-	return 0;
-}*/
-
-
 
 int enviar_mensaje_sin_header(int sock_fd, int tamanio, void* buffer){
 	int total=0, pending =tamanio;
@@ -421,8 +378,7 @@ int mandarMensaje(int unSocket, int8_t tipo, int tamanio, void *buffer) {
 	bufferAux = malloc(sizeof(t_header_base) + tamanio);
 	memcpy(bufferAux, &header, sizeof(t_header_base));
 	memcpy((bufferAux + (sizeof(t_header_base))), buffer, tamanio);
-//			if ((auxInt=send(unSocket, &header, sizeof(Header), 0)) >= 0){
-	//auxInt = send(unSocket, bufferAux, (sizeof(t_header_base) + tamanio), 0);
+
 	auxInt = sendAll(unSocket, bufferAux, (sizeof(t_header_base) + tamanio), 0);
 	free(bufferAux);
 	return auxInt;
@@ -658,19 +614,6 @@ int enviar_mensaje(int sock_fd, t_msg *msg) {
 		total += sent;
 		pending -= sent;
 	}
-	/*
-	while (total < pending) {
-		//int sent = send(sock_fd, buffer, msg->header.length + sizeof msg->header	+ msg->header.argc * sizeof(uint32_t), MSG_NOSIGNAL);
-		int sent = send(sock_fd, buffer, msg->header.length + sizeof msg->header	+ msg->header.argc * sizeof(uint32_t), 0);
-		if (sent < 0) {
-			printf("sock_fd %d error\n", sock_fd);
-			perror("send:::");
-			FREE_NULL(buffer);
-			return -1;
-		}
-		total += sent;
-		pending -= sent;
-	}*/
 
 	FREE_NULL(buffer);
 
@@ -684,7 +627,6 @@ void destroy_message(t_msg *msg) {
 	else
 		if(msg->stream != NULL && string_is_empty(msg->stream))
 			FREE_NULL(msg->stream);
-	//if (msg->header.argc && msg->argv != NULL)
 		FREE_NULL(msg->argv);
 	FREE_NULL(msg);
 }
@@ -703,7 +645,6 @@ void create_file(char *path, size_t size) {
 void clean_file(char *path) {
 
 	FILE *f = fopen(path, "wb");
-	//perror("fopen");
 
 	fclose(f);
 }
@@ -890,16 +831,8 @@ float bytes_to_kilobytes(size_t bytes){
 float bytes_to_megabytes(size_t bytes){
 	return bytes / ((1024*1024) + 0.0);
 }
-/*
-int convertir_path_absoluto(char**destino, char* file){
-	//char* destino = malloc(PATH_MAX_LEN);
-	if (getcwd(*destino, PATH_MAX_LEN) == NULL)
-		handle_error("getcwd() error");
-	strcat(*destino, file);
 
-	return 0;
-}
-*/
+
 char* convertir_path_absoluto(char* file){
 	char* destino = malloc(PATH_MAX_LEN);
 	if (getcwd(destino, PATH_MAX_LEN) == NULL)
@@ -940,7 +873,7 @@ t_pcb* recibir_mensaje_pcb(int socket){
 
 	msg = recibir_mensaje(socket);
 	new = pcb_nuevo(msg->stream);
-	//primero el pc, despues cant, a ejectuar
+	//primero el pc, despues cant, a ejectuar//
 	new->cant_a_ejectuar = msg->argv[1];
 	new->pc = msg->argv[0];
 	new->cant_sentencias = msg->argv[2];
@@ -952,10 +885,9 @@ t_pcb* recibir_mensaje_pcb(int socket){
 }
 
 int enviar_mensaje_pcb(int socket, t_pcb* pcb){
+
 	t_msg* msg = NULL;
 	int rs ;
-	//primero el pc, 2 cant, a ejectuar, 3 cant sentencias,4 pid
-
 
 	msg = string_message(PCB, pcb->path, 4, pcb->pc, pcb->cant_a_ejectuar, pcb->cant_sentencias, pcb->pid);
 
@@ -972,8 +904,6 @@ t_pcb* pcb_nuevo(char* path){
 
 	new->pc = 0;
 	new->cant_a_ejectuar = 0;
-
-
 
 	return new;
 }
