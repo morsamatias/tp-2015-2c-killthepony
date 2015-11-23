@@ -1985,6 +1985,12 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 int finalizar() {
 	config_destroy(cfg);
+	list_destroy_and_destroy_elements(pcbs,(void*)eliminar_pcb);
+	list_destroy_and_destroy_elements(cpus,(void*)eliminar_cpu);
+	list_destroy_and_destroy_elements(list_ready,(void*)eliminar_ready);
+	list_destroy_and_destroy_elements(list_exec,(void*)eliminar_exec);
+	list_destroy_and_destroy_elements(list_block,(void*)eliminar_block);
+	list_destroy_and_destroy_elements(list_finish,(void*)eliminar_finish);
 	printf("Fin OK\n");
 	return 0;
 }
@@ -2466,4 +2472,26 @@ void logueo (t_msg* msg){
 
 			}
 
+}
+
+void eliminar_pcb (t_pcb* pcb){
+		free(pcb->path);
+		free(pcb);
+}
+
+void eliminar_cpu (t_cpu* cpu){
+	free(cpu);
+}
+
+void eliminar_ready (t_ready* ready){
+	free(ready);
+}
+void eliminar_exec (t_exec* exec){
+	free(exec);
+}
+void eliminar_block (t_block* block){
+	free(block);
+}
+void eliminar_finish (t_finish* finish){
+	free(finish);
 }

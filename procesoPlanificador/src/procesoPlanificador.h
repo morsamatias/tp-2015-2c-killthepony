@@ -254,4 +254,17 @@ int cpus_sin_dato_uso(t_cpu* cpu);
 
 void logueo (t_msg* msg);
 
+void eliminar_pcb (t_pcb* pcb);
+
+void eliminar_cpu (t_cpu* cpu);
+
+void eliminar_ready (t_ready* ready);
+
+void eliminar_exec (t_exec* exec);
+
+void eliminar_block (t_block* block);
+
+void eliminar_finish (t_finish* finish);
+
+
 #endif /* PROCESOPLANIFICADOR_H_ */
