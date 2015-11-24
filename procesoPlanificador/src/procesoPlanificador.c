@@ -170,16 +170,10 @@ if (cpu2 != NULL)
 								}*/
 								switch(pcb2->estado){
 
-								case 2:
-
-									PID_GLOBAL_BLOCK=pcb2->pid;
-
-									list_remove_by_condition(list_block, (void*) es_el_pcb_buscado_en_block);
-											pcb2->estado=5;
-														break;
 								case 3:
 
 									PID_GLOBAL_EXEC=pcb2->pid;
+
 
 						list_remove_by_condition(list_exec, (void*) es_el_pcb_buscado_en_exec);
 														pcb2->estado=5;
