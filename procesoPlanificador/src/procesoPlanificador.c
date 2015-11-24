@@ -169,15 +169,6 @@ if (cpu2 != NULL)
 											(void*)_es_pcb_buscando_por_id);
 								}*/
 								switch(pcb2->estado){
-								case 1:
-
-								PID_GLOBAL_READY=pcb2->pid;
-
-								list_remove_by_condition(list_ready, (void*) es_el_pcb_buscado_en_ready);
-								pcb2->estado=5;
-
-
-								break;
 
 								case 2:
 
