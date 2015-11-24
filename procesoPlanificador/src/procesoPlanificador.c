@@ -72,10 +72,10 @@ int main(void) {
 	int port = PUERTO_ESCUCHA();
 	////////////////
 	fd_set master, read_fds;
-	int fdNuevoNodo, fdmax, newfd;
+	int fdNuevaCPU, fdmax, newfd;
 	int socket;
 
-	if ((fdNuevoNodo = server_socket(port)) < 0) {
+	if ((fdNuevaCPU = server_socket(port)) < 0) {
 		handle_error("No se pudo iniciar el server");
 	}
 	printf("server iniciado en %d\n", port);
@@ -84,9 +84,9 @@ int main(void) {
 
 	FD_ZERO(&master); // borra los conjuntos maestro y temporal
 	FD_ZERO(&read_fds);
-	FD_SET(fdNuevoNodo, &master);
+	FD_SET(fdNuevaCPU, &master);
 	FD_SET(consola, &master); // agrego consola stdin
-	fdmax = fdNuevoNodo; // por ahora el maximo
+	fdmax = fdNuevaCPU; // por ahora el maximo
 	printf("Consola iniciada \n");
 	printf("Opciones Disponibles: \n ");
 	printf("CORRER Path \n FINALIZAR Pid \n PS \n CPU \n");
@@ -109,10 +109,10 @@ int main(void) {
 					procesar_msg_consola(comando_usuario);
 
 				} else {
-					if (socket == fdNuevoNodo) { // gestionar nuevas conexiones
+					if (socket == fdNuevaCPU) { // gestionar nuevas conexiones
 						//char * ip;
 						//newfd = accept_connection_and_get_ip(fdNuevoNodo, &ip);
-						newfd = accept_connection(fdNuevoNodo);
+						newfd = accept_connection(fdNuevaCPU);
 						if (newfd < 0) {
 							printf("no acepta mas conexiones\n");
 						} else {
