@@ -314,10 +314,10 @@ void procesar_msg_consola(char* msg) {
 	case PS:
 
 		log_info(logger,
-				"PS listar procesos\n");
+				"PS listar estados de los procesos\n");
 
 		log_info(log_consola,
-				"PS listar procesos\n");
+				"PS listar estados de los procesos\n");
 
 		int i = 0;
 
@@ -2233,6 +2233,8 @@ sem_wait(&sem_IO);
 }
 //}
 
+/*
+
 void controlar_IO(char* pid_string) {
 
 	t_block* block;
@@ -2264,6 +2266,8 @@ void controlar_IO(char* pid_string) {
 	pthread_exit(NULL);
 
 }
+
+*/
 
 t_pcb* es_el_pcb_buscado_por_id(int pid) {
 
