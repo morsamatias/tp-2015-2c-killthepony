@@ -13,6 +13,7 @@
 #define BLOCK 2;
 #define EXEC 3;
 #define FINISH 4;
+#define FINISH_ERROR 5;
 
 #include <commons/log.h>
 #include <pthread.h>
@@ -126,6 +127,7 @@ t_pcb* pcb_buscar_por_cpu(int cpu);
 int gl_id;
 int gl_cpu;
 int gl_socket;
+int gl_pcb;
 
 bool _pcb_buscar_por_cpu(t_pcb* pcb) {
 
@@ -193,7 +195,9 @@ bool cpu_existe(int id) {
 	t_cpu* cpu = cpu_buscar(id);
 	return cpu != NULL;
 }
-
+bool _es_pcb_buscando_por_id(int id){
+	return id==gl_pcb;
+}
 bool _estado_bloqueado(t_block* block) {
 	return block->estado == 1;
 

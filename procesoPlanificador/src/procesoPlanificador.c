@@ -129,45 +129,85 @@ int main(void) {
 						if (msg == NULL) {
 							//printf("Conexion cerrada %d\n", socket);
 
-
+									t_cpu* cpu2;
 							//si llega aca se desconecto el cpu
 
 							//busco el cpu por el socket
-						//cpu = cpu_buscar_por_socket(socket);
+						cpu2 = cpu_buscar_por_socket(socket);
 							//si el cpu se desconecto habria que sacarlo de la lista de cpus, o marcarlo como desconectado
 							// hay que buscar los pcbs que esta procesando este socket, para replanificarlos en otra cpu
 
-
-
+if (cpu2 != NULL)
+{
 							log_warning(logger,
-									"El cpu con socket: %d se desconecto",
-									 socket);
+									"El cpu con socket: %d ID:%d   se desconecto",
+									 socket,cpu2->id);
 							log_warning(log_consola,
 										"El cpu con socket: %d se desconecto",
 											 socket);
 
 
-/*
+							t_pcb* pcb2;
 
-							pcb = pcb_buscar_por_cpu(cpu->id);
+							pcb2 = pcb_buscar_por_cpu(cpu2->id);
 
-							if (pcb != NULL) {
+							if (pcb2 != NULL) {
 
-								PID_GLOBAL_EXEC=pcb->pid;
+								PID_GLOBAL=pcb2->pid;
 								log_info(logger,
 										" La CPU tenia a cargo los siguentes procesos  %d",
-										pcb->pid);
+										pcb2->pid);
 
-								list_remove_by_condition(pcbs,(void*) pcb_buscar_por_cpu);
+
+								//list_remove(pcbs,pcb2->pid);
 								//no se replanifica nada
 								//por eso no se tienen en cuenta esto
 								//log_trace(logger, "Ningun pcb a replanificar");
+								gl_pcb=pcb2->pid;
+								/*if (list_any_satisfy(pcbs, (void*) _es_pcb_buscando_por_id)) {
+									list_remove_by_condition(pcbs,
+											(void*)_es_pcb_buscando_por_id);
+								}*/
+								switch(pcb2->estado){
+								case 1:
 
-							list_remove_by_condition(cpus,
-											(void*) cpu_buscar_por_socket);
-							*/
-							close(socket);
-							FD_CLR(socket, &master);
+								PID_GLOBAL_READY=pcb2->pid;
+
+								list_remove_by_condition(list_ready, (void*) es_el_pcb_buscado_en_ready);
+								pcb2->estado=5;
+
+
+								break;
+
+								case 2:
+
+									PID_GLOBAL_BLOCK=pcb2->pid;
+
+									list_remove_by_condition(list_block, (void*) es_el_pcb_buscado_en_block);
+											pcb2->estado=5;
+														break;
+								case 3:
+
+									PID_GLOBAL_EXEC=pcb2->pid;
+
+						list_remove_by_condition(list_exec, (void*) es_el_pcb_buscado_en_exec);
+														pcb2->estado=5;
+
+														break;
+
+								}
+
+								list_remove_by_condition(pcbs,(void*)es_el_pcb_buscado);
+							}
+							else{
+								log_info(logger,
+												" La CPU no tenia a cargo ningun proceso");
+							}
+}
+								FD_CLR(socket, &master);
+								close(socket);
+
+								list_remove_by_condition(cpus, (void*) _cpu_buscar_por_socket);
 
 						} else {
 							//print_msg(msg);
@@ -362,7 +402,14 @@ void procesar_msg_consola(char* msg) {
 						pcb2->pid, pcb2->path, "FINISH");
 
 				break;
+			case 5:
+				log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",
+									pcb2->pid, pcb2->path, "FINISH CON ERROR POR CAIDA DE CPU");
 
+
+				log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",
+									pcb2->pid, pcb2->path, "FINISH CON ERROR POR CAIDA DE CPU");
+				break;
 			default:
 
 				log_error(logger,
@@ -2325,6 +2372,7 @@ int es_el_pid_en_block(int pid, t_list* list_block) {
 int es_el_pcb_buscado_en_exec(t_exec* exec) {
 	return (exec->pid == PID_GLOBAL_EXEC);
 }
+
 
 int es_el_pcb_buscado_en_block(t_block* block) {
 	return (block->pid == PID_GLOBAL_BLOCK);
