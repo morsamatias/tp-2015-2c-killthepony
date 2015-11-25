@@ -97,23 +97,41 @@ int inicializar(){
 	cfg = config_create(CONFIG_PATH);
 
 	clean_file(LOGGER_PATH);
-	logger = log_create(LOGGER_PATH, "procesoSwap", true, LOG_LEVEL_TRACE);
+	clean_file(LOGGER_PATH_MPROC_ASIGNADO);
+	clean_file(LOGGER_PATH_MPROC_LIBERADO);
+	clean_file(LOGGER_PATH_MPROC_RECHAZADO);
+	clean_file(LOGGER_PATH_COMPACTACION);
+	clean_file(LOGGER_PATH_LECTURAS_ESCRITURAS);
+	clean_file(LOGGER_PATH_PAGINAS_CANT_LECT_ESC);
+
+
+	logger = log_create(LOGGER_PATH, "swap", true, LOG_LEVEL_TRACE);
+	logger_mproc_asignado = log_create(LOGGER_PATH_MPROC_ASIGNADO, "swap", true, LOG_LEVEL_TRACE);
+	logger_mproc_liberado = log_create(LOGGER_PATH_MPROC_LIBERADO, "swap", true, LOG_LEVEL_TRACE);
+	logger_mproc_rechazado = log_create(LOGGER_PATH_MPROC_RECHAZADO, "swap", true, LOG_LEVEL_TRACE);
+	logger_compactacion = log_create(LOGGER_PATH_COMPACTACION, "swap", true, LOG_LEVEL_TRACE);
+	logger_lecturas_escrituras = log_create(LOGGER_PATH_LECTURAS_ESCRITURAS, "swap", true, LOG_LEVEL_TRACE);
+	logger_errores = log_create(LOGGER_PATH_ERRORES, "swap", true, LOG_LEVEL_TRACE);
+	logger_paginas_cant_lect_esc = log_create(LOGGER_PATH_PAGINAS_CANT_LECT_ESC, "swap", true, LOG_LEVEL_TRACE);
+
+
 
 	swap = swap_inicializar();
 	/////////////////////////////////////
 	//inicializo las paginas con nros del 1 al X
-	int i;
+	/*int i;
 	for (i = 0; i < CANTIDAD_PAGINAS(); ++i) {
 		memset(swap + i, i, TAMANIO_PAGINA());
-	}
+	}*/
 	/////////////////////////
 
 
 	////////////////////////////////////////
 	//fix temporal
 	//cargo el archivo de letras A porque sino me da error el envio de cadena vacia la lib de socket!!!
-	int TAMANIO_SWAP = CANTIDAD_PAGINAS() * TAMANIO_PAGINA();
-	memset(swap, 'A', TAMANIO_SWAP);
+	//int TAMANIO_SWAP = CANTIDAD_PAGINAS() * TAMANIO_PAGINA();
+	//memset(swap, 'A', TAMANIO_SWAP);
+
 	////////////////////////////////////
 
 	esp_ocupado =  list_create();
@@ -175,7 +193,7 @@ int swap_cant_huecos_libres(){
 }
 
 int compactar(){
-	log_trace(logger, "Iniciando compactacion");
+	log_trace(logger_compactacion, "Iniciando compactacion");
 	//creo una nueva lista copia de la lista de ocupados
 	t_list* esp_ocupado_new = NULL;
 	esp_ocupado_new = list_create();
@@ -250,7 +268,7 @@ int compactar(){
 
 	dormir_compactacion();
 
-	log_trace(logger, "Compactacion OK");
+	log_trace(logger_compactacion, "Compactacion finalizada");
 	return 0;
 }
 
@@ -276,7 +294,7 @@ int swap_buscar_hueco_libre(int paginas){
 			l = list_find(esp_libre, (void*)_swap_buscar_hueco_libre);
 			return l->posicion;
 		}else{
-			log_trace(logger, "No se pudo crear el proceso porque no hay %d paginas libres");
+			log_trace(logger_mproc_rechazado, "No se pudo crear el proceso porque no hay %d paginas libres");
 			return -1;
 		}
 
@@ -362,8 +380,8 @@ int hueco_tamanio_bytes(t_ocupado* hueco){
 	return hueco->cantidad * TAMANIO_PAGINA();
 }
 
-void hueco_print_info(const char* texto_inicial, t_ocupado* hueco){
-	log_info(logger, "%s > PID: %d, Paginas: %d, Inicio: byte %d, Tamaño: %d bytes", texto_inicial, hueco->pid, hueco->pid, hueco_inicio_bytes(hueco), hueco_tamanio_bytes(hueco));
+void hueco_print_info(const char* texto_inicial, t_ocupado* hueco, t_log* log_ok){
+	log_info(log_ok, "%s > PID: %d, Paginas: %d, Inicio: byte %d, Tamaño: %d bytes", texto_inicial, hueco->pid, hueco->pid, hueco_inicio_bytes(hueco), hueco_tamanio_bytes(hueco));
 }
 
 t_proceso* proc_nuevo(int pid){
@@ -387,12 +405,10 @@ int swap_nuevo_proceso(int pid, int paginas){
 		t_ocupado* hueco;
 		hueco = swap_ocupar(pid, comienzo, paginas);
 
-
-
-		hueco_print_info("mProc Asignado", hueco);
+		hueco_print_info("mProc Asignado", hueco, logger_mproc_asignado);
 		return 0;
 	}else{
-		log_warning(logger, "OCUPADO pid: %d, paginas: %d. No hay hueco libre para el proceso", pid, paginas);
+		log_warning(logger_mproc_rechazado, "OCUPADO pid: %d, paginas: %d. No hay hueco libre para el proceso", pid, paginas);
 		return -1;
 	}
 
@@ -520,7 +536,7 @@ int swap_liberar(int pid){
 	}
 	list_remove_by_condition(esp_ocupado, (void*)_swap_buscar_ocupado_por_pid);
 
-	hueco_print_info("mProc Liberado", ocupado);
+	hueco_print_info("mProc Liberado", ocupado, logger_mproc_liberado);
 
 	FREE_NULL(ocupado);
 
@@ -533,7 +549,7 @@ int swap_liberar(int pid){
 void pagina_print_info(const char* texto_inicio, int pid, int pagina, char* contenido){
 	int inicio = pagina * TAMANIO_PAGINA();
 	int size = strlen(contenido);
-	log_info(logger, "%s > PID: %d, Pagina: %d, Inicio: byte %d, Tamaño: %d bytes, Contenido: \"%s\"", texto_inicio, pid, pagina, inicio, size, contenido);
+	log_info(logger_lecturas_escrituras, "%s > PID: %d, Pagina: %d, Inicio: byte %d, Tamaño: %d bytes, Contenido: \"%s\"", texto_inicio, pid, pagina, inicio, size, contenido);
 }
 
 t_proceso* proc_buscar(int pid){
@@ -557,7 +573,7 @@ void est_escribir(int pid){
 void est_print(int pid){
 	t_proceso* proc = proc_buscar(pid);
 
-	log_info(logger, "PID %d, Lecturas: %d, Escrituras: %d", pid, proc->cant_lecturas, proc->cant_escrituras);
+	log_info(logger_paginas_cant_lect_esc, "PID %d, Lecturas: %d, Escrituras: %d", pid, proc->cant_lecturas, proc->cant_escrituras);
 }
 
 void est_eliminar(int pid){
@@ -570,17 +586,16 @@ void est_eliminar(int pid){
 
 ///////////////////////////////////////////////////////////PRINTS////////////////////////////////
 void print_ocupado() {
-	printf("	ESPACIO OCUPADO \n");
+	printf("**********************************ESPACIO OCUPADO \n");
 	void _print_ocupado(t_ocupado* o) {
-		printf("-pid:%d.\n -pos:%d.\n cant:%d.\n", o->pid, o->posicion, o->cantidad);
+		printf("-pid:%d. -Posicion:%d. Cantidad:%d.\n", o->pid, o->posicion, o->cantidad);
 	}
 	list_iterate(esp_ocupado, (void*) _print_ocupado);
 }
 void print_libre() {
-	printf("	ESPACIO LIBRE \n");
+	printf("*********************************ESPACIO LIBRE \n");
 	void _print_libre(t_libre* l) {
-			printf("-Poscion:%d.\n-Cantidad:%d.\n", l->posicion, l->cantidad);
-			printf("************************************************************************\n");
+		printf("-Posicion:%d. -Cantidad:%d.\n", l->posicion, l->cantidad);
 	}
 
 	list_iterate(esp_libre, (void*) _print_libre);
@@ -602,8 +617,6 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			paginas = msg->argv[1];
 
 			//log_trace(logger, "SWAP_INICIAR . pid: %d, Paginas: %d", pid, paginas);
-
-
 			destroy_message(msg);
 
 			//sleep(RETARDO_SWAP());
@@ -617,11 +630,11 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 
 			if(st==-1){
 				msg = argv_message(SWAP_NO_OK, 0);
-				log_error(logger, "No hay espacio suficiente para guardas %d paginas del proceso %d", paginas, pid);
+				log_error(logger_mproc_rechazado, "PID: %d, No hay espacio suficiente para guardar %d paginas", pid, paginas);
 			}else{
 				est_nuevo_proceso(pid);
 				msg = argv_message(SWAP_OK, 0);
-				log_trace(logger, "Se reservaron %d paginas para el proceso %d", paginas, pid);
+				log_trace(logger_mproc_asignado, "PID: %d.  Se reservaron %d paginas", pid, paginas);
 			}
 
 			enviar_y_destroy_mensaje(socket_mem, msg);
@@ -657,7 +670,7 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			pagina = msg->argv[1];
 			contenido = string_duplicate(msg->stream);
 			destroy_message(msg);
-			log_trace(logger, "SWAP_ESCRIBIR. pid: %d, Pagina: %d, conteindo: \"%s\"", pid, pagina, contenido);
+			log_trace(logger_lecturas_escrituras, "SWAP_ESCRIBIR. pid: %d, Pagina: %d, contenido: \"%s\"", pid, pagina, contenido);
 
 			swap_escribir(pid, pagina, contenido);
 			est_escribir(pid);
@@ -708,9 +721,10 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 		default:
 			break;
 	}//FIN SWITCH
-	printf("************************************************************************\n");
+	printf("*************************INICIO PRINTS**************************\n");
 	print_ocupado();
 	print_libre();
+	printf("*************************FIN PRINTS**************\n");
 
 
 }

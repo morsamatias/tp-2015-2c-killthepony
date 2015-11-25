@@ -15,11 +15,28 @@
 
 ////////////////////////////////////////////////////////////////////VARIABLES/////////////////////////////////
 char* LOGGER_PATH = "log.txt";
+char* LOGGER_PATH_MPROC_ASIGNADO = "log_mproc_asignado.txt";
+char* LOGGER_PATH_MPROC_LIBERADO = "log_mproc_liberado.txt";
+char* LOGGER_PATH_MPROC_RECHAZADO = "log_mproc_rechazado.txt";
+char* LOGGER_PATH_COMPACTACION = "log_compactacion.txt";
+char* LOGGER_PATH_LECTURAS_ESCRITURAS = "log_lecturas_escrituras.txt";
+char* LOGGER_PATH_ERRORES = "log_errores.txt";
+char* LOGGER_PATH_PAGINAS_CANT_LECT_ESC = "log_paginas_cant_lecturas_escrituras.txt";
+
 char* swap;
 
 int TAMANIO_SWAP;
 
 t_log* logger;
+
+t_log* logger_mproc_asignado;
+t_log* logger_mproc_liberado;
+t_log* logger_mproc_rechazado;
+t_log* logger_compactacion;
+t_log* logger_lecturas_escrituras;
+t_log* logger_errores;
+t_log* logger_paginas_cant_lect_esc;
+
 t_list* esp_ocupado;
 t_list* esp_libre;
 t_list* procesos ;//para las estadisticas
@@ -69,7 +86,7 @@ void est_eliminar(int pid);
 void _copiar(t_ocupado* ocup);
 void dormir_compactacion();
 void dormir_swap();
-void hueco_print_info(const char* texto_inicial, t_ocupado* hueco);
+void hueco_print_info(const char* texto_inicial, t_ocupado* hueco, t_log* log);
 void procesar_mensaje_mem(int socket, t_msg* msg);
 void pagina_print_info(const char* texto_inicio, int pid, int pagina, char* contenido);
 void print_ocupado();
@@ -77,7 +94,7 @@ void print_libre();
 void swap_destroy();
 void libre_destroy();
 void ocupado_destroy();
-void _ocupar_hueco(t_ocupado* o);
+//void _ocupar_hueco(t_ocupado* o);
 void proceso_destroy();
 void esp_libre_inicializar();
 
