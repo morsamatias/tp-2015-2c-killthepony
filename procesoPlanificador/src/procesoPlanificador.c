@@ -27,6 +27,7 @@ int IO_GLOBAL = 1;
 #define RR 1;
 #define FIFO 0;
 
+
 t_log* logger;
 t_log* log_consola;
 t_log* log_listas;
@@ -574,6 +575,7 @@ void mostrar_porcentaje(int cpu_id, int porcentaje) {
 
 int correr_proceso(char* path) {
 	t_pcb* pcb = NULL;
+	int quantum;
 
 	pcb = pcb_nuevo(path);
 
@@ -606,9 +608,28 @@ int correr_proceso(char* path) {
 		log_info(log_consola,
 				"El algoritmo de planificación será Round Robin");
 
-		pcb->cant_a_ejectuar = QUANTUM();
+		if(string_equals_ignore_case(QUANTUM(), "N/A")){
+
+			pcb->cant_a_ejectuar = 2;
+
+			log_info(logger,
+							"El Quantum por defecto será 2 instrucciones");
+
+					log_info(log_consola,
+							"El Quantum por defecto será 2 instrucciones");
+
+		}else{
+
+		quantum=atoi(QUANTUM());
+
+		pcb->cant_a_ejectuar = quantum;
+
+		log_info(logger,"El Quantum será de %d instrucciones", pcb->cant_a_ejectuar);
+
+		log_info(log_consola,"El Quantum será de %d instrucciones", pcb->cant_a_ejectuar);
+
 		// en caso de que se RR es el Q
-	}
+	}}
 
 	log_info(logger,
 			"Proceso mProc a ejecutar: %s", pcb->path);
@@ -783,6 +804,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 	int m;
 	int i;
 	t_msg* msge;
+	int quantum;
 
 	switch (msg->header.id) {
 	case CPU_NUEVO:
@@ -1420,7 +1442,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		if ((pcb->pc + 1) != pcb->cant_sentencias) {
 
-			pcb->pc = pcb->pc + QUANTUM();
+			quantum=atoi(QUANTUM());
+
+			pcb->pc = pcb->pc + quantum;
 
 		}
 

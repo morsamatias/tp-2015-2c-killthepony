@@ -17,7 +17,7 @@ int PUERTO_ESCUCHA();
 
 char* ALGORITMO_PLANIFICACION();
 
-int QUANTUM();
+char* QUANTUM();
 
 int TIPO_LOG();
 
@@ -33,8 +33,8 @@ char* ALGORITMO_PLANIFICACION(){
 	return config_get_string_value(cfg, "ALGORITMO_PLANIFICACION");
 }
 
-int QUANTUM(){
-	return config_get_int_value(cfg, "QUANTUM");
+char* QUANTUM(){
+	return config_get_string_value(cfg, "QUANTUM");
 }
 
 int TIPO_LOG(){
