@@ -43,10 +43,10 @@ int inicializar(){ ///////////////////
 	clean_file("log_estadisticas.txt");
 	clean_file("log_status_memoria.txt");
 	log_general_p = log_create("log_general.txt", "Adm_Mem", true, LOG_LEVEL_TRACE);
-	log_general_f = log_create("log_general.txt", "Adm_Mem", false, LOG_LEVEL_TRACE);
-	log_errores = log_create("log_errores.txt", "Adm_Mem", false, LOG_LEVEL_TRACE);
-	log_memoria = log_create("log_memoria.txt", "Adm_Mem", false, LOG_LEVEL_TRACE);
-	log_estadisticas = log_create("log_estadisticas.txt", "Adm_Mem", false, LOG_LEVEL_TRACE);
+	log_general_f = log_create("log_general.txt", "Adm_Mem", LOG_TODO_POR_PANTALLA(), LOG_LEVEL_TRACE);
+	log_errores = log_create("log_errores.txt", "Adm_Mem", LOG_TODO_POR_PANTALLA(), LOG_LEVEL_TRACE);
+	log_memoria = log_create("log_memoria.txt", "Adm_Mem", LOG_TODO_POR_PANTALLA(), LOG_LEVEL_TRACE);
+	log_estadisticas = log_create("log_estadisticas.txt", "Adm_Mem", LOG_TODO_POR_PANTALLA(), LOG_LEVEL_TRACE);
 	log_print_mem = log_create("log_status_memoria.txt", "Adm_Mem", false, LOG_LEVEL_TRACE);
 
 	// ESTRUCTURA MEMORIA

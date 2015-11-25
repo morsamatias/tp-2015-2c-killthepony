@@ -30,6 +30,9 @@ int RETARDO_MEMORIA(){
 int RETARDO_MEMORIA_MINIMO(){
 	return config_get_int_value(cfg, "RETARDO_MEMORIA_MILISEGUNDOS");
 }
+int LOG_TODO_POR_PANTALLA(){
+	return config_get_int_value(cfg, "LOG_TODO_POR_PANTALLA");
+}
 char* ALGORITMO_REEMPLAZO(){
 	return config_get_string_value(cfg, "ALGORITMO_REEMPLAZO");
 }
