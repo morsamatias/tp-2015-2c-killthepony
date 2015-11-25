@@ -1,36 +1,9 @@
-iniciar 50
-escribir 0 "Hola"
-escribir 45 "chau"
-escribir 10 "ERsaROsadsadR"
-escribir 9 "Noooooo"
-escribir 12 "PorFavooor"
-entrada-salida 2
-escribir 19 "No?"
-escribir 33 "LoVemosEl28deNov"
-escribir 46 "Aprobas?"
-escribir 1 "Seguro?"
-leer 1
-escribir 0 "Seh"
-escribir 0 "Hola"
-escribir 45 "chau"
-escribir 10 "ERRasdsaOR"
-escribir 9 "Noooooo"
-escribir 12 "PorFavooor"
-escribir 19 "No?"
-escribir 0 "Hola"
-escribir 45 "chau"
-escribir 10 "ERsadsROR"
-escribir 9 "Noooooo"
-escribir 12 "PorFavooor"
-entrada-salida 2
-escribir 19 "No?"
-escribir 33 "LoVemosEl28deNov"
-leer 10
-leer 46
-leer 9
-entrada-salida 2
-leer 1
-leer 0
-leer 12
-leer 49
-finalizar
+iniciar 3;
+escribir 0 “Corto”;
+escribir 1 “Corto”;
+escribir 2 “Corto”;
+entrada-salida 30;
+leer 0;
+leer 1;
+leer 2;
+finalizar;
