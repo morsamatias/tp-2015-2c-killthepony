@@ -44,10 +44,10 @@ void dormir_swap(){
 		usleep(RETARDO_SWAP_MINIMO()*1000);
 	}*/
 	
-	if (RETARDO() == 0) {
-		usleep(RETARDO_MINIMO()*1000);
+	if (RETARDO_SWAP() == 0) {
+		usleep(RETARDO_SWAP_MINIMO()*1000);
 	}else{
-		sleep(RETARDO());
+		sleep(RETARDO_SWAP());
 	}
 
 

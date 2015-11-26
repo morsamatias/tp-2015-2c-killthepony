@@ -205,7 +205,7 @@ void dormir2(){
 
 	int retardo = RETARDO();
 
-	printf(" retardo %d.\n",retardo);
+	printf(" RETARDO %d.\n",retardo);
 
 	if (retardo == 0) {
 		usleep(RETARDO_MINIMO()*1000);
@@ -285,8 +285,8 @@ char* get_texto_solo(char* texto) {
 	int len = strlen(texto) - 2;
 	txt = malloc(len + 1);
 	memset(txt, 0, len); //inicializo en 0
-	memcpy(txt, texto + 1, len);
-	txt[len] = '\0';
+	memcpy(txt, texto +1 , len);
+	txt[len - 1] = '\0';
 	return txt;
 }
 
@@ -387,8 +387,6 @@ t_sentencia* sent_crear(char* sentencia, int pid, int hilo) {
 
 int sent_ejecutar_iniciar(t_sentencia* sent, int socket_mem) {
 
-	sleep(5);
-
 	int rs = 0;
 	int i;
 	t_msg* msg = NULL;
@@ -433,8 +431,6 @@ int sent_ejecutar_iniciar(t_sentencia* sent, int socket_mem) {
 
 int sent_ejecutar_finalizar(t_sentencia* sent, int socket_mem) {
 
-	dormir2();
-
 	int i,rs = 0;
 	t_msg* msg = NULL;
 	msg = argv_message(MEM_FINALIZAR, 1, sent->pid);
@@ -477,8 +473,6 @@ int sent_ejecutar_finalizar(t_sentencia* sent, int socket_mem) {
 
 int sent_ejecutar_escribir(t_sentencia* sent, int socket_mem) {
 
-	dormir2();
-
 	int i,rs = 0;
 	t_msg* msg = NULL;
 
@@ -517,7 +511,6 @@ int sent_ejecutar_escribir(t_sentencia* sent, int socket_mem) {
 
 char* sent_ejecutar_leer(t_sentencia* sent, int socket_mem) {
 
-	dormir2();
 	char* pagina = NULL;
 	int i;
 
@@ -705,7 +698,8 @@ int avisar_a_planificador(t_resultado_pcb respuesta, int socket_planif, int hilo
 					"[HILO #%d] EnviarAlPlanif PCB_IO, PID:%d, sent:%d, t: %d, cant_sent_ejec:%d",
 					hilo, respuesta.pcb->pid, respuesta.sentencia,
 					respuesta.tiempo, respuesta.cantidad_sentencias);
-			avisar_a_memoria_io(socket_memoria[hilo],respuesta);
+			if (avisar_a_memoria_io(socket_memoria[hilo],respuesta)<0)
+							desconexion_memoria();
 			break;
 		case final:
 			mensaje_a_planificador = argv_message(PCB_FINALIZAR, 4,
@@ -818,12 +812,12 @@ t_msg* sent_to_msg(t_sentencia* sent){
 
 
 
-int avisar_a_memoria_io(int sock_m,t_resultado_pcb pcb){
+int avisar_a_memoria_io(int sock_m,t_resultado_pcb respuesta){
 
 	t_msg* msg = NULL;
 	int rs ;
 
-	//msg = string_message(MEM_IO, pcb->path, 4, pcb->pc, pcb->cant_a_ejectuar, pcb->cant_sentencias, pcb->pid);
+	msg = string_message(MEM_IO, respuesta.pcb->path, 1,respuesta.pcb->pid);
 
 	rs = enviar_y_destroy_mensaje(sock_m, msg);
 

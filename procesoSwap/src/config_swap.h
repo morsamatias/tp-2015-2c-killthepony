@@ -13,13 +13,13 @@ char* CONFIG_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoSw
 
 t_config* cfg;
 
-int PUERTO_ESCUCHA();
-int CANTIDAD_PAGINAS();
-int TAMANIO_PAGINA();
-int RETARDO_COMPACTACION();
-int SWAP_RETARDO();
+int 			PUERTO_ESCUCHA();
+int 			CANTIDAD_PAGINAS();
+int 			TAMANIO_PAGINA();
+int 			RETARDO_COMPACTACION();
+int 			SWAP_RETARDO();
 
-char* NOMBRE_SWAP();
+char* 			NOMBRE_SWAP();
 
 //////////////////////////////////////////////////////////////CONFIGURACION////////////////////////////////////
 
@@ -34,9 +34,11 @@ int RETARDO_SWAP_MINIMO(){
 int PUERTO_ESCUCHA(){
 	return config_get_int_value(cfg, "PUERTO_ESCUCHA");
 }
+
 int CANTIDAD_PAGINAS(){
 	return config_get_int_value(cfg, "CANTIDAD_PAGINAS");
 }
+
 int TAMANIO_PAGINA(){
 	return config_get_int_value(cfg, "TAMANIO_PAGINA");
 }
