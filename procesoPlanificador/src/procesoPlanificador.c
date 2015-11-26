@@ -1800,7 +1800,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 						list_remove_by_condition(list_exec, (void*) es_el_pcb_buscado_en_exec);
 
-						list_remove_and_destroy_by_condition(cpus, (void*) es_el_pcb_buscado_por_id(msg->argv[0]), (void*)eliminar_pcb);
+						list_remove_and_destroy_by_condition(pcbs, (void*) es_el_pcb_buscado_por_id(msg->argv[0]), (void*)eliminar_pcb);
 
 					}
 
