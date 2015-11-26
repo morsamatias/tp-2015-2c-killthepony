@@ -1791,16 +1791,16 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 					if(msg->argv[1]==0){
 
-						log_info(logger,"El proceso cuyo pid es: %d\n no pudo iniciarse y se eliminará del sistema", pcb->pid);
+						log_info(logger,"El proceso cuyo pid es: %d  no pudo iniciarse y se eliminará del sistema", pcb->pid);
 
 						log_info(log_consola,
-										"El proceso cuyo pid es: %d\n no pudo iniciarse y se eliminará del sistema", pcb->pid);
+										"El proceso cuyo pid es: %d  no pudo iniciarse y se eliminará del sistema", pcb->pid);
 
-						PID_GLOBAL_EXEC = (msg->argv[0]);
+						PID_GLOBAL_EXEC = msg->argv[0];
 
 						list_remove_by_condition(list_exec, (void*) es_el_pcb_buscado_en_exec);
 
-						list_remove_and_destroy_by_condition(pcbs, (void*) es_el_pcb_buscado_por_id(msg->argv[0]), (void*)eliminar_pcb);
+						list_remove_and_destroy_by_condition(pcbs, (void*) es_el_pcb_buscado_por_id, (void*)eliminar_pcb);
 
 					}
 
