@@ -1802,6 +1802,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 						list_remove_and_destroy_by_condition(pcbs, (void*) es_el_pcb_buscado_por_id, (void*)eliminar_pcb);
 
+						break;
+
 					}
 
 
