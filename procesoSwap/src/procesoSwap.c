@@ -35,25 +35,31 @@ int main(void) {
 
 void dormir_swap(){
 
+	/*
 	int retardo = RETARDO_SWAP();
-
+	
 	if (retardo == 0) {
 		sleep(retardo);
 	}else{
 		usleep(RETARDO_SWAP_MINIMO()*1000);
+	}*/
+	
+	if (RETARDO() == 0) {
+		usleep(RETARDO_MINIMO()*1000);
+	}else{
+		sleep(RETARDO());
 	}
+
 
 }
 
 
 void dormir_compactacion(){
 
-	int retardo = RETARDO_COMPACTACION();
-
-	if (retardo == 0) {
-		sleep(retardo);
-	}else{
+	if (RETARDO_COMPACTACION() == 0) {
 		usleep(RETARDO_COMPACTACION_MINIMO()*1000);
+	}else{
+		sleep(RETARDO_COMPACTACION());
 	}
 
 }
