@@ -73,7 +73,7 @@ typedef struct{
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int 			avisar_a_planificador										(t_resultado_pcb respuesta,int socket_planif, int hilo);
-int 			avisar_a_memoria_io											(int sock_m,t_pcb* pcb);
+int 			avisar_a_memoria_io											(int sock_m,t_resultado_pcb pcb);
 int 			CANTIDAD_HILOS												();
 int 			conectar_con_memoria										(int numero);
 int 			conectar_con_planificador									(int numero);
