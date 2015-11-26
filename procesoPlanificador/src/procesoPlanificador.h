@@ -174,7 +174,23 @@ int cpu_libre(t_cpu* cpu) {
 	return (cpu->estado == 1);
 }
 
+
+
 t_cpu* cpu_seleccionar() {
+	if (list_any_satisfy(cpus, (void*) cpu_libre)) {
+
+		t_cpu* cpu =
+		list_remove_by_condition(cpus,(void*)cpu_libre);
+
+		list_add(cpus,cpu);
+
+		return cpu;
+	} else {
+		return NULL;
+	}
+}
+
+t_cpu* cpu_seleccionar2() {
 	if (list_any_satisfy(cpus, (void*) cpu_libre)) {
 		return list_find(cpus, (void*) cpu_libre);
 	} else {
