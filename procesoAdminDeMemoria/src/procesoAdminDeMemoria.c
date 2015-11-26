@@ -380,6 +380,17 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			exit(0);
 			break;
 
+		case MEM_IO:
+			sem_wait(&mutex_PAGINAS);
+			gl_PID 		= msg->argv[0];
+			log_info(log_memoria, "E/S - Quitar todas paginas del Proces %d de memoria", gl_PID);
+			proceso = list_find(paginas,(void*)es_el_proceso_segun_PID);
+			quitar_todas_las_paginas_de_memoria_del_proceso(proceso);
+			sem_post(&mutex_PAGINAS);
+			dormir_memoria();
+			dormir_memoria();
+			break;
+
 		default:
 			log_error(log_errores, "El mensaje %d no es correcto",msg->header.id);
 			break;

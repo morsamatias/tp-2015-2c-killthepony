@@ -112,9 +112,9 @@ void handler_SIGPOLL(){
 			archivo = fopen("/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoAdminDeMemoria/Debug/Dump_Memoria.txt","w");
 			for(i=0;i<CANTIDAD_MARCOS();i++){
 				if(memoria[i]->libre)
-					fprintf(archivo,"Marco: %d	Contenido: <vacio>",i);
+					fprintf(archivo,"Marco: %d	Contenido: <vacio>\n",i);
 				else
-					fprintf(archivo,"Marco: %d	Contenido: %s",i,memoria[i]->contenido);
+					fprintf(archivo,"Marco: %d	Contenido: %s\n",i,memoria[i]->contenido);
 			}
 			fclose(archivo);
 			log_info(log_general_p, "Realizado correctamente Dump Memoria");
