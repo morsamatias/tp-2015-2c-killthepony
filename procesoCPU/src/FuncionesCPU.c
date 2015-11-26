@@ -387,7 +387,7 @@ t_sentencia* sent_crear(char* sentencia, int pid, int hilo) {
 
 int sent_ejecutar_iniciar(t_sentencia* sent, int socket_mem) {
 
-	dormir2();
+	sleep(5);
 
 	int rs = 0;
 	int i;
