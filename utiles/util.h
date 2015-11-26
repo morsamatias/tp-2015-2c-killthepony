@@ -97,6 +97,7 @@ typedef enum {
 	MEM_ESCRIBIR,
 	MEM_FINALIZAR,
 	MEM_NO_OK,
+	MEM_IO,
 
 	SWAP_INICIAR,
 	SWAP_OK,
