@@ -16,7 +16,7 @@ int main(void) {
 	socket_planificador = malloc(contador*sizeof(int));
 	socket_memoria = malloc(contador*sizeof(int));
 	
-	sentencias_ejecutadas_ultimo_min = malloc(contador*sizeof(int));
+	tiempo_ejecucion_ultimo_minuto = malloc(contador*sizeof(int));
 	porcentaje_a_planificador = malloc (contador*sizeof(int));
 
 

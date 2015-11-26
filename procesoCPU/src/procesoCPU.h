@@ -39,6 +39,7 @@ int* 					socket_planificador;
 int* 					socket_memoria;
 int* 					sentencias_ejecutadas_ultimo_min;
 int* 					porcentaje_a_planificador;
+int*					tiempo_ejecucion_ultimo_minuto;
 
 int 					socket_planificador_especial;
 int 					puertomem;
@@ -50,6 +51,7 @@ int 					flag_error_planificador;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////ESTRUCTURAS///////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
 typedef struct{
 	e_sentencia sentencia;
 	int pagina;
@@ -95,6 +97,7 @@ int				RETARDO														();
 int 			RETARDO_MINIMO												();
 int 			sent_ejecutar_iniciar										(t_sentencia* sent,int socket_mem);
 int 			sent_ejecutar_finalizar										(t_sentencia* sent,int socket_mem);
+int 			tiempo														(int a ,int b,int cpu);
 
 t_msg* 			sent_to_msg													(t_sentencia* sent);
 t_resultado_pcb ejecutar													(t_pcb* pcb,int socket_mem, int hilo);

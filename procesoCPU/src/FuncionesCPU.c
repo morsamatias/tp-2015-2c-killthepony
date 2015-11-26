@@ -95,16 +95,59 @@ void inicializar_porcentajes(){
 
 	for (contador = 0; contador < CANTIDAD_HILOS(); ++contador) {
 
-		sentencias_ejecutadas_ultimo_min[contador] = 0;
+		tiempo_ejecucion_ultimo_minuto[contador] = 0;
 		porcentaje_a_planificador[contador] = 0;
 
 	}
 }
 
+void* hilo_porcentaje(){
+
+		int numero;
+
+		while(true){
+
+			sleep(60); //ACTUALIZA A CADA MINUTO//
+
+			pthread_mutex_lock(&mutex);
+			printf( "\n*****************************************************************************\n");
+			log_info(logger, "[PORCENTAJE] CALCULANDO PORCENTAJE DE UTILIZACION DE CADA HILO EN EL ULTIMO MINUTO");
+
+			for (numero = 0; numero < CANTIDAD_HILOS(); numero++) {
+
+
+				porcentaje_a_planificador[numero] = dividir(tiempo_ejecucion_ultimo_minuto[numero]*100,60);
+
+				if(dividir(tiempo_ejecucion_ultimo_minuto[numero]*100,60)>100)
+							porcentaje_a_planificador[numero] = 0;
+
+
+				log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d.", numero,tiempo_ejecucion_ultimo_minuto[numero], porcentaje_a_planificador[numero]);
+
+				sentencias_ejecutadas_ultimo_min[numero] = 0;
+
+
+			}
+
+			printf("\n*****************************************************************************\n");
+			pthread_mutex_unlock(&mutex);
+		}
+
+		return NULL;
+}
 
 
 
-void* hilo_porcentaje() {
+
+int tiempo(int a ,int b,int cpu){
+
+	tiempo_ejecucion_ultimo_minuto[cpu] = tiempo_ejecucion_ultimo_minuto[cpu] + a - b;
+
+}
+
+
+
+void* hilo_porcentaje_trucho() {
 
 	int numero,CANT_SENT_EN_UN_MIN;
 
@@ -231,6 +274,8 @@ int procesar_mensaje_planif(t_msg* msg, int numero) {
 
 	case PCB_A_EJECUTAR:
 
+		tiempo(time(NULL),0,numero);
+
 		destroy_message(msg);
 
 		pcb = recibir_mensaje_pcb(socket_planificador[numero]);
@@ -252,6 +297,8 @@ int procesar_mensaje_planif(t_msg* msg, int numero) {
 		retorno = avisar_a_planificador(mensaje_planificador, socket_planificador[numero], numero);
 
 		FREE_NULL(pcb);
+
+		tiempo(0,time(NULL),numero);
 
 		return retorno;
 
