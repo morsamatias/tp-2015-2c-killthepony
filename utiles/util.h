@@ -7,10 +7,9 @@
 
 #ifndef UTILES_UTIL_H_
 #define UTILES_UTIL_H_
-
-
-/////////////////////////////////////////////////////////////BIBLIOTECAS///////////////////////////////////////////////////
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////BIBLIOTECAS///////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////
 #include "commons/collections/list.h"
 #include "commons/string.h"
 #include <arpa/inet.h>
@@ -36,9 +35,9 @@
 #include <errno.h>          /* errno, ECHILD            */
 #include <semaphore.h>      /* sem_open(), sem_destroy(), sem_wait().. */
 
-
-///////////////////////////////////////////////////////////////DEFINE CONSTANTES/////////////////////////////////////////////////////
-
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////// CONSTANTES///////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
 #define handle_error(msj) \
 	do{perror(msj);exit(EXIT_FAILURE);} while(0)
 
@@ -49,16 +48,16 @@
 #define REG_SIZE 10
 #define BACK_LOG 100
 
-/* Funciones Macro */
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////* Funciones Macro *///////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #define FREE_NULL(p) \
     {free(p); \
     p = NULL;}
 
+ //Compara dos numeros y retorna el mínimo.
 
-
-/*
- * Compara dos numeros y retorna el mínimo.
- */
 #define min(n, m) (n < m ? n : m)
 
 /*
@@ -71,9 +70,8 @@
 
 #define MAX_PATH 1024
 
-/*************************************************************** IDS DE MENSAJES. *************************************/
-
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*************************************************************** IDS DE MENSAJES. ************************************/
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef enum {
@@ -92,6 +90,7 @@ typedef enum {
 	PCB_LOGUEO,
 	PCB_FINALIZAR,
 
+	MEM_IO,
 	MEM_INICIAR,
 	MEM_OK,
 	MEM_LEER,
@@ -113,7 +112,9 @@ typedef enum {
 
 } t_msg_id;
 
-/////////////////////////////////////////////////////////////////ESCTRUCTURAS////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////ESCTRUCTURAS/////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef enum {
 	iniciar,
@@ -173,7 +174,6 @@ typedef struct {
 }__attribute__ ((__packed__)) t_msg;
 
 
-
 //test envio struct
 typedef struct{
 		int pid;
@@ -181,165 +181,100 @@ typedef struct{
 		char texto[1024];
 }__attribute__ ((__packed__)) t_foo;
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////PROTOTIPOS/////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////PROTOTIPOS///////////////////////////////////////////////
+void*		 	file_get_mapped										(char* filename);
+void		 	dormir												(int segundos,int milisegundos);
+void 		    file_mmap_free										(char* mapped, char* filename);
 
-void* file_get_mapped(char* filename);
+bool 		    file_exists											(const char* filename);
 
+size_t 		    file_get_size										(char* filename);
+t_cpu_base*     cpu_base_new										(int id, char* ip, int puerto);
 
+float	        bytes_to_kilobytes									(size_t bytes);
+float		    bytes_to_megabytes									(size_t bytes);
 
-void dormir(int segundos,int milisegundos);
-void file_mmap_free(char* mapped, char* filename);
+int			 	cant_registros										(char** registros) ;
 
-bool file_exists(const char* filename);
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+/******************************************************MENSAJES****************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-size_t file_get_size(char* filename);
-t_cpu_base* cpu_base_new(int id, char* ip, int puerto);
+int 			enviar_mensaje_flujo								(int unSocket, int8_t tipo, int tamanio, void *buffer);
+int 			enviar_mensaje_script								(int fd, char* path_script);
+int 			enviar_mensaje_sin_header							(int sock_fd, int tamanio, void* buffer);
+int 			recibir_mensaje_flujo								(int unSocket, void** buffer);
+int 			recibir_mensaje_script_y_guardar					(int fd, char* path_destino);
+int 			recibir_mensaje_script								(int socket, char* save_as);
 
-float  bytes_to_kilobytes(size_t bytes);
-float bytes_to_megabytes(size_t bytes);
-
-
-
-int cant_registros(char** registros) ;
-
-/****************************************************MENSAJES******************************************/
-
-int recibir_mensaje_script(int socket, char* save_as);
-int enviar_mensaje_flujo(int unSocket, int8_t tipo, int tamanio, void *buffer);
-int recibir_mensaje_flujo(int unSocket, void** buffer);
-int recibir_mensaje_script_y_guardar(int fd, char* path_destino);
-int enviar_mensaje_script(int fd, char* path_script);
-int enviar_mensaje_sin_header(int sock_fd, int tamanio, void* buffer);
-
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 /****************************************************** FUNCIONES SOCKET. ******************************/
-int server_socket_select(uint16_t port, void (*procesar_mensaje)(int, t_msg*));
-int recibirMensaje(int unSocket, void** buffer) ;
-int mandarMensaje(int unSocket, int8_t tipo, int tamanio, void *buffer) ;
-/*
- * Crea, vincula y escucha un socket desde un puerto determinado.
- */
-int server_socket(uint16_t port);
-int recibir_linea(int sock_fd, char*linea);
-
-//char* ip_get();
-
-/*
- * Crea y conecta a una ip:puerto determinado.
- */
-int client_socket(char* ip, uint16_t port);
-
-/*
- * Acepta la conexion de un socket.
- */
-int accept_connection(int sock_fd);
-int accept_connection_and_get_ip(int sock_fd, char **ip);
-int len_hasta_enter(char* strings);
-
-//////////////////////////////////////////////////////////////////////MENSAJES//////////////////////////////////////////////////////
-/*
- * Recibe un t_msg a partir de un socket determinado.
- */
-t_msg *recibir_mensaje(int sock_fd);
-
-/*
- * Envia los contenidos de un t_msg a un socket determinado.
- */
-int enviar_mensaje(int sock_fd, t_msg *msg);
-
-/****************** FUNCIONES T_MSG. ******************/
-
-/*
- * Crea un t_msg sin argumentos, a partir del id.
- */
-t_msg *id_message(t_msg_id id);
-
-/*
- * Crea un t_msg a partir de count argumentos.
- */
-t_msg *argv_message(t_msg_id id, uint16_t count, ...);
-
-/*
- * Crea un t_msg a partir de un string y count argumentos.
- */
-t_msg *string_message(t_msg_id id, char *message, uint16_t count, ...);
-
-/*
- * Libera los contenidos de un t_msg.
- */
-void destroy_message(t_msg *mgs);
-
-/****************** FUNCIONES FILE SYSTEM. ******************/
-
-/*
- * Crea un archivo de size bytes de tamaño.
- */
-void create_file(char *path, size_t size);
-
-/*
- * Vacía el archivo indicado por path. Si no existe lo crea.
- */
-void clean_file(char *path);
-
-/*
- * Lee un archivo y retorna los primeros size bytes de su contenido.
- */
-char* read_file(char *path, size_t size);
-
-/*
- * Si existe, copia el contenido del archivo path en dest.
- */
-void memcpy_from_file(char *dest, char *path, size_t size);
-
-/*
- * Elimina los primeros size bytes del archivo path, y los retorna.
- */
-char* read_file_and_clean(char *path, size_t size);
-
-/*
- * Lee un archivo y retorna todo su contenido.
- */
-char* read_whole_file(char *path);
-
-/*
- * Lee un archivo y retorna todo su contenido, vaciándolo.
- */
-char* read_whole_file_and_clean(char *path);
-
-/*
- * Abre el archivo indicado por path (si no existe lo crea) y escribe size bytes de data.
- */
-void write_file(char *path, char* data, size_t size);
-
-/****************** FUNCIONES AUXILIARES. ******************/
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-/*
- * Muestra los contenidos y argumentos de un t_msg.
- */
-void print_msg(t_msg *msg);
+int 			accept_connection									(int sock_fd);
+int 			accept_connection_and_get_ip						(int sock_fd, char **ip);
+int 			client_socket										(char* ip, uint16_t port);
+int 			len_hasta_enter										(char* strings);
+int 			mandarMensaje										(int unSocket, int8_t tipo, int tamanio, void *buffer) ;
+int 			server_socket_select								(uint16_t port, void (*procesar_mensaje)(int, t_msg*));
+int 			server_socket										(uint16_t port);
+int 			recibirMensaje										(int unSocket, void** buffer) ;
+int 			recibir_linea										(int sock_fd, char*linea);
 
-/*
- * Convierte t_msg_id a string.
- */
-char *id_string(t_msg_id id);
-//int convertir_path_absoluto(char** destino, char* file);
-char* convertir_path_absoluto(char* file);
-void free_split(char** splitted);
-int split_count(char** splitted);
-int recv_timeout(int s , int timeout);
-int enviar_y_destroy_mensaje(int sock, t_msg* msg);
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////MENSAJES///////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int enviar_mensaje_cpu(int sock, t_msg*);
-t_msg* cpu_base_message(t_cpu_base* cb);
-t_cpu_base* recibir_mensaje_cpu_base(int s);
+t_msg*			argv_message										(t_msg_id id, uint16_t count, ...);
+t_msg*			id_message											(t_msg_id id);
+t_msg*			string_message										(t_msg_id id, char *message, uint16_t count, ...);
+t_msg*			recibir_mensaje										(int sock_fd);
 
-int enviar_mensaje_pcb(int socket, t_pcb* pcb);
+int			 	enviar_mensaje										(int sock_fd, t_msg *msg);
 
-t_pcb* pcb_nuevo(char* path);
-t_pcb* recibir_mensaje_pcb(int socket);
-int pcb_print(t_pcb* pcb);
+void 			destroy_message										(t_msg *mgs);
 
-void lock(pthread_mutex_t* mutex);
-void unlock(pthread_mutex_t* mutex);
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/****************************************************** FUNCIONES FILE SYSTEM. ****************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void 			create_file											(char *path, size_t size);
+void 			clean_file											(char *path);
+void 			memcpy_from_file									(char *dest, char *path, size_t size);
+void			write_file											(char *path, char* data, size_t size);
+
+char* 			read_file											(char *path, size_t size);
+char* 			read_file_and_clean									(char *path, size_t size);
+char* 			read_whole_file										(char *path);
+char* 			read_whole_file_and_clean							(char *path);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/******************************************************* FUNCIONES AUXILIARES. ****************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void 			lock												(pthread_mutex_t* mutex);
+void 			free_split											(char** splitted);
+void 			print_msg											(t_msg *msg);
+void 			unlock												(pthread_mutex_t* mutex);
+
+char*			id_string											(t_msg_id id);
+char* 			convertir_path_absoluto								(char* file);
+
+int 			enviar_mensaje_pcb									(int socket, t_pcb* pcb);
+int 			enviar_mensaje_cpu									(int sock, t_msg*);
+int 			enviar_y_destroy_mensaje							(int sock, t_msg* msg);
+int 			pcb_print											(t_pcb* pcb);
+int 			recv_timeout										(int s , int timeout);
+int 			split_count											(char** splitted);
+
+t_msg* 			cpu_base_message									(t_cpu_base* cb);
+t_cpu_base* 	recibir_mensaje_cpu_base							(int s);
+
+t_pcb* 			pcb_nuevo											(char* path);
+t_pcb* 			recibir_mensaje_pcb									(int socket);
+
 #endif /* UTILES_UTIL_H_ */

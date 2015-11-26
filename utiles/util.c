@@ -1,14 +1,8 @@
-/*
- * util.c
- *
- *  Created on: 26/4/2015
- *      Author: utnso
- */
-
 #include "util.h"
 
-
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////RETARDO/////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void dormir(int segundos,int milisegundos){
 
@@ -17,11 +11,12 @@ void dormir(int segundos,int milisegundos){
 	}else{
 		sleep(segundos);
 	}
-
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////// ARCHIVOS Y MAPPEO//////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-///////////////////////////////////////////////////// ARCHIVOS Y MAPPEO/////////////////////////////////////////////
 size_t file_get_size(char* filename) {
 	struct stat st;
 	stat(filename, &st);
@@ -32,7 +27,6 @@ size_t file_get_size(char* filename) {
 /*
  * devuelve el arhivo mappeado modo lectura y escritura
  */
-
 void* file_get_mapped(char* filename) {
 
 	char *addr;
@@ -47,8 +41,6 @@ void* file_get_mapped(char* filename) {
 	if (fstat(fd, &sb) == -1) /* To obtain file size */
 		handle_error("fstat");
 
-
-
 	length = sb.st_size;
 	addr = mmap(NULL, length, PROT_READ | PROT_WRITE,MAP_SHARED | MAP_NORESERVE, fd, 0);
 	if (addr == MAP_FAILED)
@@ -57,12 +49,17 @@ void* file_get_mapped(char* filename) {
 
 }
 
-///////////////////////////////////////////////////////LIBERAR MAPEO//////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////LIBERAR MAPEO/////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void file_mmap_free(char* mapped, char* filename) {
 	munmap(mapped, file_get_size(filename));
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////// FILE /////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int len_hasta_enter(char* strings){
 		int i=0;
@@ -96,9 +93,154 @@ bool file_exists(const char* filename) {
 	return rs;
 }
 
-/*
- ***************************************************
- */
+
+void create_file(char *path, size_t size) {
+
+	FILE *f = fopen(path, "wb");
+
+	fseek(f, size - 1, SEEK_SET);
+
+	fputc('\n', f);
+
+	fclose(f);
+}
+
+void clean_file(char *path) {
+
+	FILE *f = fopen(path, "wb");
+
+	fclose(f);
+}
+
+char* read_file(char *path, size_t size) {
+
+	FILE *f = fopen(path, "rb");
+	if (f == NULL) {
+		perror("fopen");
+		exit(EXIT_FAILURE);
+	}
+
+	char *buffer = malloc(size + 1);
+	if (buffer == NULL) {
+		perror("malloc");
+		exit(EXIT_FAILURE);
+	}
+
+	fread(buffer, size, 1, f);
+
+	fclose(f);
+
+	buffer[size] = '\0';
+
+	return buffer;
+}
+
+void memcpy_from_file(char *dest, char *path, size_t size) {
+
+	FILE *f = fopen(path, "rb");
+
+	if (f != NULL) {
+		fread(dest, size, 1, f);
+		fclose(f);
+	}
+}
+
+char *read_file_and_clean(char *path, size_t size) {
+
+	FILE *f = fopen(path, "rb");
+	if (f == NULL) {
+		perror("fopen");
+		exit(EXIT_FAILURE);
+	}
+
+	char *buffer = malloc(size + 1);
+	if (buffer == NULL) {
+		perror("malloc");
+		exit(EXIT_FAILURE);
+	}
+
+	fread(buffer, size, 1, f);
+
+	fclose(f);
+
+	f = fopen(path, "wb");
+
+	fclose(f);
+
+	buffer[size] = '\0';
+
+	return buffer;
+}
+
+char *read_whole_file(char *path) {
+
+	FILE *f = fopen(path, "rb");
+	if (f == NULL) {
+		perror("fopen");
+		exit(EXIT_FAILURE);
+	}
+
+	fseek(f, 0, SEEK_END);
+	long fsize = ftell(f);
+	fseek(f, 0, SEEK_SET);
+
+	char *buffer = malloc(fsize + 1);
+	if (buffer == NULL) {
+		perror("malloc");
+		exit(EXIT_FAILURE);
+	}
+
+	fread(buffer, fsize, 1, f);
+
+	fclose(f);
+
+	buffer[fsize] = '\0';
+
+	return buffer;
+}
+
+char *read_whole_file_and_clean(char *path) {
+
+	FILE *f = fopen(path, "rb");
+	if (f == NULL) {
+		perror("fopen");
+		exit(EXIT_FAILURE);
+	}
+
+	fseek(f, 0, SEEK_END);
+	long fsize = ftell(f);
+	fseek(f, 0, SEEK_SET);
+
+	char *buffer = malloc(fsize + 1);
+	if (buffer == NULL) {
+		perror("malloc");
+		exit(EXIT_FAILURE);
+	}
+
+	fread(buffer, fsize, 1, f);
+
+	fclose(f);
+
+	buffer[fsize] = '\0';
+
+	return buffer;
+}
+
+void write_file(char *path, char *data, size_t size) {
+
+	FILE *f = fopen(path, "wb");
+
+	fwrite(data, 1, size, f);
+
+	fclose(f);
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////CONEXION SOCKETS/////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int server_socket_select(uint16_t port, void (*procesar_mensaje)(int, t_msg*)) {
 	fd_set master, read_fds;
 	int fdNuevoNodo, fdmax, newfd;
@@ -156,6 +298,7 @@ int server_socket_select(uint16_t port, void (*procesar_mensaje)(int, t_msg*)) {
 	}
 	return 0;
 }
+
 int server_socket(uint16_t port) {
 	int sock_fd, optval = 1;
 	struct sockaddr_in servername;
@@ -253,6 +396,11 @@ int accept_connection_and_get_ip(int sock_fd, char **ip) {
 	return new_fd;
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////// MENSAJES //////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 t_msg *id_message(t_msg_id id) {
 
 	t_msg *new = malloc(sizeof *new);
@@ -265,8 +413,6 @@ t_msg *id_message(t_msg_id id) {
 
 	return new;
 }
-
-
 
 
 t_msg *argv_message(t_msg_id id, uint16_t count, ...) {
@@ -385,7 +531,8 @@ int mandarMensaje(int unSocket, int8_t tipo, int tamanio, void *buffer) {
 }
 
 //Mande un mensaje a un socket determinado
-//Recibe un mensaje del servidor - Version Lucas
+//Recibe un mensaje del servidor
+
 int recibirMensajeConHeader(int unSocket, t_header_base* header, void** buffer) {
 
 	int auxInt;
@@ -412,7 +559,8 @@ int recibirMensaje(int unSocket, void** buffer) {
 	return auxInt;
 
 }
-//Recibe un mensaje del servidor - Version Lucas
+//Recibe un mensaje del servidoR
+
 int recibirHeader(int unSocket, t_header_base* header) {
 	int auxInt;
 	if ((auxInt = recv(unSocket, header, sizeof(t_header_base), 0)) >= 0) {
@@ -631,147 +779,6 @@ void destroy_message(t_msg *msg) {
 	FREE_NULL(msg);
 }
 
-void create_file(char *path, size_t size) {
-
-	FILE *f = fopen(path, "wb");
-
-	fseek(f, size - 1, SEEK_SET);
-
-	fputc('\n', f);
-
-	fclose(f);
-}
-
-void clean_file(char *path) {
-
-	FILE *f = fopen(path, "wb");
-
-	fclose(f);
-}
-
-char* read_file(char *path, size_t size) {
-
-	FILE *f = fopen(path, "rb");
-	if (f == NULL) {
-		perror("fopen");
-		exit(EXIT_FAILURE);
-	}
-
-	char *buffer = malloc(size + 1);
-	if (buffer == NULL) {
-		perror("malloc");
-		exit(EXIT_FAILURE);
-	}
-
-	fread(buffer, size, 1, f);
-
-	fclose(f);
-
-	buffer[size] = '\0';
-
-	return buffer;
-}
-
-void memcpy_from_file(char *dest, char *path, size_t size) {
-
-	FILE *f = fopen(path, "rb");
-
-	if (f != NULL) {
-		fread(dest, size, 1, f);
-		fclose(f);
-	}
-}
-
-char *read_file_and_clean(char *path, size_t size) {
-
-	FILE *f = fopen(path, "rb");
-	if (f == NULL) {
-		perror("fopen");
-		exit(EXIT_FAILURE);
-	}
-
-	char *buffer = malloc(size + 1);
-	if (buffer == NULL) {
-		perror("malloc");
-		exit(EXIT_FAILURE);
-	}
-
-	fread(buffer, size, 1, f);
-
-	fclose(f);
-
-	f = fopen(path, "wb");
-
-	fclose(f);
-
-	buffer[size] = '\0';
-
-	return buffer;
-}
-
-char *read_whole_file(char *path) {
-
-	FILE *f = fopen(path, "rb");
-	if (f == NULL) {
-		perror("fopen");
-		exit(EXIT_FAILURE);
-	}
-
-	fseek(f, 0, SEEK_END);
-	long fsize = ftell(f);
-	fseek(f, 0, SEEK_SET);
-
-	char *buffer = malloc(fsize + 1);
-	if (buffer == NULL) {
-		perror("malloc");
-		exit(EXIT_FAILURE);
-	}
-
-	fread(buffer, fsize, 1, f);
-
-	fclose(f);
-
-	buffer[fsize] = '\0';
-
-	return buffer;
-}
-
-char *read_whole_file_and_clean(char *path) {
-
-	FILE *f = fopen(path, "rb");
-	if (f == NULL) {
-		perror("fopen");
-		exit(EXIT_FAILURE);
-	}
-
-	fseek(f, 0, SEEK_END);
-	long fsize = ftell(f);
-	fseek(f, 0, SEEK_SET);
-
-	char *buffer = malloc(fsize + 1);
-	if (buffer == NULL) {
-		perror("malloc");
-		exit(EXIT_FAILURE);
-	}
-
-	fread(buffer, fsize, 1, f);
-
-	fclose(f);
-
-	buffer[fsize] = '\0';
-
-	return buffer;
-}
-
-void write_file(char *path, char *data, size_t size) {
-
-	FILE *f = fopen(path, "wb");
-
-	fwrite(data, 1, size, f);
-
-	fclose(f);
-}
-
 void print_msg(t_msg *msg) {
 	int i;
 	puts("\n==================================================");
@@ -792,6 +799,10 @@ void print_msg(t_msg *msg) {
 		putchar(*(msg->stream + i));
 	puts("\n==================================================\n");
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////7/////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 char *id_string(t_msg_id id) {
 	char *buf;
 	switch (id) {
@@ -820,10 +831,9 @@ char *id_string(t_msg_id id) {
 
 
 
-
-/*
- *
- */
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////// CONVERTIR ////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 float bytes_to_kilobytes(size_t bytes){
 	return bytes / (1024 + 0.0);
@@ -832,6 +842,9 @@ float bytes_to_megabytes(size_t bytes){
 	return bytes / ((1024*1024) + 0.0);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 char* convertir_path_absoluto(char* file){
 	char* destino = malloc(PATH_MAX_LEN);
@@ -858,6 +871,9 @@ void free_split(char** splitted){
 }
 
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////// PCB //////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int pcb_print(t_pcb* pcb){
 
@@ -908,6 +924,9 @@ t_pcb* pcb_nuevo(char* path){
 	return new;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////// MUTEX ////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void lock(pthread_mutex_t* mutex){
 	pthread_mutex_lock(mutex);

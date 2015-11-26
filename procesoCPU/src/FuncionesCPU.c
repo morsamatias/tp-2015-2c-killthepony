@@ -644,6 +644,12 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem, int hilo) {
 		pcb->pc++;
 		list_add(resultado.resultados_sentencias, sent);
 	} */
+
+	if(sent->sentencia == io)
+			if(!avisar_a_memoria_io(socket_mem,pcb))
+					desconexion_memoria();
+
+
 	file_mmap_free(mcod, pcb->path);
 
 	free_split(sents);
@@ -801,6 +807,19 @@ t_msg* sent_to_msg(t_sentencia* sent){
 	return msg;
 }
 
+
+
+int avisar_a_memoria_io(int sock_m,t_pcb* pcb){
+
+	t_msg* msg = NULL;
+	int rs ;
+
+	msg = string_message(MEM_IO, pcb->path, 4, pcb->pc, pcb->cant_a_ejectuar, pcb->cant_sentencias, pcb->pid);
+
+	rs = enviar_y_destroy_mensaje(sock_m, msg);
+
+	return rs;
+}
 /////////////////////////////////////////////////DESCONEXION DE PROCESOS/////////////////////
 
 int desconexion_planificador(){
