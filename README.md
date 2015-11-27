@@ -10,6 +10,8 @@ al final pegar export LD_LIBRARY_PATH=/home/utnso/Escritorio/git/tp-2015-2c-kill
 debug postmortem: 
 ulimit -c unlimited
 
+watch -n 1 cat SWAP.DATA
+
 ------------------------------
 Para instalar en el server hay que hacer el mkdir de Escritorio/git
 ahi dentro hacer el clone
