@@ -19,6 +19,7 @@ int main(void) {
 	tiempo_ejecucion_ultimo_minuto  = 		malloc(contador*sizeof(int));
 	porcentaje_a_planificador 		= 		malloc(contador*sizeof(int));
 	aux						 		= 		malloc(contador*sizeof(int));
+	flag						    = 		malloc(contador*sizeof(int));
 
 
 	inicializar_porcentajes(); //	for (i = 0; i < CANTIDAD_HILOS(); ++i) Sentencias_ejecutadas_ultimo_min[i] = 0 ,porcentaje_a_planificador[i] = 0;
