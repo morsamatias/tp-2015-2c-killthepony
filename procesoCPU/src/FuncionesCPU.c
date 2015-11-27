@@ -1,14 +1,9 @@
 #include "procesoCPU.h"
 
-
-
-
 ///////////////////////////////////////////VARIBALES///////////////////////////////////////////////////////////////////////////////////////////////
 
 char* CONFIG_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoCPU/Debug/config.txt";
 char* LOGGER_PATH = "log.txt";
-
-
 //////////////////////////////////////HILO RESPONDE PORCENTAJE//////////////////////////////////////////////////////////////////////
 
 
@@ -80,9 +75,7 @@ int enviar_porcentaje_a_planificador() {
 			desconexion_planificador();
 		}
 	}
-
 	return retorno;
-
 }
 
 
@@ -96,16 +89,63 @@ void inicializar_porcentajes(){
 	for (contador = 0; contador < CANTIDAD_HILOS(); ++contador) {
 
 		tiempo_ejecucion_ultimo_minuto[contador] = 0;
+		sentencias_ejecutadas_ultimo_min[contador] = 0;
+
 		porcentaje_a_planificador[contador] = 0;
 		aux[contador] = 0;
-		flag[contador]= 0;
-
 	}
 }
 
 void* hilo_porcentaje(){
 
 		int numero;
+
+		if(PORCENTAJE_CPU() == 0){
+
+			int numero,CANT_SENT_EN_UN_MIN;
+
+			if (RETARDO() == 0) {
+					CANT_SENT_EN_UN_MIN = dividir (60000,(RETARDO_MINIMO())); //CALCULO CANTIDAD DE SENTENCIAS MAXIMAS COMO SON MICROSEGUNDOS MULTIPLICO * 1000//
+			}else{
+					CANT_SENT_EN_UN_MIN = dividir (60 ,RETARDO());                 //CALCULO CANTIDAD DE SENTENCIAS MAXIMAS EN SEGUNDOS//
+			}
+
+			while(true){
+
+				sleep(60); //ACTUALIZA A CADA MINUTO//
+
+				pthread_mutex_lock(&mutex);
+				printf( "\n*****************************************************************************\n");
+				log_info(logger, "[PORCENTAJE] CALCULANDO PORCENTAJE DE UTILIZACION DE CADA HILO EN EL ULTIMO MINUTO");
+				log_info(logger, "[PORCENTAJE] CANTIDAD DE SENTENCIAS MAXIMAS EN UN MIN: %d", CANT_SENT_EN_UN_MIN);
+
+
+				for (numero = 0; numero < CANTIDAD_HILOS(); numero++) {
+
+					if(CANT_SENT_EN_UN_MIN != 0){
+
+					porcentaje_a_planificador[numero] = dividir(sentencias_ejecutadas_ultimo_min[numero]*100,CANT_SENT_EN_UN_MIN);
+
+					log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d%c.", numero,sentencias_ejecutadas_ultimo_min[numero], porcentaje_a_planificador[numero],'%');
+
+					}else{
+
+						porcentaje_a_planificador[numero] = 0;
+
+						log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d.", numero,sentencias_ejecutadas_ultimo_min[numero], porcentaje_a_planificador[numero]);
+
+					}
+
+					sentencias_ejecutadas_ultimo_min[numero] = 0;
+				}
+
+				printf("\n*****************************************************************************\n");
+				pthread_mutex_unlock(&mutex);
+			}
+
+
+
+		}else{
 
 		while(true){
 
@@ -117,22 +157,18 @@ void* hilo_porcentaje(){
 
 			for (numero = 0; numero < CANTIDAD_HILOS(); numero++) {
 
-				porcentaje_a_planificador[numero] = dividir(aux[numero]*100,60);
+				porcentaje_a_planificador[numero] = dividir(tiempo_ejecucion_ultimo_minuto[numero]*100,60);
 
-				log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d.", numero,aux[numero], porcentaje_a_planificador[numero]);
+				log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d%c.", numero,tiempo_ejecucion_ultimo_minuto[numero], porcentaje_a_planificador[numero], '%');
 
-				aux[numero] = 0;
+				tiempo_ejecucion_ultimo_minuto[numero] = 0;
 
-				flag[numero] = 1;
-				if (tiempo_ejecucion_ultimo_minuto[numero] > 0)
-							tiempo_ejecucion_ultimo_minuto[numero] = 0;
 			}
-
-
 
 			printf("\n*****************************************************************************\n");
 			pthread_mutex_unlock(&mutex);
 
+			}
 		}
 		return NULL;
 }
@@ -140,70 +176,18 @@ void* hilo_porcentaje(){
 
 
 
-int tiempo(int a ,int b,int cpu){
+int tiempo(int tiempo_inicial ,int tiempo_final,int hilo_cpu){
 
-	tiempo_ejecucion_ultimo_minuto[cpu] =  tiempo_ejecucion_ultimo_minuto[cpu] - a + b;
+	if(PORCENTAJE_CPU()){
 
-	if((tiempo_ejecucion_ultimo_minuto[cpu]>0)&&(tiempo_ejecucion_ultimo_minuto[cpu]<101)){
-				aux[cpu]=tiempo_ejecucion_ultimo_minuto[cpu]+aux[cpu];
-				tiempo_ejecucion_ultimo_minuto[cpu] = 0;
+		tiempo_ejecucion_ultimo_minuto[hilo_cpu]=difftime(tiempo_final,tiempo_inicial) + tiempo_ejecucion_ultimo_minuto[hilo_cpu];
+
+		log_trace(logger, "[HILO #%d] SEGUNDOS DE USO: %d.\n",tiempo_ejecucion_ultimo_minuto[hilo_cpu],hilo_cpu);
+
 	}
-
-	printf("tiempo_ejecucion_ultimo_minuto %d \n",aux[cpu]);
 
 	return 0;
 
-}
-
-
-
-void* hilo_porcentaje_trucho() {
-
-	int numero,CANT_SENT_EN_UN_MIN;
-
-	if (RETARDO() == 0) {
-			CANT_SENT_EN_UN_MIN = dividir (60000,(RETARDO_MINIMO())); //CALCULO CANTIDAD DE SENTENCIAS MAXIMAS COMO SON MICROSEGUNDOS MULTIPLICO * 1000//
-	}else{
-			CANT_SENT_EN_UN_MIN = dividir (60 ,RETARDO());                 //CALCULO CANTIDAD DE SENTENCIAS MAXIMAS EN SEGUNDOS//
-	}
-
-	while(true){
-
-		sleep(60); //ACTUALIZA A CADA MINUTO//
-
-		pthread_mutex_lock(&mutex);
-		printf( "\n*****************************************************************************\n");
-		log_info(logger, "[PORCENTAJE] CALCULANDO PORCENTAJE DE UTILIZACION DE CADA HILO EN EL ULTIMO MINUTO");
-		log_info(logger, "[PORCENTAJE] CANTIDAD DE SENTENCIAS MAXIMAS EN UN MIN: %d", CANT_SENT_EN_UN_MIN);
-
-
-		for (numero = 0; numero < CANTIDAD_HILOS(); numero++) {
-
-			if(CANT_SENT_EN_UN_MIN != 0){
-
-			porcentaje_a_planificador[numero] = dividir(sentencias_ejecutadas_ultimo_min[numero]*100,CANT_SENT_EN_UN_MIN);
-
-			log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d.", numero,sentencias_ejecutadas_ultimo_min[numero], porcentaje_a_planificador[numero]);
-
-			}else{
-
-				porcentaje_a_planificador[numero] = 0;
-
-				log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d.", numero,sentencias_ejecutadas_ultimo_min[numero], porcentaje_a_planificador[numero]);
-
-
-			}
-
-			sentencias_ejecutadas_ultimo_min[numero] = 0;
-
-
-		}
-
-		printf("\n*****************************************************************************\n");
-		pthread_mutex_unlock(&mutex);
-	}
-
-	return NULL;
 }
 ///////////////////////////////////////HILO CPU ///////////////////////////////////////////////
 
@@ -258,20 +242,21 @@ void dormir2(){
 
 	int retardo = RETARDO();
 
-	printf(" RETARDO %d.\n",retardo);
+	//printf(" RETARDO %d.\n",retardo);
 
 	if (retardo == 0) {
 		usleep(RETARDO_MINIMO()*1000);
-		printf(" RETARDO MINIMO \n");
+		//printf(" RETARDO MINIMO \n");
 	}else{
 		sleep(RETARDO());
-		printf(" RETARDO \n");
+		//printf(" RETARDO \n");
 	}
 
 }
 
 
 ///////////////////////////////////////////////////////////////PROCESAR MENSAJE///////////////////////////////////////////////
+
 int procesar_mensaje_planif(t_msg* msg, int numero) {
 
 	int retorno = 1;
@@ -281,10 +266,7 @@ int procesar_mensaje_planif(t_msg* msg, int numero) {
 
 	switch (msg->header.id) {
 
-
 	case PCB_A_EJECUTAR:
-
-
 
 		destroy_message(msg);
 
@@ -605,30 +587,28 @@ char* sent_ejecutar_leer(t_sentencia* sent, int socket_mem) {
 
 int sent_ejecutar(t_sentencia* sent, int socket_mem,int numero) {				//TINE INCLUIDO EL RETARDO//
 
-	dormir2();
 
-	//pthread_mutex_lock(&mutex);
-	//sentencias_ejecutadas_ultimo_min[sent->hilo] ++;
-	//pthread_mutex_unlock(&mutex);
+	time_t tiempo_inicial,tiempo_final;
+	pthread_mutex_lock(&mutex);
+	sentencias_ejecutadas_ultimo_min[sent->hilo] ++;
+	pthread_mutex_unlock(&mutex);
+
+	tiempo_inicial=time(NULL);
+
+	dormir2();
 
 	int st = 0;
 	switch (sent->sentencia) {
 	case iniciar:
-		tiempo(time(NULL),0,numero);
 		st = sent_ejecutar_iniciar(sent, socket_mem);
-		tiempo(0,time(NULL),numero);
 		break;
 	case leer:
-		tiempo(time(NULL),0,numero);
 		sent->texto = sent_ejecutar_leer(sent, socket_mem);
 		if(sent->texto == NULL)
 			st = -1;
-		tiempo(0,time(NULL),numero);
 		break;
 	case escribir:
-		tiempo(time(NULL),0,numero);
 		st = sent_ejecutar_escribir(sent, socket_mem);
-		tiempo(0,time(NULL),numero);
 		break;
 	case io:
 		log_trace(logger, "[HILO #%d] Entrada-Salida de %d", sent->hilo, sent->tiempo);
@@ -638,14 +618,15 @@ int sent_ejecutar(t_sentencia* sent, int socket_mem,int numero) {				//TINE INCL
 		st = -1;
 		break;
 	case final:
-		tiempo(time(NULL),0,numero);
 		sent_ejecutar_finalizar(sent, socket_mem);
-		tiempo(0,time(NULL),numero);
 		break;
 	default:
 		log_trace(logger, "[HILO #%d] case default", sent->hilo);
 		break;
 	}
+
+	tiempo_final = time(NULL);
+	tiempo(tiempo_inicial,tiempo_final,numero);
 
 	return st;
 
@@ -1145,5 +1126,9 @@ int RETARDO() {
 
 int RETARDO_MINIMO() {
 	return config_get_int_value(cfg, "RETARDO_MILISEGUNDOS");
+}
+
+int PORCENTAJE_CPU(){
+	return config_get_int_value(cfg,"CALCULO_PORCENTAJE_CPU");
 }
 

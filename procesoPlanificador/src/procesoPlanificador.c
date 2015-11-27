@@ -895,7 +895,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		}
 
-		PID_GLOBAL_BLOCK = pcb->pid;
+
 		IO_GLOBAL = msg->argv[2];
 
 		int cantIO = msg->argv[2];
@@ -2175,7 +2175,7 @@ void Hilo_IO(int pid) {
 
 sem_wait(&sem_IO);
 
-		while(list_size(list_block) != 0) {
+	while(list_size(list_block) != 0) {
 			//hay bloqueados
 			//if ((list_any_satisfy(list_block, (void*) _estado_bloqueado))) {
 				if(list_all_satisfy(list_block, (void*) _estado_libre)){
@@ -2215,7 +2215,19 @@ sem_wait(&sem_IO);
 
 				ready->pid = block->pid;
 
+
 				PID_GLOBAL_BLOCK = block->pid;
+
+				block->estado=0;
+
+
+				if (list_any_satisfy(list_block,
+						(void*) es_el_pcb_buscado_en_block)) {
+
+					list_remove_by_condition(list_block,
+							(void*) es_el_pcb_buscado_en_block);
+
+				}
 
 				list_add(list_ready, ready);
 
@@ -2228,13 +2240,6 @@ sem_wait(&sem_IO);
 
 				pcb->tiempo_inicio_ready = time(NULL);
 
-				if (list_any_satisfy(list_block,
-						(void*) es_el_pcb_buscado_por_id)) {
-
-					list_remove_by_condition(list_block,
-							(void*) es_el_pcb_buscado_en_block);
-
-				}
 
 				if (list_size(list_ready) > 0) {
 					if (cpu_disponible()) {
@@ -2279,8 +2284,8 @@ sem_wait(&sem_IO);
 		}
 
 	}
+
 }
-//}
 
 /*
 

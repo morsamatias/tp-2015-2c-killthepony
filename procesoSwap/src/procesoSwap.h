@@ -97,6 +97,7 @@ void 				ocupado_destroy							();
 void 				proceso_destroy							();
 void				esp_libre_inicializar					();
 
+void mostrar_listas();
 ///////////////////////////////////////////////////////////////////////////////////
 
 #endif /* PROCESOSWAP_H_ */
