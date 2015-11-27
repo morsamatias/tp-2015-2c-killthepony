@@ -41,6 +41,7 @@ int* 					sentencias_ejecutadas_ultimo_min;
 int* 					porcentaje_a_planificador;
 int*					tiempo_ejecucion_ultimo_minuto;
 int*					aux;
+int*					flag;
 
 int 					socket_planificador_especial;
 int 					puertomem;

@@ -98,6 +98,7 @@ void inicializar_porcentajes(){
 		tiempo_ejecucion_ultimo_minuto[contador] = 0;
 		porcentaje_a_planificador[contador] = 0;
 		aux[contador] = 0;
+		flag[contador]= 0;
 
 	}
 }
@@ -121,7 +122,10 @@ void* hilo_porcentaje(){
 				log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d.", numero,aux[numero], porcentaje_a_planificador[numero]);
 
 				aux[numero] = 0;
-				tiempo_ejecucion_ultimo_minuto[numero] = 0;
+
+				flag[numero] = 1;
+				if (tiempo_ejecucion_ultimo_minuto[numero] > 0)
+							tiempo_ejecucion_ultimo_minuto[numero] = 0;
 			}
 
 
@@ -138,12 +142,16 @@ void* hilo_porcentaje(){
 
 int tiempo(int a ,int b,int cpu){
 
-	tiempo_ejecucion_ultimo_minuto[cpu] = tiempo_ejecucion_ultimo_minuto[cpu] - a + b;
+	tiempo_ejecucion_ultimo_minuto[cpu] =  tiempo_ejecucion_ultimo_minuto[cpu] - a + b;
 
-	if(tiempo_ejecucion_ultimo_minuto[cpu]>0)
-				aux[cpu]=tiempo_ejecucion_ultimo_minuto[cpu] + aux[cpu];
+	if((tiempo_ejecucion_ultimo_minuto[cpu]>0)&&(tiempo_ejecucion_ultimo_minuto[cpu]<101)){
+				aux[cpu]=tiempo_ejecucion_ultimo_minuto[cpu]+aux[cpu];
+				tiempo_ejecucion_ultimo_minuto[cpu] = 0;
+	}
 
 	printf("tiempo_ejecucion_ultimo_minuto %d \n",aux[cpu]);
+
+	return 0;
 
 }
 
