@@ -536,12 +536,12 @@ int quitar_pagina_de_la_memoria(t_pagina* pag){
 	int st;
 	t_proceso* proceso;
 	gl_PID = pag->PID;
-	if(list_any_satisfying(paginas,(void*)es_el_proceso_segun_PID))
+	if(list_any_satisfy(paginas,(void*)es_el_proceso_segun_PID))
 		proceso = list_find(paginas,(void*)es_el_proceso_segun_PID);
 	// CHEQUEO SI ESTA MODIFICADA
 	if(pag->modificado){
 		st = swap_escribir_pagina(pag->PID, pag->pagina, memoria[pag->marco]->contenido);
-		if(list_any_satisfying(paginas,(void*)es_el_proceso_segun_PID))
+		if(list_any_satisfy(paginas,(void*)es_el_proceso_segun_PID))
 			proceso->accesos_swap ++;
 	}
 	if(st==-1) return 0;

@@ -90,6 +90,7 @@ int 			enviar_porcentaje_a_planificador							();
 int 			enviar_logs													(int socket, t_list* resultados_sentencias);
 int 			finalizar													();
 int 			inicializar													();
+int 			PORCENTAJE_CPU												();
 int 			PUERTO_MEMORIA												();
 int 			PUERTO_PLANIFICADOR											();
 int 			procesar_mensaje_planif										(t_msg* msg,int numero);
