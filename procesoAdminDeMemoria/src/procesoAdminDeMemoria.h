@@ -36,6 +36,8 @@ typedef struct {
 	t_list* paginas;
 	float TLB_hit;
 	int TLB_total;
+	int fallos_pagina;
+	int accesos_swap;
 } t_proceso;
 
 typedef struct {
@@ -76,7 +78,7 @@ sem_t mutex_PAGINAS;
 // Loggers
 //t_log* 		logger;
 t_log* 	log_general_p;
-t_log* 	log_general_f;
+//t_log* 	log_general_f;
 t_log* 	log_errores;
 t_log* 	log_memoria;
 t_log* 	log_estadisticas;
@@ -106,7 +108,6 @@ int 	TLB_HABILITADA();
 int 	RETARDO_MEMORIA();
 char* 	ALGORITMO_REEMPLAZO();
 int 	RETARDO_MEMORIA_MINIMO();
-int 	LOG_TODO_POR_PANTALLA();
 
 //// NUEVAS
 
