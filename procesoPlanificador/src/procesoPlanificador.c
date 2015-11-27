@@ -2088,6 +2088,9 @@ int inicializar() {
 
 	log_porcentajes =log_create(LOG_PATH_PORCENTAJE,"PLANIFICADOR",false,LOG_LEVEL_INFO);
 
+	clean_file(LOG_PATH_CONSOLA);
+	clean_file(LOG_PATH_LISTAS);
+	clean_file(LOG_PATH_PORCENTAJE);
 
 	cpus = list_create();
 
