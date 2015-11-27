@@ -895,7 +895,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		}
 
-		PID_GLOBAL_BLOCK = pcb->pid;
+
 		IO_GLOBAL = msg->argv[2];
 
 		int cantIO = msg->argv[2];
@@ -2217,7 +2217,18 @@ sem_wait(&sem_IO);
 
 
 				PID_GLOBAL_BLOCK = block->pid;
+
 				block->estado=0;
+
+
+				if (list_any_satisfy(list_block,
+						(void*) es_el_pcb_buscado_en_block)) {
+
+					list_remove_by_condition(list_block,
+							(void*) es_el_pcb_buscado_en_block);
+
+				}
+
 				list_add(list_ready, ready);
 
 				t_pcb* pcb;
@@ -2229,13 +2240,6 @@ sem_wait(&sem_IO);
 
 				pcb->tiempo_inicio_ready = time(NULL);
 
-				if (list_any_satisfy(list_block,
-						(void*) es_el_pcb_buscado_por_id)) {
-
-					list_remove_by_condition(list_block,
-							(void*) es_el_pcb_buscado_en_block);
-
-				}
 
 				if (list_size(list_ready) > 0) {
 					if (cpu_disponible()) {
