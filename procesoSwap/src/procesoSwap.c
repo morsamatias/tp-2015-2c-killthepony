@@ -68,6 +68,8 @@ void dormir_compactacion(){
 
 char* swap_inicializar() {
 
+	clean_file(NOMBRE_SWAP());
+
 	TAMANIO_SWAP = CANTIDAD_PAGINAS() * TAMANIO_PAGINA();
 	char CREAR_DATA[1024];
 
@@ -422,11 +424,29 @@ int swap_nuevo_proceso(int pid, int paginas){
 
 int swap_escribir(int pid, int pagina, char* contenido){
 	size_t size = strlen(contenido);
-	memcpy(swap + (TAMANIO_PAGINA() * pagina), contenido, size);
+
+	bool _buscar(t_ocupado* o){
+		return o->pid == pid;
+	}
+
+	t_ocupado* o;
+	o = list_find(esp_ocupado, (void*)_buscar);
+
+	int comienzo;
+	comienzo = o->posicion*TAMANIO_PAGINA();
+
+	memcpy(swap + (TAMANIO_PAGINA() * pagina) + comienzo, contenido, size);
 	//memcpy
 
-	memset(swap + (TAMANIO_PAGINA() * pagina)+size, '\0', TAMANIO_PAGINA() - size);
+	memset(swap + (TAMANIO_PAGINA() * pagina)+size + comienzo, '\0', TAMANIO_PAGINA() - size);
 
+	/*
+	if (msync(swap + (TAMANIO_PAGINA() * pagina)+size, size, MS_SYNC) < 0) {
+		perror("msync failed with error:");
+		return -1;
+	} else
+		(void) printf("%s", "msync completed successfully.");
+*/
 	return 0;
 }
 
@@ -511,6 +531,11 @@ int unir_huecos_contiguos(t_libre* libre){
 
 int swap_liberar(int pid){
 	t_ocupado* ocupado = swap_buscar_ocupado_por_pid(pid);
+
+	if(ocupado == NULL){
+		log_error(logger_errores, "El PID %d no se encontro en la lista de procesos para liberar", pid);
+		return -1;
+	}
 
 	//me posiciono en el hueco
 	int posicion = ocupado->posicion + ocupado->cantidad;
@@ -699,10 +724,13 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			//log_trace(logger, "SWAP_FINALIZAR. pid: %d", pid);
 			//envio 1 = true
 
-			swap_liberar(pid);
+			//puede que finalice alguno que no haya comenzado a ejecutar
+			if(swap_liberar(pid)!= -1)
+			{
+				est_print(pid);
+				est_eliminar(pid);
+			}
 
-			est_print(pid);
-			est_eliminar(pid);
 
 			//sleep(RETARDO_SWAP());
 
@@ -725,6 +753,8 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			exit(0);
 			break;
 		default:
+			log_error(logger_errores, "Mensaje desconocido");
+			destroy_message(msg);
 			break;
 	}//FIN SWITCH
 	printf("*************************INICIO PRINTS**************************\n");
