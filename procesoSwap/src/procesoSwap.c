@@ -752,6 +752,10 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 
 			exit(0);
 			break;
+		case 0:
+			destroy_message(msg);
+			log_trace(logger, "Memoria conectada OK");
+			break;
 		default:
 			log_error(logger_errores, "Mensaje desconocido");
 			destroy_message(msg);
