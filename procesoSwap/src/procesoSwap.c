@@ -276,6 +276,8 @@ int compactar(){
 
 	dormir_compactacion();
 
+	mostrar_listas();
+
 	log_trace(logger_compactacion, "Compactacion finalizada");
 	return 0;
 }
@@ -389,7 +391,7 @@ int hueco_tamanio_bytes(t_ocupado* hueco){
 }
 
 void hueco_print_info(const char* texto_inicial, t_ocupado* hueco, t_log* log_ok){
-	log_info(log_ok, "%s > PID: %d, Paginas: %d, Inicio: byte %d, Tamaño: %d bytes", texto_inicial, hueco->pid, hueco->pid, hueco_inicio_bytes(hueco), hueco_tamanio_bytes(hueco));
+	log_info(log_ok, "%s > PID: %d, Paginas: %d, Inicio: byte %d, Tamaño: %d bytes", texto_inicial, hueco->pid, hueco->cantidad, hueco_inicio_bytes(hueco), hueco_tamanio_bytes(hueco));
 }
 
 t_proceso* proc_nuevo(int pid){
@@ -632,6 +634,13 @@ void print_libre() {
 	list_iterate(esp_libre, (void*) _print_libre);
 }
 
+void mostrar_listas(){
+	printf("*************************INICIO PRINTS**************************\n");
+	print_ocupado();
+	print_libre();
+	printf("*************************FIN PRINTS**************\n");
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void procesar_mensaje_mem(int socket_mem, t_msg* msg){
@@ -761,10 +770,9 @@ void procesar_mensaje_mem(int socket_mem, t_msg* msg){
 			destroy_message(msg);
 			break;
 	}//FIN SWITCH
-	printf("*************************INICIO PRINTS**************************\n");
-	print_ocupado();
-	print_libre();
-	printf("*************************FIN PRINTS**************\n");
+
+	mostrar_listas();
+
 
 
 }
