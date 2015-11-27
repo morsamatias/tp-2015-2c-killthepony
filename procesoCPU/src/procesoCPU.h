@@ -40,6 +40,7 @@ int* 					socket_memoria;
 int* 					sentencias_ejecutadas_ultimo_min;
 int* 					porcentaje_a_planificador;
 int*					tiempo_ejecucion_ultimo_minuto;
+int*					aux;
 
 int 					socket_planificador_especial;
 int 					puertomem;
@@ -95,6 +96,7 @@ int 			procesar_mensaje_planif										(t_msg* msg,int numero);
 int 			pcb_tiene_que_seguir_ejecutando								(t_pcb* pcb);
 int				RETARDO														();
 int 			RETARDO_MINIMO												();
+int 			sent_ejecutar												(t_sentencia* sent, int socket_mem,int numero);
 int 			sent_ejecutar_iniciar										(t_sentencia* sent,int socket_mem);
 int 			sent_ejecutar_finalizar										(t_sentencia* sent,int socket_mem);
 int 			tiempo														(int a ,int b,int cpu);

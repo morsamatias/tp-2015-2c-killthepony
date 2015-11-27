@@ -97,6 +97,7 @@ void inicializar_porcentajes(){
 
 		tiempo_ejecucion_ultimo_minuto[contador] = 0;
 		porcentaje_a_planificador[contador] = 0;
+		aux[contador] = 0;
 
 	}
 }
@@ -115,24 +116,20 @@ void* hilo_porcentaje(){
 
 			for (numero = 0; numero < CANTIDAD_HILOS(); numero++) {
 
+				porcentaje_a_planificador[numero] = dividir(aux[numero]*100,60);
 
-				porcentaje_a_planificador[numero] = dividir(tiempo_ejecucion_ultimo_minuto[numero]*100,60);
+				log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d.", numero,aux[numero], porcentaje_a_planificador[numero]);
 
-				if(dividir(tiempo_ejecucion_ultimo_minuto[numero]*100,60)>100)
-							porcentaje_a_planificador[numero] = 0;
-
-
-				log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d.", numero,tiempo_ejecucion_ultimo_minuto[numero], porcentaje_a_planificador[numero]);
-
-				sentencias_ejecutadas_ultimo_min[numero] = 0;
-
-
+				aux[numero] = 0;
+				tiempo_ejecucion_ultimo_minuto[numero] = 0;
 			}
+
+
 
 			printf("\n*****************************************************************************\n");
 			pthread_mutex_unlock(&mutex);
-		}
 
+		}
 		return NULL;
 }
 
@@ -141,7 +138,12 @@ void* hilo_porcentaje(){
 
 int tiempo(int a ,int b,int cpu){
 
-	tiempo_ejecucion_ultimo_minuto[cpu] = tiempo_ejecucion_ultimo_minuto[cpu] + a - b;
+	tiempo_ejecucion_ultimo_minuto[cpu] = tiempo_ejecucion_ultimo_minuto[cpu] - a + b;
+
+	if(tiempo_ejecucion_ultimo_minuto[cpu]>0)
+				aux[cpu]=tiempo_ejecucion_ultimo_minuto[cpu] + aux[cpu];
+
+	printf("tiempo_ejecucion_ultimo_minuto %d \n",aux[cpu]);
 
 }
 
@@ -274,7 +276,7 @@ int procesar_mensaje_planif(t_msg* msg, int numero) {
 
 	case PCB_A_EJECUTAR:
 
-		tiempo(time(NULL),0,numero);
+
 
 		destroy_message(msg);
 
@@ -298,7 +300,7 @@ int procesar_mensaje_planif(t_msg* msg, int numero) {
 
 		FREE_NULL(pcb);
 
-		tiempo(0,time(NULL),numero);
+
 
 		return retorno;
 
@@ -436,6 +438,7 @@ int sent_ejecutar_iniciar(t_sentencia* sent, int socket_mem) {
 
 	int rs = 0;
 	int i;
+
 	t_msg* msg = NULL;
 
 	msg = argv_message(MEM_INICIAR, 2, sent->pid, sent->cant_paginas);
@@ -592,26 +595,32 @@ char* sent_ejecutar_leer(t_sentencia* sent, int socket_mem) {
 	}
 }
 
-int sent_ejecutar(t_sentencia* sent, int socket_mem) {				//TINE INCLUIDO EL RETARDO//
+int sent_ejecutar(t_sentencia* sent, int socket_mem,int numero) {				//TINE INCLUIDO EL RETARDO//
 
 	dormir2();
 
-	pthread_mutex_lock(&mutex);
-	sentencias_ejecutadas_ultimo_min[sent->hilo] ++;
-	pthread_mutex_unlock(&mutex);
+	//pthread_mutex_lock(&mutex);
+	//sentencias_ejecutadas_ultimo_min[sent->hilo] ++;
+	//pthread_mutex_unlock(&mutex);
 
 	int st = 0;
 	switch (sent->sentencia) {
 	case iniciar:
+		tiempo(time(NULL),0,numero);
 		st = sent_ejecutar_iniciar(sent, socket_mem);
+		tiempo(0,time(NULL),numero);
 		break;
 	case leer:
+		tiempo(time(NULL),0,numero);
 		sent->texto = sent_ejecutar_leer(sent, socket_mem);
 		if(sent->texto == NULL)
 			st = -1;
+		tiempo(0,time(NULL),numero);
 		break;
 	case escribir:
+		tiempo(time(NULL),0,numero);
 		st = sent_ejecutar_escribir(sent, socket_mem);
+		tiempo(0,time(NULL),numero);
 		break;
 	case io:
 		log_trace(logger, "[HILO #%d] Entrada-Salida de %d", sent->hilo, sent->tiempo);
@@ -621,7 +630,9 @@ int sent_ejecutar(t_sentencia* sent, int socket_mem) {				//TINE INCLUIDO EL RET
 		st = -1;
 		break;
 	case final:
+		tiempo(time(NULL),0,numero);
 		sent_ejecutar_finalizar(sent, socket_mem);
+		tiempo(0,time(NULL),numero);
 		break;
 	default:
 		log_trace(logger, "[HILO #%d] case default", sent->hilo);
@@ -666,7 +677,7 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem, int hilo) {
 
 		ultima_sentencia_ejecutada = sent->sentencia;
 
-		st = sent_ejecutar(sent, socket_mem);
+		st = sent_ejecutar(sent, socket_mem,hilo);
 		sentencias_ejecutadas = sentencias_ejecutadas + 1;
 		pcb->pc++;
 		list_add(resultado.resultados_sentencias, sent);
@@ -679,7 +690,7 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem, int hilo) {
 	if (((sent->sentencia == final) && (cantidad_a_ejecutar != sentencias_ejecutadas)) || sent->sentencia == io){
 
 		//O YA SE EJECUTARON TODAS
-		st = sent_ejecutar(sent, socket_mem);
+		st = sent_ejecutar(sent, socket_mem,hilo);
 		ultima_sentencia_ejecutada = sent->sentencia;
 		pcb->pc++;
 		sentencias_ejecutadas++;

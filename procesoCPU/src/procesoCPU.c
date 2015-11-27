@@ -9,15 +9,16 @@ int main(void) {
 	inicializar();
 
 	///////////////////////////////////////////////////VARIABLES/////////////////////////////////////////////
-	int contador=CANTIDAD_HILOS();
-	int* vector= malloc (contador*sizeof(int));
+	int contador					=		CANTIDAD_HILOS();
+	int* vector						= 		malloc (contador*sizeof(int));
 	int* numero ;
 	
-	socket_planificador = malloc(contador*sizeof(int));
-	socket_memoria = malloc(contador*sizeof(int));
+	socket_planificador 			= 		malloc(contador*sizeof(int));
+	socket_memoria 					= 		malloc(contador*sizeof(int));
 	
-	tiempo_ejecucion_ultimo_minuto = malloc(contador*sizeof(int));
-	porcentaje_a_planificador = malloc (contador*sizeof(int));
+	tiempo_ejecucion_ultimo_minuto  = 		malloc(contador*sizeof(int));
+	porcentaje_a_planificador 		= 		malloc(contador*sizeof(int));
+	aux						 		= 		malloc(contador*sizeof(int));
 
 
 	inicializar_porcentajes(); //	for (i = 0; i < CANTIDAD_HILOS(); ++i) Sentencias_ejecutadas_ultimo_min[i] = 0 ,porcentaje_a_planificador[i] = 0;
