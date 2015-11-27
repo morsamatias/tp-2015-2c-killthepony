@@ -2175,7 +2175,7 @@ void Hilo_IO(int pid) {
 
 sem_wait(&sem_IO);
 
-		while(list_size(list_block) != 0) {
+	while(list_size(list_block) != 0) {
 			//hay bloqueados
 			//if ((list_any_satisfy(list_block, (void*) _estado_bloqueado))) {
 				if(list_all_satisfy(list_block, (void*) _estado_libre)){
@@ -2215,8 +2215,9 @@ sem_wait(&sem_IO);
 
 				ready->pid = block->pid;
 
-				PID_GLOBAL_BLOCK = block->pid;
 
+				PID_GLOBAL_BLOCK = block->pid;
+				block->estado=0;
 				list_add(list_ready, ready);
 
 				t_pcb* pcb;
@@ -2279,8 +2280,8 @@ sem_wait(&sem_IO);
 		}
 
 	}
+
 }
-//}
 
 /*
 
