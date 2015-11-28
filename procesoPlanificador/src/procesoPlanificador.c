@@ -1208,8 +1208,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		for (i=0;i<msg->argv[3];i++){
 
 		msge=recibir_mensaje(socket);
-		logueo (msge);
-		destroy_message(msge);
+		if( msge != NULL){
+			logueo (msge);
+		destroy_message(msge);}
 
 		}
 
