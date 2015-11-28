@@ -242,62 +242,142 @@ int get_nuevo_pid() {
 
 	t_exec* pcb_exec;
 
-	log_info(logger,"LISTA DE READY \n");
+	log_info(logger,"LISTA DE READY ");
 
-	log_info(log_listas,"LISTA DE READY \n");
+	log_info(log_listas,"LISTA DE READY ");
+
+	if(list_size(list_ready)==0){
+
+		log_info(logger,"Lista Vacia\n");
+
+
+			log_info(log_listas,"Lista Vacia \n ");
+
+	}
+
 
 	for (i = 0; i < list_size(list_ready); i++) {
 
 		pcb_ready=list_get(list_ready,i);
 
-	log_info(logger,"Proceso %d ",pcb_ready->pid);
 
-	log_info(log_listas,"Proceso %d ",pcb_ready->pid);
+		if (i==(list_size(list_ready)-1)){
+
+	log_info(logger,"Proceso %d\n ",pcb_ready->pid);
+
+	log_info(log_listas,"Proceso %d\n ",pcb_ready->pid);
+
+	}else{
+
+
+		log_info(logger,"Proceso %d ",pcb_ready->pid);
+
+		log_info(log_listas,"Proceso %d",pcb_ready->pid);}
+	}
+
+	log_info(logger,"LISTA DE BLOQUEADOS ");
+
+	log_info(log_listas,"LISTA DE BLOQUEADOS ");
+
+	if(list_size(list_block)==0){
+
+		log_info(logger,"Lista Vacia\n");
+
+
+			log_info(log_listas,"Lista Vacia \n ");
 
 	}
 
-	log_info(logger," LISTA DE BLOQUEADOS \n");
-
-	log_info(log_listas," LISTA DE BLOQUEADOS \n");
 
 	for (i = 0; i < list_size(list_block); i++) {
 
 
 				pcb_block=list_get(list_block,i);
 
-		log_info(logger,"Proceso %d ",pcb_block->pid);
+				if (i==(list_size(list_block)-1)){
 
-		log_info(log_listas,"Proceso %d ",pcb_block->pid);
-		}
+					log_info(logger,"Proceso %d\n ",pcb_block->pid);
 
-	log_info(logger,"LISTA DE EJECUCION \n ");
+					log_info(log_listas,"Proceso %d\n ",pcb_block->pid);
 
-	log_info(log_listas,"LISTA DE EJECUCION \n ");
+					}else{
+
+
+						log_info(logger,"Proceso %d ",pcb_block->pid);
+
+						log_info(log_listas,"Proceso %d",pcb_block->pid);}
+
+
+	}
+
+	log_info(logger,"LISTA DE EJECUCION  ");
+
+	log_info(log_listas,"LISTA DE EJECUCION  ");
+
+	if(list_size(list_exec)==0){
+
+		log_info(logger,"Lista Vacia\n");
+
+
+			log_info(log_listas,"Lista Vacia \n ");
+
+	}
+
 
 	for (i = 0; i < list_size(list_exec); i++) {
 
 
 		pcb_exec=list_get(list_exec,i);
 
-		log_info(logger,"Proceso %d",pcb_exec->pid);
+		if (i==(list_size(list_exec)-1)){
 
-		log_info(log_listas,"Proceso %d",pcb_exec->pid);
+		log_info(logger,"Proceso %d\n",pcb_exec->pid);
+
+		log_info(log_listas,"Proceso %d \n",pcb_exec->pid);
+
+		}else{
+
+			log_info(logger,"Proceso %d",pcb_exec->pid);
+
+					log_info(log_listas,"Proceso %d ",pcb_exec->pid);
+
 
 		}
+		}
 
-	log_info(logger,"LISTA DE FINALIZADOS \n");
+	log_info(logger,"LISTA DE FINALIZADOS ");
 
 
-	log_info(log_listas,"LISTA DE FINALIZADOS \n");
+	log_info(log_listas,"LISTA DE FINALIZADOS ");
+
+	if(list_size(list_finish)==0){
+
+		log_info(logger,"Lista Vacia\n");
+
+
+			log_info(log_listas,"Lista Vacia \n ");
+
+	}
 
 	for (i = 0; i < list_size(list_finish); i++) {
 
+
+
 		pcb_finish=list_get(list_finish,i);
 
-		log_info(logger,"Proceso %d ",pcb_finish->pid);
 
-		log_info(log_listas,"Proceso %d ",pcb_finish->pid);
+		if (i==(list_size(list_finish)-1)){
 
+		log_info(logger,"Proceso %d \n ",pcb_finish->pid);
+
+		log_info(log_listas,"Proceso %d \n",pcb_finish->pid);
+
+		}else{
+			log_info(logger,"Proceso %d ",pcb_finish->pid);
+
+					log_info(log_listas,"Proceso %d ",pcb_finish->pid);
+
+		}
 		}
 	return 0;
 
