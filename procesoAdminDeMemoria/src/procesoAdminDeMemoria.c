@@ -479,9 +479,10 @@ void tasa_aciertos_TLB_total(){
 			log_info(log_general_p, "TLB - Sin pedidos ultimo minuto");
 			log_info(log_estadisticas, "TLB - Sin pedidos ultimo minuto");
 		}
-		sleep(60);
+		
 		gl_TLB_hit=0.0;
 		gl_TLB_total = 0;
+		sleep(60);
 	}
 }
 
