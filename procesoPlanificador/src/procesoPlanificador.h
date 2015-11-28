@@ -14,6 +14,7 @@
 #define EXEC 3;
 #define FINISH 4;
 #define FINISH_ERROR 5;
+#define ABORTADO 6;
 
 #include <commons/log.h>
 #include <pthread.h>

@@ -1,0 +1,14 @@
+[INFO] 14:15:36:32 PLANIFICADOR/(12233:12233): Correr path completo: /home/utnso/Escritorio/git/tp-2015-2c-killthepony/tests/benchmark.cod
+
+[INFO] 14:15:36:33 PLANIFICADOR/(12233:12233): Pid asignado: 1
+[INFO] 14:15:36:33 PLANIFICADOR/(12233:12233): El algoritmo de planificación será Round Robin
+[INFO] 14:15:36:33 PLANIFICADOR/(12233:12233): El Quantum será de 1 instrucciones
+[INFO] 14:15:36:35 PLANIFICADOR/(12233:12233): Proceso mProc a ejecutar: /home/utnso/Escritorio/git/tp-2015-2c-killthepony/tests/benchmark.cod
+[INFO] 14:15:42:737 PLANIFICADOR/(12233:12233): Nuevo CPU id: 1
+[INFO] 14:15:42:738 PLANIFICADOR/(12233:12233): Nuevo CPU id: 2
+[INFO] 14:15:42:739 PLANIFICADOR/(12233:12233): Nuevo CPU id: 0
+[INFO] 14:15:42:739 PLANIFICADOR/(12233:12233): Nuevo CPU id: 3
+[INFO] 14:15:42:740 PLANIFICADOR/(12233:12233): Nuevo CPU id: 4
+[INFO] 14:15:42:740 PLANIFICADOR/(12233:12233): Se conecta con el Planificador el Hilo al que se pedirán las solicitudes de Uso de CPUs 
+
+[INFO] 14:15:43:742 PLANIFICADOR/(12233:12233): El proceso cuyo pid es: 1  no pudo iniciarse y se eliminará del sistema

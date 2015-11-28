@@ -1,0 +1,5 @@
+[INFO] 14:15:36:36 PLANIFICADOR/(12233:12233): El proceso 1 se encuentra en la cola de procesos Nuevos para ejecutar el programa Mcod /home/utnso/Escritorio/git/tp-2015-2c-killthepony/tests/benchmark.cod
+[INFO] 14:15:36:36 PLANIFICADOR/(12233:12233): El proceso 1 se encuentra en la cola de procesos Listos
+[INFO] 14:15:36:36 PLANIFICADOR/(12233:12233): No existe una CPU libre para asignar al proceso 1. El proceso queda en READY
+[INFO] 14:15:42:737 PLANIFICADOR/(12233:12233): El proceso 1 se encuentra en la cola de procesos en Ejecución y se está ejecutando en la CPU 1 
+

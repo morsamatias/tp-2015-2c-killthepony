@@ -549,6 +549,17 @@ void procesar_msg_consola(char* msg) {
 				log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",
 									pcb2->pid, pcb2->path, "FINISH CON ERROR POR CAIDA DE CPU");
 				break;
+
+			case 6:
+				log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",
+									pcb2->pid, pcb2->path, "PROCESO ABORTADO POR FALLO AL INICIAR");
+
+
+				log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",
+									pcb2->pid, pcb2->path, "PROCESO ABORTADO POR FALLO AL INICIAR");
+				break;
+
+
 			default:
 
 				log_error(logger,
@@ -1964,7 +1975,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 						list_remove_by_condition(list_exec, (void*) es_el_pcb_buscado_en_exec);
 
-						list_remove_and_destroy_by_condition(pcbs, (void*) es_el_pcb_buscado_por_id, (void*)eliminar_pcb);
+						pcb->estado=ABORTADO;
 
 						cpu = cpu_buscar_por_socket(socket);
 
