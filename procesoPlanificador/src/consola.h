@@ -23,6 +23,7 @@ typedef enum {
 	FINALIZAR,
 	PS,
 	CPU,
+	LS,
 	NODO_AGREGAR
 } e_comando;
 

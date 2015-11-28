@@ -123,6 +123,7 @@ t_cpu* cpu_seleccionar();
 int cpu_ejecutar(t_cpu* cpu, t_pcb* pcb);
 int procesar_mensaje_cpu(int socket, t_msg* msg);
 t_pcb* pcb_buscar_por_cpu(int cpu);
+int mostrar_contenido_listas();
 
 int gl_id;
 int gl_cpu;

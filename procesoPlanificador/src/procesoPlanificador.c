@@ -90,7 +90,7 @@ int main(void) {
 	fdmax = fdNuevaCPU; // por ahora el maximo
 	printf("Consola iniciada \n");
 	printf("Opciones Disponibles: \n ");
-	printf("CORRER Path \n FINALIZAR Pid \n PS \n CPU \n");
+	printf("CORRER Path \n FINALIZAR Pid \n PS \n CPU \n LS \n");
 	fflush(stdout);
 	//log_info(logger, "inicio thread eschca de nuevos nodos");
 	// bucle principal
@@ -229,6 +229,61 @@ int get_nuevo_pid() {
 	return PID++;
 }
 
+
+ int mostrar_contenido_listas(){
+
+	int i;
+
+	t_ready* pcb_ready;
+
+	t_block* pcb_block;
+
+	t_finish* pcb_finish;
+
+	t_exec* pcb_exec;
+
+	log_info(log_listas,"LISTA DE READY \n");
+
+	for (i = 0; i < list_size(list_ready); i++) {
+
+		pcb_ready=list_get(list_ready,i);
+	log_info(log_listas,"Proceso %d ",pcb_ready->pid);
+
+	}
+
+	log_info(log_listas," LISTA DE BLOQUEADOS \n");
+
+	for (i = 0; i < list_size(list_block); i++) {
+
+
+				pcb_block=list_get(list_block,i);
+		log_info(log_listas,"Proceso %d ",pcb_block->pid);
+
+		}
+
+	log_info(log_listas,"LISTA DE EJECUCION \n ");
+
+	for (i = 0; i < list_size(list_exec); i++) {
+
+
+		pcb_exec=list_get(list_exec,i);
+
+		log_info(log_listas,"Proceso %d",pcb_exec->pid);
+
+		}
+
+	log_info(log_listas,"LISTA DE FINALIZADOS \n");
+
+	for (i = 0; i < list_size(list_finish); i++) {
+
+		pcb_finish=list_get(list_finish,i);
+
+		log_info(log_listas,"Proceso %d ",pcb_finish->pid);
+
+		}
+	return 0;
+
+}
 void procesar_msg_consola(char* msg) {
 
 	char* path;
@@ -412,6 +467,15 @@ void procesar_msg_consola(char* msg) {
 
 			i++;
 		}
+		break;
+
+	case LS:
+
+
+		log_info(log_listas,"Estado de las Listas: \n");
+
+		mostrar_contenido_listas();
+
 		break;
 
 	case CPU:
@@ -902,7 +966,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		PID_GLOBAL_EXEC = pcb->pid;
 
-		if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_por_id)) {
+		if (list_any_satisfy(list_exec, (void*) es_el_pcb_buscado_en_exec)) {
 			list_remove_by_condition(list_exec,
 					(void*) es_el_pcb_buscado_en_exec);
 		}
@@ -1219,6 +1283,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		}
 
 		//log_trace(logger,"Operaciones realizadas por el proceso %d hasta el momento son:", pcb->pid);
+
+
 
 		destroy_message(msg);
 

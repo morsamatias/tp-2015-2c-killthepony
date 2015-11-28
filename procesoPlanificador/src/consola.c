@@ -19,6 +19,9 @@ e_comando parsear_comando(char* comando) {
 		return CPU;
 	if (string_equals_ignore_case(comando, "SALIR"))
 		return SALIR;
+	if (string_equals_ignore_case(comando, "LS"))
+			return LS;
+
 
 	return NADA;
 }
