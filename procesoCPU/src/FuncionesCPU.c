@@ -157,6 +157,10 @@ void* hilo_porcentaje(){
 
 			for (numero = 0; numero < CANTIDAD_HILOS(); numero++) {
 
+				if (tiempo_ejecucion_ultimo_minuto[numero]>100){
+					tiempo_ejecucion_ultimo_minuto[numero] = 100;
+				}
+
 				porcentaje_a_planificador[numero] = dividir(tiempo_ejecucion_ultimo_minuto[numero]*100,60);
 
 				log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d%c.", numero,tiempo_ejecucion_ultimo_minuto[numero], porcentaje_a_planificador[numero], '%');
@@ -182,7 +186,7 @@ int tiempo(int tiempo_inicial ,int tiempo_final,int hilo_cpu){
 
 		tiempo_ejecucion_ultimo_minuto[hilo_cpu]=difftime(tiempo_final,tiempo_inicial) + tiempo_ejecucion_ultimo_minuto[hilo_cpu];
 
-		log_trace(logger, "[HILO #%d] SEGUNDOS DE USO: %d.\n",tiempo_ejecucion_ultimo_minuto[hilo_cpu],hilo_cpu);
+		//log_trace(logger, "[HILO #%d] SEGUNDOS DE USO: %d.\n",hilo_cpu,tiempo_ejecucion_ultimo_minuto[hilo_cpu]);
 
 	}
 
