@@ -301,9 +301,9 @@ void procesar_msg_consola(char* msg) {
 
 			pcb->pc = pcb->cant_sentencias - 1;
 
-			log_info(logger,"pcb->pc: %d",pcb->pc);
+			//log_info(logger,"pcb->pc: %d",pcb->pc);
 
-			log_info(log_consola,"pcb->pc: %d",pcb->pc);
+			//log_info(log_consola,"pcb->pc: %d",pcb->pc);
 
 		} else {
 			log_error(logger,
