@@ -242,14 +242,21 @@ int get_nuevo_pid() {
 
 	t_exec* pcb_exec;
 
+	log_info(logger,"LISTA DE READY \n");
+
 	log_info(log_listas,"LISTA DE READY \n");
 
 	for (i = 0; i < list_size(list_ready); i++) {
 
 		pcb_ready=list_get(list_ready,i);
+
+	log_info(logger,"Proceso %d ",pcb_ready->pid);
+
 	log_info(log_listas,"Proceso %d ",pcb_ready->pid);
 
 	}
+
+	log_info(logger," LISTA DE BLOQUEADOS \n");
 
 	log_info(log_listas," LISTA DE BLOQUEADOS \n");
 
@@ -257,9 +264,13 @@ int get_nuevo_pid() {
 
 
 				pcb_block=list_get(list_block,i);
-		log_info(log_listas,"Proceso %d ",pcb_block->pid);
 
+		log_info(logger,"Proceso %d ",pcb_block->pid);
+
+		log_info(log_listas,"Proceso %d ",pcb_block->pid);
 		}
+
+	log_info(logger,"LISTA DE EJECUCION \n ");
 
 	log_info(log_listas,"LISTA DE EJECUCION \n ");
 
@@ -268,15 +279,22 @@ int get_nuevo_pid() {
 
 		pcb_exec=list_get(list_exec,i);
 
+		log_info(logger,"Proceso %d",pcb_exec->pid);
+
 		log_info(log_listas,"Proceso %d",pcb_exec->pid);
 
 		}
+
+	log_info(logger,"LISTA DE FINALIZADOS \n");
+
 
 	log_info(log_listas,"LISTA DE FINALIZADOS \n");
 
 	for (i = 0; i < list_size(list_finish); i++) {
 
 		pcb_finish=list_get(list_finish,i);
+
+		log_info(logger,"Proceso %d ",pcb_finish->pid);
 
 		log_info(log_listas,"Proceso %d ",pcb_finish->pid);
 
@@ -472,7 +490,7 @@ void procesar_msg_consola(char* msg) {
 	case LS:
 
 
-		log_info(log_listas,"Estado de las Listas: \n");
+		log_info(logger,"Estado de las Listas: \n");
 
 		mostrar_contenido_listas();
 
