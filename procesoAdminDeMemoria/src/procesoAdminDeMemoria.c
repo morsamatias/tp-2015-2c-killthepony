@@ -29,7 +29,10 @@ int main(void) {
 
 int inicializar(){ ///////////////////
 	int i;
-
+	
+	gl_TLB_hit=0.0;
+	gl_TLB_total = 0;
+	
 	// ARCHIVO DE CONFIGURACION
 	CONFIG_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoAdminDeMemoria/Debug/config.txt";
 	cfg = config_create(CONFIG_PATH);
@@ -65,8 +68,7 @@ int inicializar(){ ///////////////////
 	sem_init(&mutex_TLB, 0, 1);
 	sem_init(&mutex_PAGINAS, 0, 1);
 
-	iniciar_signals();
-
+	
 	return 0;
 }
 
@@ -464,9 +466,8 @@ void tasa_aciertos_TLB_total(){
 	//log_info(log_general_p, "arranco ¬¬");
 	while(1){
 		//log_info(log_general_p, "me duermo ¬¬");
-		gl_TLB_hit=0.0;
-		gl_TLB_total = 0;
-		sleep(60);
+		
+
 		//log_info(log_general_p, "despierto ¬¬");
 		//list_iterate(paginas,(void*)sumar_tasas_TLB);
 		//log_info(log_general_p, "a ver que onda: %f - %d",gl_TLB_hit,gl_TLB_total);
@@ -478,6 +479,10 @@ void tasa_aciertos_TLB_total(){
 			log_info(log_general_p, "TLB - Sin pedidos ultimo minuto");
 			log_info(log_estadisticas, "TLB - Sin pedidos ultimo minuto");
 		}
+		
+		gl_TLB_hit=0.0;
+		gl_TLB_total = 0;
+		sleep(60);
 	}
 }
 
