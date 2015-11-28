@@ -126,12 +126,34 @@ int inicializar(){
 
 	swap = swap_inicializar();
 	/////////////////////////////////////
+	////////////////////////////////////////////////////
+	/*
 	//inicializo las paginas con nros del 1 al X
-	/*int i;
-	for (i = 0; i < CANTIDAD_PAGINAS(); ++i) {
-		memset(swap + i, i, TAMANIO_PAGINA());
-	}*/
+	int i;
+	char* p;
+	char* car;
+	int cant_pag = CANTIDAD_PAGINAS();
+	int tam_pag = TAMANIO_PAGINA();
+	int j;
+	for (i = 0; i < cant_pag; ++i) {
+
+		car = string_from_format("%c", i+97);
+		p = string_new();
+		for (j = 0; j < tam_pag; ++j) {
+			string_append(&p, car);
+		}
+		printf("%s\n", p);
+		//char j = i+1;
+		memcpy(swap + (i*tam_pag), p, tam_pag);
+		//strcpy(swap + (i*tam_pag), p);
+		free(p);
+		free(car);
+		//memset(swap + i, i, TAMANIO_PAGINA());
+	}
+	*/
 	/////////////////////////
+	/////////////////////////////////////////////////
+	///////////////////////////////////////////////////////
 
 
 	////////////////////////////////////////
@@ -219,8 +241,10 @@ int compactar(){
 
 		//me guardo el contenido de tod0 el hueco
 		page_tmp->tamanio = ocup->cantidad*TAMANIO_PAGINA();
-		page_tmp->contenido = malloc(page_tmp->tamanio );
-		memcpy(page_tmp->contenido, swap+ocup->posicion, page_tmp->tamanio );
+		page_tmp->contenido = malloc(page_tmp->tamanio +1);
+		memcpy(page_tmp->contenido, swap+(ocup->posicion*TAMANIO_PAGINA()), page_tmp->tamanio );
+		page_tmp->contenido[page_tmp->tamanio] = '\0';
+		//printf("%s\n", page_tmp->contenido);
 		list_add(paginas_tmp, page_tmp);
 
 		list_add(esp_ocupado_new, ocup);
@@ -236,8 +260,8 @@ int compactar(){
 	esp_libre_inicializar();
 
 	//inicializo toda la particion
-	memset(swap, 0, TAMANIO_SWAP);
-	//int comienzo = 0;
+	//memset(swap, 'X', TAMANIO_SWAP);
+
 
 	void _ocupar_hueco(t_ocupado* o){
 		o->posicion= swap_buscar_hueco_libre(o->cantidad);
@@ -247,7 +271,7 @@ int compactar(){
 			return p->pid ==o->pid;
 		}
 		page_tmp = list_find(paginas_tmp, (void*)_buscar_page_tmp);
-		memcpy(swap + (o->posicion), page_tmp->contenido, page_tmp->tamanio);
+		memcpy(swap + (o->posicion*TAMANIO_PAGINA()), page_tmp->contenido, page_tmp->tamanio);
 	}
 	//ocupo tod0 de nuevo
 	list_iterate(esp_ocupado_new, (void*)_ocupar_hueco);

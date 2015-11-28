@@ -1,14 +1,9 @@
 #include "procesoCPU.h"
 
-
-
-
 ///////////////////////////////////////////VARIBALES///////////////////////////////////////////////////////////////////////////////////////////////
 
 char* CONFIG_PATH = "/home/utnso/Escritorio/git/tp-2015-2c-killthepony/procesoCPU/Debug/config.txt";
 char* LOGGER_PATH = "log.txt";
-
-
 //////////////////////////////////////HILO RESPONDE PORCENTAJE//////////////////////////////////////////////////////////////////////
 
 
@@ -80,9 +75,7 @@ int enviar_porcentaje_a_planificador() {
 			desconexion_planificador();
 		}
 	}
-
 	return retorno;
-
 }
 
 
@@ -133,7 +126,7 @@ void* hilo_porcentaje(){
 
 					porcentaje_a_planificador[numero] = dividir(sentencias_ejecutadas_ultimo_min[numero]*100,CANT_SENT_EN_UN_MIN);
 
-					log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d.", numero,sentencias_ejecutadas_ultimo_min[numero], porcentaje_a_planificador[numero]);
+					log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d%c.", numero,sentencias_ejecutadas_ultimo_min[numero], porcentaje_a_planificador[numero],'%');
 
 					}else{
 
@@ -164,9 +157,13 @@ void* hilo_porcentaje(){
 
 			for (numero = 0; numero < CANTIDAD_HILOS(); numero++) {
 
+				if (tiempo_ejecucion_ultimo_minuto[numero]>100){
+					tiempo_ejecucion_ultimo_minuto[numero] = 100;
+				}
+
 				porcentaje_a_planificador[numero] = dividir(tiempo_ejecucion_ultimo_minuto[numero]*100,60);
 
-				log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d.", numero,tiempo_ejecucion_ultimo_minuto[numero], porcentaje_a_planificador[numero]);
+				log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d%c.", numero,tiempo_ejecucion_ultimo_minuto[numero], porcentaje_a_planificador[numero], '%');
 
 				tiempo_ejecucion_ultimo_minuto[numero] = 0;
 
@@ -189,7 +186,7 @@ int tiempo(int tiempo_inicial ,int tiempo_final,int hilo_cpu){
 
 		tiempo_ejecucion_ultimo_minuto[hilo_cpu]=difftime(tiempo_final,tiempo_inicial) + tiempo_ejecucion_ultimo_minuto[hilo_cpu];
 
-		printf("TIEMPO DE USO DE LA CPU %d \n",tiempo_ejecucion_ultimo_minuto[hilo_cpu]);
+		//log_trace(logger, "[HILO #%d] SEGUNDOS DE USO: %d.\n",hilo_cpu,tiempo_ejecucion_ultimo_minuto[hilo_cpu]);
 
 	}
 
@@ -263,6 +260,7 @@ void dormir2(){
 
 
 ///////////////////////////////////////////////////////////////PROCESAR MENSAJE///////////////////////////////////////////////
+
 int procesar_mensaje_planif(t_msg* msg, int numero) {
 
 	int retorno = 1;
@@ -272,10 +270,7 @@ int procesar_mensaje_planif(t_msg* msg, int numero) {
 
 	switch (msg->header.id) {
 
-
 	case PCB_A_EJECUTAR:
-
-
 
 		destroy_message(msg);
 
