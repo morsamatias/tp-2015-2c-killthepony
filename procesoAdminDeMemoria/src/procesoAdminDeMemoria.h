@@ -69,6 +69,7 @@ int 		gl_PID;
 int			gl_nro_pagina;
 float		gl_TLB_hit;
 int			gl_TLB_total;
+int 		gl_marco_subst;
 pthread_t 	t_tasas_globales;
 
 // Semaforos

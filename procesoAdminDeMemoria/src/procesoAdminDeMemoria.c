@@ -220,9 +220,9 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 								nro_pagina,pid, b_marco.TLB_HIT, b_marco.marco);}
 					else{
 						log_info(log_memoria, "Lectura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d - Algoritmo: %s",
-														nro_pagina,pid, b_marco.TLB_HIT, b_marco.marco, ALGORITMO_REEMPLAZO());
+														nro_pagina,pid, b_marco.TLB_HIT, gl_marco_subst, ALGORITMO_REEMPLAZO());
 						log_info(log_general_p, "Lectura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d - Algoritmo: %s",
-								nro_pagina,pid, b_marco.TLB_HIT, b_marco.marco, ALGORITMO_REEMPLAZO());}
+								nro_pagina,pid, b_marco.TLB_HIT, gl_marco_subst, ALGORITMO_REEMPLAZO());}
 					break;
 				case 3:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
@@ -333,9 +333,9 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 								nro_pagina,pid, b_marco.TLB_HIT, b_marco.marco);}
 					else{
 						log_info(log_general_p, "Escritura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d - Algoritmo: %s",
-								nro_pagina,pid, b_marco.TLB_HIT, b_marco.marco, ALGORITMO_REEMPLAZO());
+								nro_pagina,pid, b_marco.TLB_HIT, gl_marco_subst, ALGORITMO_REEMPLAZO());
 						log_info(log_memoria, "Escritura Correcta --> Pagina: %d - PID: %d - TBL_HIT: %d - Marco: %d - Algoritmo: %s",
-														nro_pagina,pid, b_marco.TLB_HIT, b_marco.marco, ALGORITMO_REEMPLAZO());}
+														nro_pagina,pid, b_marco.TLB_HIT, gl_marco_subst, ALGORITMO_REEMPLAZO());}
 					break;
 				case 3:
 					resp = argv_message(MEM_NO_OK, 1 ,0);
@@ -397,7 +397,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			break;
 
 		case MEM_IO:
-			sem_wait(&mutex_PAGINAS);
+			/*sem_wait(&mutex_PAGINAS);
 			gl_PID 		= msg->argv[0];
 			log_info(log_memoria, "E/S - Quitar todas paginas del Proces %d de memoria", gl_PID);
 			log_info(log_general_p, "E/S - Quitar todas paginas del Proces %d de memoria", gl_PID);
@@ -405,7 +405,7 @@ void procesar_mensaje_cpu(int socket, t_msg* msg){
 			quitar_todas_las_paginas_de_memoria_del_proceso(proceso);
 			sem_post(&mutex_PAGINAS);
 			dormir_memoria();
-			dormir_memoria();
+			dormir_memoria();*/
 			break;
 
 		default:
@@ -500,6 +500,7 @@ void agregar_pagina_en_memoria(t_proceso* proceso, int nro_pagina, char* conteni
 
 	// BUSCO UN MARCO LIBRE
 	int marco = encontrar_marco_libre();
+	gl_marco_subst = marco;
 
 	// AGREGO EL CONTENIDO A MEMORIA
 	strncpy(memoria[marco]->contenido,contenido,TAMANIO_MARCO());
