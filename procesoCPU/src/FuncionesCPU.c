@@ -157,8 +157,8 @@ void* hilo_porcentaje(){
 
 			for (numero = 0; numero < CANTIDAD_HILOS(); numero++) {
 
-				if (tiempo_ejecucion_ultimo_minuto[numero]>100){
-					tiempo_ejecucion_ultimo_minuto[numero] = 100;
+				if (tiempo_ejecucion_ultimo_minuto[numero]>60){
+					tiempo_ejecucion_ultimo_minuto[numero] = 60;
 				}
 
 				porcentaje_a_planificador[numero] = dividir(tiempo_ejecucion_ultimo_minuto[numero]*100,60);
