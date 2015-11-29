@@ -402,6 +402,7 @@ void procesar_msg_consola(char* msg) {
 		printf("Correr path: %s\n", path);
 		if(string_equals_ignore_case(path, "")){
 			log_error(logger, "path vacio ?);");
+			break;
 		}
 		//	memset(path_completo, 0, 1000);
 		strcpy(path_completo,"/home/utnso/Escritorio/git/tp-2015-2c-killthepony/tests/");
@@ -943,9 +944,11 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		}
 
+
+		pthread_mutex_lock(&mutex);
 		cpu = cpu_buscar_por_socket(socket);
 		cpu->estado = 1;
-
+		pthread_mutex_unlock(&mutex);
 
 
 		sem_post(&sem_IO);
@@ -1090,11 +1093,9 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		pthread_mutex_lock(&mutex);
 		cpu = cpu_buscar_por_socket(socket);
 		cpu->estado = 1;
-		pthread_mutex_unlock(&mutex);
-
 
 		// Hay que ver si hay algún proceso en READY para ejecutar
-		pthread_mutex_lock(&mutex);
+
 		if (list_size(list_ready) > 0) {
 			if (cpu_disponible()) {
 				cpu = cpu_seleccionar();
@@ -1278,7 +1279,6 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 
 		pcb->cpu_asignado = 100; //Hay que poner un número alto
 
-		cpu = cpu_buscar_por_socket(socket);
 
 		log_info(logger,
 				"Operaciones realizadas por el proceso %d hasta el momento son:\n",
@@ -1295,9 +1295,12 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 			destroy_message(msge);
 
 		}
-		cpu->estado = 1;
+
 
 		pthread_mutex_lock(&mutex);
+		cpu = cpu_buscar_por_socket(socket);
+		cpu->estado = 1;
+
 		if (list_size(list_ready) > 0) {
 			if (cpu_disponible()) {
 				cpu = cpu_seleccionar();
