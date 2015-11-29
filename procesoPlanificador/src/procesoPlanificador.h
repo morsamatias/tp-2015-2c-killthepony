@@ -128,6 +128,8 @@ int procesar_mensaje_cpu(int socket, t_msg* msg);
 t_pcb* pcb_buscar_por_cpu(int cpu);
 int mostrar_contenido_listas();
 void cpu_free(t_cpu* cpu);
+void listar_procesos();
+void finalizar_proceso (int pid);
 
 int gl_id;
 int gl_cpu;

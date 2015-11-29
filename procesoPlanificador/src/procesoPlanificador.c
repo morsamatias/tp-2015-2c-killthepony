@@ -393,6 +393,7 @@ void procesar_msg_consola(char* msg) {
 	e_comando cmd = parsear_comando(input_user[0]);
 	//int espacio = encontrar_espacio(msg);
 	//int espacio ;
+	int i;
 	switch (cmd) {
 	case CORRER:
 		//espacio = encontrar_espacio(msg);
@@ -427,86 +428,17 @@ void procesar_msg_consola(char* msg) {
 
 		pid = atoi(input_user[1]);
 
-		log_info(logger,
-				"Finalizar proceso cuyo pid es: %d\n", pid);
+		finalizar_proceso(pid);
 
-		log_info(log_consola,
-						"Finalizar proceso cuyo pid es: %d\n", pid);
-
-		t_pcb* pcb;
-
-		PID_GLOBAL = pid;
-
-		if (list_any_satisfy(pcbs, (void*) es_el_pcb_buscado)) {
-			PID_GLOBAL = pid;
-			pcb = list_get(pcbs,pos_del_pcb(pid));
-
-			pcb->pc = pcb->cant_sentencias - 1;
-		} else {
-			log_error(logger,
-					"No existe un proceso con el PID ingresado");
-			log_error(log_consola,
-								"No existe un proceso con el PID ingresado");
-		}
 		break;
 	case PS:
 		log_info(logger,	"PS listar estados de los procesos\n");
 
 		log_info(log_consola,"PS listar estados de los procesos\n");
 
-		int i = 0;
-
-		t_pcb* pcb2;
-
-		while ((i + 1) <= list_size(pcbs)) {
-
-			pcb2 = list_get(pcbs, i);
-
-			//log_info(log_pantalla,"mProc	%d PID:	%s nombre	->	%d estado /n",pcb->pid,pcb->path,pcb->estado);
-
-			switch (pcb2->estado) {
-
-			case 0:
-/*
-				log_trace(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "NEW");
-*/
-				log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "NEW");
-
-				log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "NEW");
+		listar_procesos();
 
 				break;
-			case 1:
-				log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "READY");
-				log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "READY");
-				break;
-			case 2:
-				log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",  pcb2->pid, pcb2->path, "BLOCK");
-				log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "BLOCK");
-				break;
-			case 3:
-				log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "EXEC");
-				log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "EXEC");
-				break;
-			case 4:
-				log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "FINISH");
-				log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "FINISH");
-				break;
-			case 5:
-				log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",pcb2->pid, pcb2->path, "FINISH CON ERROR POR CAIDA DE CPU");
-				log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "FINISH CON ERROR POR CAIDA DE CPU");
-				break;
-			case 6:
-				log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "PROCESO ABORTADO POR FALLO AL INICIAR");
-				log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "PROCESO ABORTADO POR FALLO AL INICIAR");
-				break;
-			default:
-				log_error(logger,"No se puede determinar el estado del proceso %d", pcb2->pid);
-				log_error(log_consola, "No se puede determinar el estado del proceso %d", pcb2->pid);
-				break;
-			}
-			i++;
-		}
-		break;
 
 	case LS:
 		log_info(logger,"Estado de las Listas: \n");
@@ -550,6 +482,87 @@ void procesar_msg_consola(char* msg) {
 }
 void cpu_free(t_cpu* cpu){
 	FREE_NULL(cpu);
+}
+
+void listar_procesos(){
+	int i = 0;
+
+			t_pcb* pcb2;
+
+			while ((i + 1) <= list_size(pcbs)) {
+
+				pcb2 = list_get(pcbs, i);
+
+				//log_info(log_pantalla,"mProc	%d PID:	%s nombre	->	%d estado /n",pcb->pid,pcb->path,pcb->estado);
+
+				switch (pcb2->estado) {
+
+				case 0:
+	/*
+					log_trace(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "NEW");
+	*/
+					log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "NEW");
+
+					log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "NEW");
+
+					break;
+				case 1:
+					log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "READY");
+					log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "READY");
+					break;
+				case 2:
+					log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",  pcb2->pid, pcb2->path, "BLOCK");
+					log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "BLOCK");
+					break;
+				case 3:
+					log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "EXEC");
+					log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "EXEC");
+					break;
+				case 4:
+					log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "FINISH");
+					log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "FINISH");
+					break;
+				case 5:
+					log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n",pcb2->pid, pcb2->path, "FINISH CON ERROR POR CAIDA DE CPU");
+					log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "FINISH CON ERROR POR CAIDA DE CPU");
+					break;
+				case 6:
+					log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "PROCESO ABORTADO POR FALLO AL INICIAR");
+					log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "PROCESO ABORTADO POR FALLO AL INICIAR");
+					break;
+				default:
+					log_error(logger,"No se puede determinar el estado del proceso %d", pcb2->pid);
+					log_error(log_consola, "No se puede determinar el estado del proceso %d", pcb2->pid);
+					break;
+				}
+				i++;
+			}
+
+}
+
+void finalizar_proceso (int pid){
+
+			log_info(logger,
+					"Finalizar proceso cuyo pid es: %d\n", pid);
+
+			log_info(log_consola,
+							"Finalizar proceso cuyo pid es: %d\n", pid);
+
+			t_pcb* pcb;
+
+			PID_GLOBAL = pid;
+
+			if (list_any_satisfy(pcbs, (void*) es_el_pcb_buscado)) {
+				PID_GLOBAL = pid;
+				pcb = list_get(pcbs,pos_del_pcb(pid));
+
+				pcb->pc = pcb->cant_sentencias - 1;
+			} else {
+				log_error(logger,
+						"No existe un proceso con el PID ingresado");
+				log_error(log_consola,
+									"No existe un proceso con el PID ingresado");
+			}
 }
 
 void mostrar_porcentaje(int cpu_id, int porcentaje) {
