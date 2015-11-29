@@ -192,10 +192,9 @@ int cpu_libre(t_cpu* cpu) {
 t_cpu* cpu_seleccionar() {
 	if (list_any_satisfy(cpus, (void*) cpu_libre)) {
 
-		//reemplazo por find
-		//t_cpu* cpu =list_remove_by_condition(cpus,(void*)cpu_libre);
-		//list_add(cpus,cpu);
-		t_cpu* cpu =list_find(cpus,(void*)cpu_libre);
+		t_cpu* cpu =list_remove_by_condition(cpus,(void*)cpu_libre);
+		list_add(cpus,cpu);
+		//t_cpu* cpu =list_find(cpus,(void*)cpu_libre);
 
 		return cpu;
 	} else {
