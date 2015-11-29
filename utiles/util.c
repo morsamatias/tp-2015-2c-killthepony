@@ -47,6 +47,7 @@ void* file_get_mapped(char* filename) {
 
 	length = sb.st_size;
 	addr = mmap(NULL, length, PROT_READ | PROT_WRITE,MAP_SHARED | MAP_NORESERVE, fd, 0);
+	close(fd);
 	if (addr == MAP_FAILED)
 		handle_error("mmap");
 	return addr;
