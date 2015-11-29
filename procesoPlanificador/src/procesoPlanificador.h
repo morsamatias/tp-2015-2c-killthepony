@@ -164,10 +164,10 @@ int cpu_ejecutar(t_cpu* cpu, t_pcb* pcb) {
 	t_msg* msg = argv_message(PCB_A_EJECUTAR, 0);
 	enviar_y_destroy_mensaje(cpu->socket, msg);
 
-	printf("antes enviar pcb\n");
+	//printf("antes enviar pcb\n");
 	//sleep(3);
 	if (enviar_mensaje_pcb(cpu->socket, pcb) != -1) {
-		printf("despues pcb\n");
+		//printf("despues pcb\n");
 		//sleep(3);
 		cambiar_a_exec(pcb->pid);
 
