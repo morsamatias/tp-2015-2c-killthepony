@@ -13,6 +13,10 @@ void dormir(int segundos,int milisegundos){
 	}
 }
 
+void pcb_free(t_pcb* pcb){
+	free(pcb);
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////// ARCHIVOS Y MAPPEO//////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -889,12 +893,16 @@ t_pcb* recibir_mensaje_pcb(int socket){
 
 	msg = recibir_mensaje(socket);
 	new = pcb_nuevo(msg->stream);
+
 	//primero el pc, despues cant, a ejectuar//
 	new->cant_a_ejectuar = msg->argv[1];
 	new->pc = msg->argv[0];
 	new->cant_sentencias = msg->argv[2];
 
 	new->pid = msg->argv[3];//el pid
+
+
+	destroy_message(msg);
 
 	return new;
 

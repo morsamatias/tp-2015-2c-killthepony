@@ -1,0 +1,5 @@
+iniciar 3;
+escribir 0 "Corto";
+entrada-salida 1;
+leer 0;
+finalizar;

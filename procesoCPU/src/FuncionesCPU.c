@@ -19,7 +19,14 @@ void* hilo_responder_porcentaje() {
 			log_trace(logger, "[PORCENTAJE] Esperando peticiones CPU_PORCENTAJE_UTILIZACION del planificador");
 			msg = recibir_mensaje(socket_planificador_especial);
 
-			if(msg!=NULL){												 //VALIDACION //
+			if(msg!=NULL){		//VALIDACION //
+
+
+				if(msg->header.id == FINALIZAR_CPU){
+					destroy_message(msg);
+					log_trace(logger, "[PORCENTAJE] SE CIERRA BIEN ");
+					return NULL;
+				}
 
 				if(msg->header.id == CPU_PORCENTAJE_UTILIZACION){ 		//VALIDA QUE SEA EL MENSAJE ESPERADO//
 
@@ -28,6 +35,7 @@ void* hilo_responder_porcentaje() {
 					enviar_porcentaje_a_planificador();
 
 				}else{
+
 					log_error(logger, "[PORCENTAJE] Mensaje desconocido");
 					break;
 				}
@@ -95,86 +103,108 @@ void inicializar_porcentajes(){
 		aux[contador] = 0;
 	}
 }
-
-void* hilo_porcentaje(){
-
-		int numero;
-
-		if(PORCENTAJE_CPU() == 0){
-
-			int numero,CANT_SENT_EN_UN_MIN;
-
-			if (RETARDO() == 0) {
-					CANT_SENT_EN_UN_MIN = dividir (60000,(RETARDO_MINIMO())); //CALCULO CANTIDAD DE SENTENCIAS MAXIMAS COMO SON MICROSEGUNDOS MULTIPLICO * 1000//
-			}else{
-					CANT_SENT_EN_UN_MIN = dividir (60 ,RETARDO());                 //CALCULO CANTIDAD DE SENTENCIAS MAXIMAS EN SEGUNDOS//
-			}
-
-			while(true){
-
-				sleep(60); //ACTUALIZA A CADA MINUTO//
-
-				pthread_mutex_lock(&mutex);
-				printf( "\n*****************************************************************************\n");
-				log_info(logger, "[PORCENTAJE] CALCULANDO PORCENTAJE DE UTILIZACION DE CADA HILO EN EL ULTIMO MINUTO");
-				log_info(logger, "[PORCENTAJE] CANTIDAD DE SENTENCIAS MAXIMAS EN UN MIN: %d", CANT_SENT_EN_UN_MIN);
-
-
-				for (numero = 0; numero < CANTIDAD_HILOS(); numero++) {
-
-					if(CANT_SENT_EN_UN_MIN != 0){
-
-					porcentaje_a_planificador[numero] = dividir(sentencias_ejecutadas_ultimo_min[numero]*100,CANT_SENT_EN_UN_MIN);
-
-					log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d%c.", numero,sentencias_ejecutadas_ultimo_min[numero], porcentaje_a_planificador[numero],'%');
-
-					}else{
-
-						porcentaje_a_planificador[numero] = 0;
-
-						log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d.", numero,sentencias_ejecutadas_ultimo_min[numero], porcentaje_a_planificador[numero]);
-
-					}
-
-					sentencias_ejecutadas_ultimo_min[numero] = 0;
-				}
-
-				printf("\n*****************************************************************************\n");
-				pthread_mutex_unlock(&mutex);
-			}
+bool fin_hilo_porcentaje = false;
+void* hilo_porcentaje() {
 
 
 
-		}else{
+	int numero;
+	int cada_tanto = 60;
 
-		while(true){
+	if (PORCENTAJE_CPU() == 0) {
 
-			sleep(60); //ACTUALIZA A CADA MINUTO//
+		int numero, CANT_SENT_EN_UN_MIN;
+
+		if (RETARDO() == 0) {
+			CANT_SENT_EN_UN_MIN = dividir(60000, (RETARDO_MINIMO())); //CALCULO CANTIDAD DE SENTENCIAS MAXIMAS COMO SON MICROSEGUNDOS MULTIPLICO * 1000//
+		} else {
+			CANT_SENT_EN_UN_MIN = dividir(60, RETARDO()); //CALCULO CANTIDAD DE SENTENCIAS MAXIMAS EN SEGUNDOS//
+		}
+
+		while (!fin_hilo_porcentaje) {
+
+			sleep(cada_tanto); //ACTUALIZA A CADA MINUTO//
 
 			pthread_mutex_lock(&mutex);
-			printf( "\n*****************************************************************************\n");
-			log_info(logger, "[PORCENTAJE] CALCULANDO PORCENTAJE DE UTILIZACION DE CADA HILO EN EL ULTIMO MINUTO");
+			printf(
+					"\n*****************************************************************************\n");
+			log_info(logger,
+					"[PORCENTAJE] CALCULANDO PORCENTAJE DE UTILIZACION DE CADA HILO EN EL ULTIMO MINUTO");
+			log_info(logger,
+					"[PORCENTAJE] CANTIDAD DE SENTENCIAS MAXIMAS EN UN MIN: %d",
+					CANT_SENT_EN_UN_MIN);
 
 			for (numero = 0; numero < CANTIDAD_HILOS(); numero++) {
 
-				if (tiempo_ejecucion_ultimo_minuto[numero]>60){
+				if (CANT_SENT_EN_UN_MIN != 0) {
+
+					porcentaje_a_planificador[numero] = dividir(
+							sentencias_ejecutadas_ultimo_min[numero] * 100,
+							CANT_SENT_EN_UN_MIN);
+
+					log_trace(logger,
+							"[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d%c.",
+							numero, sentencias_ejecutadas_ultimo_min[numero],
+							porcentaje_a_planificador[numero], '%');
+
+				} else {
+
+					porcentaje_a_planificador[numero] = 0;
+
+					log_trace(logger,
+							"[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d.",
+							numero, sentencias_ejecutadas_ultimo_min[numero],
+							porcentaje_a_planificador[numero]);
+
+				}
+
+				sentencias_ejecutadas_ultimo_min[numero] = 0;
+			}
+
+			printf(
+					"\n*****************************************************************************\n");
+			pthread_mutex_unlock(&mutex);
+		}
+
+	} else {
+
+		while (!fin_hilo_porcentaje) {
+
+			sleep(cada_tanto); //ACTUALIZA A CADA MINUTO//
+
+			pthread_mutex_lock(&mutex);
+			printf(
+					"\n*****************************************************************************\n");
+			log_info(logger,
+					"[PORCENTAJE] CALCULANDO PORCENTAJE DE UTILIZACION DE CADA HILO EN EL ULTIMO MINUTO");
+
+			for (numero = 0; numero < CANTIDAD_HILOS(); numero++) {
+
+				if (tiempo_ejecucion_ultimo_minuto[numero] > 60) {
 					tiempo_ejecucion_ultimo_minuto[numero] = 60;
 				}
 
-				porcentaje_a_planificador[numero] = dividir(tiempo_ejecucion_ultimo_minuto[numero]*100,60);
+				porcentaje_a_planificador[numero] = dividir(
+						tiempo_ejecucion_ultimo_minuto[numero] * 100, 60);
 
-				log_trace(logger, "[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d%c.", numero,tiempo_ejecucion_ultimo_minuto[numero], porcentaje_a_planificador[numero], '%');
+				log_trace(logger,
+						"[PORCENTAJE] [HILO #%d]:SENT_EJECT_ULTIMO_MIN: %d CALCULO CPU_PORCENTAJE_UTILIZACION: %d%c.",
+						numero, tiempo_ejecucion_ultimo_minuto[numero],
+						porcentaje_a_planificador[numero], '%');
 
 				tiempo_ejecucion_ultimo_minuto[numero] = 0;
 
 			}
 
-			printf("\n*****************************************************************************\n");
+			printf(
+					"\n*****************************************************************************\n");
 			pthread_mutex_unlock(&mutex);
 
-			}
 		}
-		return NULL;
+	}
+
+	printf("EL HILO CADA MINUTO SE CIERRA SOLITO \n");
+	return NULL;
 }
 
 
@@ -184,8 +214,9 @@ int tiempo(int tiempo_inicial ,int tiempo_final,int hilo_cpu){
 
 	if(PORCENTAJE_CPU()){
 
+		pthread_mutex_lock(&mutex);
 		tiempo_ejecucion_ultimo_minuto[hilo_cpu]=difftime(tiempo_final,tiempo_inicial) + tiempo_ejecucion_ultimo_minuto[hilo_cpu];
-
+		pthread_mutex_unlock(&mutex);
 		//log_trace(logger, "[HILO #%d] SEGUNDOS DE USO: %d.\n",hilo_cpu,tiempo_ejecucion_ultimo_minuto[hilo_cpu]);
 
 	}
@@ -219,6 +250,14 @@ void* hilo_cpu(int *numero_hilo) {
 			log_trace(logger, "[HILO #%d] Esperando peticiones del planificador", numero);
 			mensaje_planificador = recibir_mensaje(socket_planificador[numero]);
 
+			if(mensaje_planificador->header.id == FINALIZAR_CPU){
+				printf("[HILO #%d] FINALIZAR CPU\n", numero);
+				destroy_message(mensaje_planificador);
+				fin_hilo_porcentaje = true;//para que salga de los hilos cpu
+
+				free(numero_hilo);
+				break;//salgo del while
+			}
 			if(mensaje_planificador!=NULL){
 
 				log_trace(logger, "[HILO #%d] Nuevo mensaje del planificador", numero);
@@ -278,8 +317,7 @@ int procesar_mensaje_planif(t_msg* msg, int numero) {
 
 		printf("\n\n");
 
-		log_trace(logger, "[HILO #%d] -Ejecutando: %s.\n-PID: %d.\n-PC: %d.\n-Sentencias a Ejecutar: %d.\n-Cantidad sentencias: %d.",
-				numero, pcb->path, pcb->pid, pcb->pc, pcb->cant_a_ejectuar,pcb->cant_sentencias);
+		log_trace(logger, "[HILO #%d] -Ejecutando: %s.\n-PID: %d.\n-PC: %d.\n-Sentencias a Ejecutar: %d.\n-Cantidad sentencias: %d.", numero, pcb->path, pcb->pid, pcb->pc, pcb->cant_a_ejectuar,pcb->cant_sentencias);
 
 		mensaje_planificador = ejecutar(pcb, socket_memoria[numero], numero);
 
@@ -573,12 +611,18 @@ char* sent_ejecutar_leer(t_sentencia* sent, int socket_mem) {
 	msg = recibir_mensaje(socket_mem);
 	if (msg != NULL) {
 		if (msg->header.id == MEM_OK) {
+			if(msg->stream == NULL){
+				log_error(logger, "[HILO #%d] RTA MEM_LEER pagina %d NULL como contenido de la pagina", sent->hilo, sent->pagina);
+			}
+
 			//en el stream esta el contenido de la pagina
 			log_trace(logger, "[HILO #%d] Rta mensaje: MEM_LEER %s", sent->hilo, msg->stream);
 			pagina = string_duplicate(msg->stream);
 
 		} else {
-			pagina = NULL;
+			log_error(logger, "[HILO #%d] RTA MEM_LEER pagina %d NULL como contenido de la pagina, chequear mem si esta bien esto, ahora le mando que ponga cadena vacia en la pagina para que cuando envie el log al planificador tenga la cadena vacia y no un NULL porque ROMPE TODOOOOOOOOOOOOOOOO!", sent->hilo, sent->pagina);
+			//pagina = NULL;
+			pagina = "";
 		}
 		destroy_message(msg);
 
@@ -608,8 +652,10 @@ int sent_ejecutar(t_sentencia* sent, int socket_mem,int numero) {				//TINE INCL
 		break;
 	case leer:
 		sent->texto = sent_ejecutar_leer(sent, socket_mem);
-		if(sent->texto == NULL)
+		if(sent->texto == NULL){
+			printf("TExto LEER NULLLLLLLLLL\n");
 			st = -1;
+		}
 		break;
 	case escribir:
 		st = sent_ejecutar_escribir(sent, socket_mem);
@@ -640,7 +686,10 @@ int sent_ejecutar(t_sentencia* sent, int socket_mem,int numero) {				//TINE INCL
 void sent_free(t_sentencia* sent) {
 
 	if(sent->sentencia == escribir || sent->sentencia == leer){
-		FREE_NULL(sent->texto);
+		if(sent->texto == NULL){
+			log_error(logger, "[HILO #%d] es null por algun motivo por eso no hago el free. SENT:%d, pid:%d, pagina:%d", sent->hilo, sent->sentencia, sent->pid, sent->pagina);
+		}else
+			FREE_NULL(sent->texto);
 	}
 
 	FREE_NULL(sent);
@@ -679,15 +728,22 @@ t_resultado_pcb ejecutar(t_pcb* pcb, int socket_mem, int hilo) {
 		sent = sent_crear(sents[pcb->pc], pcb->pid, hilo);
 
 	}
+	if(st ==-1){
+		printf("ERRRRR\n");
+	}
+	if (((sent->sentencia == final) && (cantidad_a_ejecutar != sentencias_ejecutadas) ) || sent->sentencia == io){
+		if(st < 0 ){
+			log_error(logger, "HIlo %d ERRRO EN SENTENCIA CREO QUE LEER", hilo);
+		}else{
+			//O YA SE EJECUTARON TODAS
+			st = sent_ejecutar(sent, socket_mem, hilo);
+			ultima_sentencia_ejecutada = sent->sentencia;
+			pcb->pc++;
+			sentencias_ejecutadas++;
+			list_add(resultado.resultados_sentencias, sent);
+		}
 
-	if (((sent->sentencia == final) && (cantidad_a_ejecutar != sentencias_ejecutadas)) || sent->sentencia == io){
 
-		//O YA SE EJECUTARON TODAS
-		st = sent_ejecutar(sent, socket_mem,hilo);
-		ultima_sentencia_ejecutada = sent->sentencia;
-		pcb->pc++;
-		sentencias_ejecutadas++;
-		list_add(resultado.resultados_sentencias, sent);
 	}
 
 
@@ -1084,9 +1140,20 @@ int finalizar() {
 	free(sentencias_ejecutadas_ultimo_min);
 	free(porcentaje_a_planificador);
 
+	free(socket_planificador);
+	free(socket_memoria);
+
+	free(tiempo_ejecucion_ultimo_minuto);
+	free(aux);
+
+
+
+
 	config_destroy(cfg);
 	log_destroy(logger);
 	pthread_mutex_destroy(&mutex);
+
+	printf("Fin CPU FELIZZZZZZZZZZ\n");
 	return 0;
 }
 

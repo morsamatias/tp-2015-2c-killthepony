@@ -11,6 +11,8 @@ e_comando parsear_comando(char* comando) {
 
 	if (string_equals_ignore_case(comando, "CORRER"))
 		return CORRER;
+	if (string_equals_ignore_case(comando, "r"))
+		return CORRER;
 	if (string_equals_ignore_case(comando, "FINALIZAR"))
 		return FINALIZAR;
 	if (string_equals_ignore_case(comando, "PS"))
@@ -20,7 +22,8 @@ e_comando parsear_comando(char* comando) {
 	if (string_equals_ignore_case(comando, "SALIR"))
 		return SALIR;
 	if (string_equals_ignore_case(comando, "LS"))
-			return LS;
+		return LS;
+
 
 
 	return NADA;

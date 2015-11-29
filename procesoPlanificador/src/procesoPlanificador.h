@@ -71,7 +71,7 @@ t_list* list_block;/*lista de procesos bloqueados*/
 
 t_list* list_finish;/*lista de procesos terminados*/
 
-
+pthread_mutex_t mutex;
 sem_t sem_IO;
 
 typedef struct {
@@ -106,6 +106,7 @@ typedef struct {
 } t_cpu;
 
 int cpu_especial;
+bool finalizar_hilo_io = false;
 
 t_list* procesosFinalizados;
 
@@ -122,9 +123,11 @@ t_cpu* cpu_nuevo(int id);
 int cpu_disponible();
 t_cpu* cpu_seleccionar();
 int cpu_ejecutar(t_cpu* cpu, t_pcb* pcb);
+void salir();
 int procesar_mensaje_cpu(int socket, t_msg* msg);
 t_pcb* pcb_buscar_por_cpu(int cpu);
 int mostrar_contenido_listas();
+void cpu_free(t_cpu* cpu);
 
 int gl_id;
 int gl_cpu;
@@ -147,8 +150,11 @@ bool _cpu_buscar_por_socket(t_cpu* cpu) {
 }
 t_cpu* cpu_buscar_por_socket(int socket) {
 
+
 	gl_socket = socket;
-	return list_find(cpus, (void*) _cpu_buscar_por_socket);
+	t_cpu* cpu = list_find(cpus, (void*) _cpu_buscar_por_socket);
+
+	return cpu;
 }
 
 int cpu_ejecutar(t_cpu* cpu, t_pcb* pcb) {
@@ -156,12 +162,15 @@ int cpu_ejecutar(t_cpu* cpu, t_pcb* pcb) {
 	t_msg* msg = argv_message(PCB_A_EJECUTAR, 0);
 	enviar_y_destroy_mensaje(cpu->socket, msg);
 
+	printf("antes enviar pcb\n");
+	//sleep(3);
 	if (enviar_mensaje_pcb(cpu->socket, pcb) != -1) {
-
+		printf("despues pcb\n");
+		//sleep(3);
 		cambiar_a_exec(pcb->pid);
 
 	} else {
-		printf("La CPU ya no se encuentra activa");
+		printf("La CPU ya no se encuentra activa\n");
 		pcb->cpu_asignado = 100; // un número alto y lo dejo en Ready.
 	}
 
@@ -181,10 +190,10 @@ int cpu_libre(t_cpu* cpu) {
 t_cpu* cpu_seleccionar() {
 	if (list_any_satisfy(cpus, (void*) cpu_libre)) {
 
-		t_cpu* cpu =
-		list_remove_by_condition(cpus,(void*)cpu_libre);
-
-		list_add(cpus,cpu);
+		//reemplazo por find
+		//t_cpu* cpu =list_remove_by_condition(cpus,(void*)cpu_libre);
+		//list_add(cpus,cpu);
+		t_cpu* cpu =list_find(cpus,(void*)cpu_libre);
 
 		return cpu;
 	} else {
@@ -253,7 +262,7 @@ t_pcb* es_el_pcb_buscado_struct(t_pcb* pcb);
 
 int es_el_pcb_buscado(t_pcb* pcb);
 
-void Hilo_IO(int pid);
+void* Hilo_IO();
 void controlar_IO(char* pid_string);
 
 //void controlar_IO (int pid);
