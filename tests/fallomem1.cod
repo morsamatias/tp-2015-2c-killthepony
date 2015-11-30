@@ -1,0 +1,13 @@
+iniciar 10;
+escribir 0 "00";
+escribir 1 "11";
+escribir 2 "22";
+escribir 3 "33";
+escribir 4 "44";
+escribir 5 "55";
+escribir 6 "66";
+escribir 7 "77";
+escribir 8 "88";
+escribir 9 "99";
+entrada-salida 60;
+finalizar;
