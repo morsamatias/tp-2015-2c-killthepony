@@ -9,5 +9,5 @@ escribir 6 "66";
 escribir 7 "77";
 escribir 8 "88";
 escribir 9 "99";
-entrada-salida 60;
+entrada-salida 30;
 finalizar;
