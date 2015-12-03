@@ -267,7 +267,7 @@ int server_socket_select(uint16_t port, void (*procesar_mensaje)(int, t_msg*)) {
 	for (;;) {
 		read_fds = master; // cópialo
 		if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
-			handle_error("Error en select");
+			//handle_error("Error en select");
 		}
 
 		// explorar conexiones existentes en busca de datos que leer
