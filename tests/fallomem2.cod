@@ -1,5 +1,4 @@
 iniciar 5;
-entrada-salida 40;
 escribir 0 "esto";
 escribir 1 "deberia";
 escribir 2 "dar";

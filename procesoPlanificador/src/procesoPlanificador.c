@@ -531,6 +531,11 @@ void listar_procesos(){
 					log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "PROCESO ABORTADO POR FALLO AL INICIAR");
 					log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "PROCESO ABORTADO POR FALLO AL INICIAR");
 					break;
+
+				case 7:
+					log_info(logger, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "FINISH CON ERROR");
+					log_info(log_consola, "mProc	 PID: %d	 nombre %s	->	 estado %s\n", pcb2->pid, pcb2->path, "FINISH CON ERROR");
+					break;
 				default:
 					log_error(logger,"No se puede determinar el estado del proceso %d", pcb2->pid);
 					log_error(log_consola, "No se puede determinar el estado del proceso %d", pcb2->pid);
@@ -1042,8 +1047,12 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		pthread_mutex_unlock(&mutex);
 
 		//pcb2->tiempo_total = difftime(time(NULL), time1);
+
+		if(pcb->estado != 7){
+
 		pcb->estado = FINISH;
 
+		}
 		pcb->tiempo_fin_proceso = time(NULL);
 
 		//log_trace(logger,
@@ -1416,8 +1425,7 @@ int procesar_mensaje_cpu(int socket, t_msg* msg) {
 		list_add(list_ready, ready2);
 		pthread_mutex_unlock(&mutex);
 
-		pcb->estado = READY
-		;
+		pcb->estado = FINISH_POR_ERROR;
 
 		pcb->tiempo_inicio_ready = time(NULL);
 
@@ -1884,7 +1892,11 @@ void cambiar_a_exec(int pid) {
 
 	pcb->tiempo_espera = pcb->tiempo_espera	+ difftime(pcb->tiempo_fin_ready, pcb->tiempo_inicio_ready);
 
+	if(pcb->estado != 7){
+
 	pcb->estado = EXEC;
+
+	}
 
 	log_info(logger,
 			"El proceso %d se encuentra en la cola de procesos en Ejecución y se está ejecutando en la CPU %d \n",
