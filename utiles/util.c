@@ -1,5 +1,52 @@
 #include "util.h"
 
+
+
+sem_t* sem_crear(int* shmid, key_t* shmkey, int contador_ftok){
+	sem_t* sem= NULL;
+	//pid_t pid; /*      fork pid                */
+	//unsigned int n; /*      fork count              */
+	unsigned int value; /*      semaphore value         */
+
+	/* initialize a shared variable in shared memory */
+
+	char* sem_name = string_from_format("pSem_%d", contador_ftok);
+
+	//shmkey = ftok("/dev/null", 5); /* valid directory name and a number */
+	*shmkey = ftok("/dev/null", contador_ftok); /* valid directory name and a number */
+
+	//printf("shmkey for p = %d\n", *shmkey);
+	*shmid = shmget(*shmkey, sizeof(int), 0644 | IPC_CREAT);
+	if (*shmid < 0) { /* shared memory error check */
+		perror("shmget\n");
+		exit(1);
+	}
+
+	///////////////////////////////////////////
+	value = 0;
+	/* initialize semaphores for shared processes */
+	//sem = sem_open("pSem", O_CREAT | O_EXCL, 0644, value);
+
+
+	//sem = sem_open("pSem", O_CREAT , 0644, value);
+	sem = sem_open(sem_name, O_CREAT , 0644, value);
+	if(sem==SEM_FAILED){
+		perror("sem_open___");
+		printf("***************************************************sdfadfasd\n");
+		_exit(1);
+	}
+
+	/* name of semaphore is "pSem", semaphore is reached using this name */
+	//sem_unlink("pSem");
+	sem_unlink(sem_name);
+	/* unlink prevents the semaphore existing forever */
+	/* if a crash occurs during the execution         */
+	//printf ("semaphores initialized.\n\n");
+
+	FREE_NULL(sem_name);
+
+	return sem;
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////RETARDO/////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
