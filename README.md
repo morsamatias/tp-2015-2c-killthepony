@@ -1,3 +1,4 @@
+Nota 10
 # tp-2015-2c-killthepony
 
 configurar la sharedLibrary cuando se ejecuta en consola(por cada consola)
