@@ -45,12 +45,14 @@ export LD_LIBRARY_PATH=/home/utnso/Escritorio/git/tp-2015-2c-killthepony/utiles/
 #### NOTA: LA LIBRERIA HAY QUE HACERLA POR CADA SESION
 -----------------------------------------
 
-#### [ENUNCIADO](https://github.com/dds-utn/2018-vn-group-19/blob/master/estadoActual.md)
+#### 
+  - [ENUNCIADO](https://github.com/dds-utn/2018-vn-group-19/blob/master/estadoActual.md)
 
-| INTEGRANTE            |       NOTA            |
-|  :----------------:   |  :----------------:   |
-|    MATIAS MORSA       |        10             |
-|    ANTONELLA  MIOZZO  |        10             |
-|    MARTIN PEÑALOZA    |        10             |
-|    PAULO DIGIANNI     |        10             |
-|    MARTIN GUIXE       |        10             |
+| INTEGRANTE                |       NOTA            |
+|  :----------------:       |  :----------------:   |
+|     [MATIAS MORSA](https://www.linkedin.com/in/matias-morsa-b8172861/)          |        10             |
+|    ANTONELLA  MIOZZO      |        10             |
+|    [MARTIN PEÑALOZA](https://github.com/PabloMartinP)    |        10             |
+|    PAULO DIGIANNI         |        10             |
+|    MARTIN GUIXE           |        10             |
+
